@@ -101,6 +101,15 @@ func (c *MemoryCacher) Delete(key string) error {
 	return nil
 }
 
+// Delete deletes cached value by given prefix.
+func (c *MemoryCacher) DeleteByPrefix(prefix string) error {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	delete(c.items, prefix)
+	return nil
+}
+
 // Incr increases cached int-type value by given key as a counter.
 func (c *MemoryCacher) Incr(key string) (int64, error) {
 	c.lock.RLock()

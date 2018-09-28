@@ -21,6 +21,8 @@ type CacheStore interface {
 	Get(key string) string
 	// Delete deletes cached value by given key.
 	Delete(key string) error
+	// Delete deletes cached value by given prefix.
+	DeleteByPrefix(prefix string) error
 	// Incr increases cached int-type value by given key as a counter.
 	Incr(key string) (int64, error)
 	// Decr decreases cached int-type value by given key as a counter.
@@ -109,6 +111,10 @@ func (this *Engine) Get(key string) string {
 
 func (this *Engine) Delete(key string) error {
 	return this.store.Delete(key)
+}
+
+func (this *Engine) DeleteByPrefix(prefix string) error {
+	return this.store.DeleteByPrefix(prefix)
 }
 
 func (this *Engine) Incr(key string) (int64, error) {

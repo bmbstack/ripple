@@ -6,6 +6,7 @@ import (
 	"time"
 
 	redigo "github.com/garyburd/redigo/redis"
+	"strings"
 )
 
 const GC_HASH_KEY = "TagCache:CacheGCKeys"
@@ -96,6 +97,27 @@ func (r *RedisCache) Delete(key string) (err error) {
 	}
 
 	_, err = r.do("HDEL", r.key(GC_HASH_KEY), r.key(key))
+	return
+}
+
+// Delete deletes cached value by given prefix key.
+func (r *RedisCache) DeleteByPrefix(prefix string) (err error) {
+	keys, err := redigo.MultiBulk(r.do("HKEYS", r.key(GC_HASH_KEY)))
+	if err != nil {
+		return
+	}
+	for _, item := range keys {
+		itemValue := item.(string)
+		if strings.HasPrefix(itemValue, prefix) {
+			if _, err = r.do("DEL", r.key(itemValue)); err != nil {
+				continue
+			}
+			if r.occupyMode {
+				continue
+			}
+			_, err = r.do("HDEL", r.key(GC_HASH_KEY), r.key(itemValue))
+		}
+	}
 	return
 }
 

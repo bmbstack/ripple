@@ -44,6 +44,10 @@ func (this *TagCache) Delete(key string) error {
 	return this.store.Delete(this.TaggedItemKey(key))
 }
 
+func (this *TagCache) DeleteByPrefix(prefix string) error {
+	return this.store.DeleteByPrefix(this.TaggedItemKey(prefix))
+}
+
 func (this *TagCache) Flush() error {
 	return this.tagSet.Reset()
 }
