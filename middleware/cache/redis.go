@@ -102,20 +102,19 @@ func (r *RedisCache) Delete(key string) (err error) {
 
 // Delete deletes cached value by given prefix key.
 func (r *RedisCache) DeleteByPrefix(prefix string) (err error) {
-	keys, err := redigo.MultiBulk(r.do("HKEYS", r.key(GC_HASH_KEY)))
+	kvs, err := redigo.Int64Map(r.do("HGETALL", r.key(GC_HASH_KEY)))
 	if err != nil {
 		return
 	}
-	for _, item := range keys {
-		itemValue := item.(string)
-		if strings.HasPrefix(itemValue, prefix) {
-			if _, err = r.do("DEL", r.key(itemValue)); err != nil {
+	for key, _ := range kvs {
+		if strings.HasPrefix(key, r.key(prefix)) {
+			if _, err = r.do("DEL", key); err != nil {
 				continue
 			}
 			if r.occupyMode {
 				continue
 			}
-			_, err = r.do("HDEL", r.key(GC_HASH_KEY), r.key(itemValue))
+			_, err = r.do("HDEL", r.key(GC_HASH_KEY), key)
 		}
 	}
 	return
