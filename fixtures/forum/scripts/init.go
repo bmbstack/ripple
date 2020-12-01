@@ -1,8 +1,8 @@
 package scripts
 
 import (
-	"os"
 	"github.com/bmbstack/ripple/fixtures/forum/logger"
+	"os"
 )
 
 // init commands

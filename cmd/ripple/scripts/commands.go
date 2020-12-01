@@ -1,38 +1,43 @@
 package scripts
 
 import (
+	"errors"
 	"github.com/bmbstack/ripple/cmd/ripple/logger"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 	"os/exec"
 )
 
 // Commands
-func Commands() []cli.Command {
-	return []cli.Command{
+func Commands() []*cli.Command {
+	return []*cli.Command{
 		//New application
 		{
 			Name:  "new",
 			Usage: "Create a Ripple application",
-			Action: func(c *cli.Context) {
-				if len(c.Args()) == 0 {
-					logger.Logger.Error("Please input the application name[ripple new appName]")
-					return
+			Action: func(c *cli.Context) error {
+				if c.Args().Len() == 0 {
+					msg := "Please input the application name[ripple new appName]"
+					logger.Logger.Error(msg)
+					return errors.New(msg)
 				}
-				applicationName := c.Args()[0]
+				applicationName := c.Args().First()
 				NewApplication(applicationName)
+				return nil
 			},
 		},
 		//Run application
 		{
 			Name:    "run",
 			Aliases: []string{"r"},
-			Usage:   "Run the Ripple applicastion",
-			Action: func(c *cli.Context) {
-				if len(c.Args()) > 0 {
-					logger.Logger.Error("Don't need input args")
-					return
+			Usage:   "Run the Ripple application",
+			Action: func(c *cli.Context) error {
+				if c.Args().Len() > 0 {
+					msg := "Don't need input args"
+					logger.Logger.Error(msg)
+					return errors.New(msg)
 				}
 				RunApplication()
+				return nil
 			},
 		},
 	}

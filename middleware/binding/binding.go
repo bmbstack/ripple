@@ -1,21 +1,7 @@
-// Copyright 2014 Manu Martinez-Almeida.  All rights reserved.
-// Use of this source code is governed by a MIT style
-// license that can be found in the LICENSE file.
-
 package binding
 
 import (
-	"github.com/labstack/echo"
-)
-
-const (
-	MIMEJSON              = "application/json"
-	MIMEHTML              = "text/html"
-	MIMEXML               = "application/xml"
-	MIMEXML2              = "text/xml"
-	MIMEPlain             = "text/plain"
-	MIMEPOSTForm          = "application/x-www-form-urlencoded"
-	MIMEMultipartPOSTForm = "multipart/form-data"
+	"github.com/labstack/echo/v4"
 )
 
 type Binding interface {
@@ -35,8 +21,8 @@ type StructValidator interface {
 var Validator StructValidator = &defaultValidator{}
 
 var (
-	JSON          = jsonBinding{}
 	XML           = xmlBinding{}
+	JSON          = jsonBinding{}
 	Form          = formBinding{}
 	FormPost      = formPostBinding{}
 	FormMultipart = formMultipartBinding{}
@@ -46,12 +32,17 @@ func Default(method, contentType string) Binding {
 	if method == "GET" {
 		return Form
 	} else {
+		// POST
 		switch contentType {
-		case MIMEJSON:
-			return JSON
-		case MIMEXML, MIMEXML2:
+		case echo.MIMEApplicationXML, echo.MIMETextXML:
 			return XML
-		default: //case MIMEPOSTForm, MIMEMultipartPOSTForm:
+		case echo.MIMEApplicationJSON:
+			return JSON
+		case echo.MIMEApplicationForm:
+			return Form
+		case echo.MIMEMultipartForm:
+			return Form
+		default:
 			return Form
 		}
 	}

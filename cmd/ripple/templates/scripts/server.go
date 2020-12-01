@@ -1,10 +1,10 @@
 package scripts
 
 import (
-	_ "github.com/bmbstack/ripple/cmd/ripple/templates/controllers"
-	"github.com/bmbstack/ripple/cmd/ripple/templates/logger"
 	"github.com/bmbstack/ripple"
 	"github.com/bmbstack/ripple/cmd/ripple/templates/controllers"
+	_ "github.com/bmbstack/ripple/cmd/ripple/templates/controllers"
+	"github.com/bmbstack/ripple/cmd/ripple/templates/logger"
 )
 
 // Server commands

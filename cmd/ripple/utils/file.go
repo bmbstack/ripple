@@ -1,9 +1,10 @@
 package utils
+
 import (
-	"path/filepath"
-	"path"
-	"strings"
 	"os"
+	"path"
+	"path/filepath"
+	"strings"
 )
 
 // CollectFiles Collect the files with these extensions under src
@@ -33,4 +34,3 @@ func CollectFiles(dir string, extensions []string) ([]string, error) {
 	}
 	return files, nil
 }
-

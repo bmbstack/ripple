@@ -1,16 +1,17 @@
 package one
 
 import (
-	"time"
-	"github.com/bmbstack/ripple"
-	. "github.com/bmbstack/ripple/helper"
-	"github.com/bmbstack/ripple/middleware/cache"
-	. "github.com/bmbstack/ripple/fixtures/forum/helper"
 	"encoding/json"
-	"github.com/labstack/echo"
+	"github.com/bmbstack/ripple"
+	"github.com/bmbstack/ripple/cache"
+	. "github.com/bmbstack/ripple/fixtures/forum/helper"
+	. "github.com/bmbstack/ripple/helper"
+	"gorm.io/gorm"
+	"time"
 )
 
 var Orm *ripple.Orm
+var Cache *cache.Cache
 var databaseAlias = "one"
 var cacheAlias = "one"
 
@@ -24,22 +25,33 @@ type BaseModel struct {
 
 func init() {
 	Orm = ripple.GetOrm(databaseAlias)
-	Orm.DB.LogMode(ripple.GetConfig().DebugOn)
+	Cache = ripple.GetCache(cacheAlias)
 }
 
-func (this *BaseModel) AfterFind() {
-	this.CreatedTimeStr = this.CreatedTime.Format(DateShortLayout)
+func (this *BaseModel) AfterFind(*gorm.DB) error {
+	if IsNotEmpty(this.CreatedTime) {
+		this.CreatedTimeStr = this.CreatedTime.Format(DateFullLayout)
+	}
+	return nil
 }
 
-func (this *BaseModel) GetCache(ctx echo.Context, cacheKey string) string {
-	return cache.Store(cacheAlias, ctx).Get(cacheKey)
+func (this *BaseModel) GetCache(cacheKey string) string {
+	return Cache.Get(cacheKey)
 }
 
-func (this *BaseModel) SetCache(ctx echo.Context, cacheKey string, data interface{}) {
+func (this *BaseModel) SetCache(cacheKey string, data interface{}) {
 	if IsNotEmpty(data) {
 		bytes, err := json.Marshal(data)
 		if err == nil {
-			cache.Store(cacheAlias, ctx).Put(cacheKey, string(bytes), CacheSeconds)
+			Cache.Set(cacheKey, string(bytes), CacheSeconds)
 		}
 	}
+}
+
+func (this *BaseModel) DeleteCache(key string) {
+	Cache.Delete(key)
+}
+
+func (this *BaseModel) DeleteCacheByPrefix(prefix string) {
+	Cache.DeleteByPrefix(prefix)
 }

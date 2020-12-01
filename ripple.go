@@ -2,12 +2,12 @@ package ripple
 
 import (
 	"fmt"
+	"github.com/bmbstack/ripple/cache"
+	. "github.com/bmbstack/ripple/helper"
 	"github.com/bmbstack/ripple/middleware/binding"
 	"github.com/bmbstack/ripple/middleware/logger"
-	"github.com/bmbstack/ripple/middleware/cache"
-	. "github.com/bmbstack/ripple/helper"
-	"github.com/labstack/echo"
-	mw "github.com/labstack/echo/middleware"
+	"github.com/labstack/echo/v4"
+	mw "github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/color"
 	"os"
 )
@@ -20,11 +20,18 @@ var firstRegModel = true
 var line1 = "=============================="
 var line2 = "================================"
 
+const VersionName = "0.1.0"
+
+func Version() string {
+	return VersionName
+}
+
 // Ripple ripple struct
 type Ripple struct {
 	Echo   *echo.Echo
 	Config *Config
 	Orms   map[string]*Orm
+	Caches map[string]*cache.Cache
 }
 
 func init() {
@@ -35,7 +42,6 @@ func init() {
 func NewLogger() *logger.Logger {
 	log, err := logger.NewLogger("ripple", 1, os.Stdout)
 	if err != nil {
-		log.Error(err.Error())
 		panic(err) // Check for error
 	}
 	return log
@@ -58,20 +64,28 @@ func NewRipple() *Ripple {
 
 	orms := make(map[string]*Orm)
 	if IsNotEmpty(config.Databases) {
-		for _, database := range config.Databases {
-			orms[database.Alias] = NewOrm(database)
+		for _, item := range config.Databases {
+			orms[item.Alias] = NewOrm(item, r.Config.DebugOn)
 		}
 	}
 	r.Orms = orms
 
+	caches := make(map[string]*cache.Cache)
 	if IsNotEmpty(config.Caches) {
-		for _, itemCache := range config.Caches {
-			r.Echo.Use(cache.EchoCacher(itemCache.Alias, cache.Options{
-				Adapter:       itemCache.Adapter,
-				AdapterConfig: itemCache.GetCacheConfig(),
-				Section:       itemCache.Section, Interval: 5}))
+		for _, item := range config.Caches {
+			newCache, err := cache.NewCache(item.Alias, cache.Options{
+				Adapter:       item.Adapter,
+				AdapterConfig: item.GetCacheAdapterConfig(),
+				Section:       item.Section,
+			})
+			if err != nil {
+				fmt.Println(fmt.Sprintf("Connect.cache error: %s", err.Error()))
+			} else {
+				caches[item.Alias] = newCache
+			}
 		}
 	}
+	r.Caches = caches
 	return r
 }
 
@@ -93,6 +107,14 @@ func GetOrm(alias string) *Orm {
 	return baseRipple.Orms[alias]
 }
 
+// GetCache  return ripple cache
+func GetCache(alias string) *cache.Cache {
+	if _, ok := baseRipple.Caches[alias]; !ok {
+		panic(fmt.Errorf("GetCache: cannot get cache alias '%s'", alias))
+	}
+	return baseRipple.Caches[alias]
+}
+
 // RegisterControllers register a controller for ripple App
 func RegisterController(c Controller) {
 	if firstRegController {
@@ -101,7 +123,7 @@ func RegisterController(c Controller) {
 			color.Bold(color.Green("Controller information")),
 			color.White(line1)))
 	}
-	AddController(*baseRipple.Echo, c)
+	AddController(baseRipple.Echo, c)
 	firstRegController = false
 }
 
@@ -113,7 +135,7 @@ func RegisterModels(orm *Orm, modelItems ...interface{}) {
 			color.Bold(color.Green("Orm information")),
 			color.White(line2)))
 	}
-	orm.AddModels(modelItems...)
+	_ = orm.AddModels(modelItems...)
 	firstRegModel = false
 }
 
@@ -124,5 +146,8 @@ func Run() {
 	}
 	Logger.Info(fmt.Sprintf("Ripple ListenAndServe: %s", color.Green(baseRipple.Config.Domain)))
 	baseRipple.Echo.Debug = baseRipple.Config.DebugOn
-	baseRipple.Echo.Start(baseRipple.Config.Domain)
+	err := baseRipple.Echo.Start(baseRipple.Config.Domain)
+	if err != nil {
+		Logger.Error(fmt.Sprintf("Ripple Start error: %s", color.Red(err)))
+	}
 }

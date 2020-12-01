@@ -1,8 +1,8 @@
 package logger
 
 import (
-	"os"
 	"github.com/bmbstack/ripple/middleware/logger"
+	"os"
 )
 
 var Logger *logger.Logger
@@ -14,7 +14,6 @@ func init() {
 func NewLogger() *logger.Logger {
 	log, err := logger.NewLogger("{{rippleApp}}", 1, os.Stdout)
 	if err != nil {
-		log.Error(err.Error())
 		panic(err) // Check for error
 	}
 	return log

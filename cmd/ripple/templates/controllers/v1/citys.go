@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	. "github.com/bmbstack/ripple/cmd/ripple/templates/helper"
-		"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 type CityController struct {
@@ -30,11 +30,11 @@ func (this CityController) ActionIndex(ctx echo.Context) error {
 
 	var result []map[string]interface{}
 	result = append(result, map[string]interface{}{
-		"id": 1,
+		"id":   1,
 		"name": "北京市",
 	})
 	result = append(result, map[string]interface{}{
-		"id": 2,
+		"id":   2,
 		"name": "上海市",
 	})
 	return ctx.JSON(http.StatusOK, SuccessJSON(result))

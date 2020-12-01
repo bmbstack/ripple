@@ -3,7 +3,7 @@ package ripple
 import (
 	"errors"
 	"fmt"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/color"
 	"reflect"
 	"strings"
@@ -21,7 +21,7 @@ type Controller interface {
 // AddControllers applies the Controller to the echo via a new Group using the
 // Controller's ripple tags as a manifest to properly associate methods/path and
 // handler.
-func AddController(echoMux echo.Echo, c Controller) {
+func AddController(echoMux *echo.Echo, c Controller) {
 	ctlValue, ctlType, err := reflectCtrl(c)
 	if err != nil {
 		panic(err)
@@ -97,21 +97,21 @@ type fieldInfo struct {
 }
 
 func newFieldInfo(f structFielder) (*fieldInfo, error) {
-	taginf, err := parseTag(f.Tag())
+	tagInf, err := parseTag(f.Tag())
 	if err != nil {
 		return nil, err
 	}
-	if taginf == nil {
+	if tagInf == nil {
 		return nil, nil
 	}
 
 	return &fieldInfo{
-		Method: taginf.meth,
-		Path:   strings.TrimRight(taginf.path, "/"),
+		Method: tagInf.meth,
+		Path:   strings.TrimRight(tagInf.path, "/"),
 		Name:   f.Name(),
 		Type:   f.Type(),
 
-		EchoType: taginf.EchoType,
+		EchoType: tagInf.EchoType,
 	}, nil
 }
 
@@ -133,8 +133,6 @@ var methodMap = map[string]string{
 	"OPTIONS": "OPTIONS",
 	"CONNECT": "CONNECT",
 	"TRACE":   "TRACE",
-
-	// TODO add WebSocket?
 }
 
 // tagInfo represents the decoded tag string

@@ -1,7 +1,3 @@
-// Copyright 2014 Manu Martinez-Almeida.  All rights reserved.
-// Use of this source code is governed by a MIT style
-// license that can be found in the LICENSE file.
-
 package binding
 
 import (
@@ -41,11 +37,11 @@ func mapForm(ptr interface{}, form map[string][]string) error {
 			continue
 		}
 
-		numElems := len(inputValue)
-		if structFieldKind == reflect.Slice && numElems > 0 {
+		numElements := len(inputValue)
+		if structFieldKind == reflect.Slice && numElements > 0 {
 			sliceOf := structField.Type().Elem().Kind()
-			slice := reflect.MakeSlice(structField.Type(), numElems, numElems)
-			for i := 0; i < numElems; i++ {
+			slice := reflect.MakeSlice(structField.Type(), numElements, numElements)
+			for i := 0; i < numElements; i++ {
 				if err := setWithProperType(sliceOf, inputValue[i], slice.Index(i)); err != nil {
 					return err
 				}
@@ -91,7 +87,7 @@ func setWithProperType(valueKind reflect.Kind, val string, structField reflect.V
 	case reflect.String:
 		structField.SetString(val)
 	default:
-		return errors.New("Unknown type")
+		return errors.New("form mapping unknown type")
 	}
 	return nil
 }
@@ -138,13 +134,4 @@ func setFloatField(val string, bitSize int, field reflect.Value) error {
 		field.SetFloat(floatVal)
 	}
 	return err
-}
-
-// Don't pass in pointers to bind to. Can lead to bugs. See:
-// https://github.com/codegangsta/martini-contrib/issues/40
-// https://github.com/codegangsta/martini-contrib/pull/34#issuecomment-29683659
-func ensureNotPointer(obj interface{}) {
-	if reflect.TypeOf(obj).Kind() == reflect.Ptr {
-		panic("Pointers are not accepted as binding models")
-	}
 }

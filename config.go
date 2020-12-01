@@ -1,25 +1,25 @@
 package ripple
 
 import (
-	_ "github.com/joho/godotenv/autoload"
-	"path/filepath"
-	"os"
+	"encoding/json"
 	"fmt"
+	"github.com/bmbstack/ripple/cache"
 	"github.com/labstack/gommon/color"
 	"io/ioutil"
-	"encoding/json"
+	"os"
+	"path/filepath"
 )
 
 type Config struct {
-	DebugOn   bool       `json:"debugOn"`             // debug_on=true
-	Domain    string     `json:"domain"`              // domain=127.0.0.1:8090
-	Static    string     `json:"static"`              // static=frontend/static
-	Templates string     `json:"templates"`           // templates=frontend/templates
-	Databases []Database `json:"databases,omitempty"` // databases
-	Caches    []Cache    `json:"caches,omitempty"`    // caches
+	DebugOn   bool             `json:"debugOn"`             // debug_on=true
+	Domain    string           `json:"domain"`              // domain=127.0.0.1:8090
+	Static    string           `json:"static"`              // static=frontend/static
+	Templates string           `json:"templates"`           // templates=frontend/templates
+	Databases []DatabaseConfig `json:"databases,omitempty"` // databases
+	Caches    []CacheConfig    `json:"caches,omitempty"`    // caches
 }
 
-type Database struct {
+type DatabaseConfig struct {
 	Alias    string `json:"alias"`    // alias=forum
 	Dialect  string `json:"dialect"`  // dialect=mysql
 	Host     string `json:"host"`     // host=127.0.0.1
@@ -29,32 +29,21 @@ type Database struct {
 	Password string `json:"password"` // password=123456
 }
 
-type Cache struct {
+type CacheConfig struct {
 	Alias    string `json:"alias"`    // alias=forum
-	Section  string `json:"section"`  // alias=ripple
+	Section  string `json:"section"`  // section=forum
 	Adapter  string `json:"adapter"`  // adapter=redis
 	Host     string `json:"host"`     // host=127.0.0.1
 	Port     int    `json:"port"`     // port=6379
-	Password string `json:"password"` // password=Bmbstack2016
-}
-
-// CacheAdapterConfig
-type CacheAdapterConfig struct {
-	Addr   string `json:"Addr"`
-	Passwd string `json:"Passwd"`
+	Password string `json:"password"` // password=123456
 }
 
 // GetCacheConfig return cache config
-func (cache Cache) GetCacheConfig() string {
-	adapterConfig := &CacheAdapterConfig{
-		Addr:   fmt.Sprintf("%s:%d", cache.Host, cache.Port),
-		Passwd: cache.Password,
+func (cacheConfig CacheConfig) GetCacheAdapterConfig() cache.AdapterConfig {
+	return cache.AdapterConfig{
+		Addr:     fmt.Sprintf("%s:%d", cacheConfig.Host, cacheConfig.Port),
+		Password: cacheConfig.Password,
 	}
-	configByte, err := json.Marshal(adapterConfig)
-	if err != nil {
-		panic(err)
-	}
-	return string(configByte)
 }
 
 func NewConfig() *Config {

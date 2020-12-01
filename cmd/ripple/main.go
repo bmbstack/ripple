@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/bmbstack/ripple/cmd/ripple/scripts"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 	"os"
 )
 
@@ -11,8 +11,7 @@ func main() {
 	app.Name = "ripple"
 	app.Usage = "Command line tool to managing your Ripple application"
 	app.Version = "0.0.1"
-	app.Author = "wangmingjob"
-	app.Email = "wangmingjob@icloud.com"
+	app.Authors = []*cli.Author{{Name: "wangmingjob", Email: "wangmingjob@icloud.com"}}
 	app.Commands = scripts.Commands()
-	app.Run(os.Args)
+	_ = app.Run(os.Args)
 }

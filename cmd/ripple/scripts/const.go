@@ -1,8 +1,8 @@
 package scripts
 
 const (
-	permissions = 0744
-	PACKAGE_TEMPLATES = "github.com/bmbstack/ripple/cmd/ripple/templates"
-	EXPRESSION_APP_NAME = "{{rippleApp}}"
-	HOST_PORT = "8090"
+	Permissions       = 0744
+	PackageTemplates  = "github.com/bmbstack/ripple/cmd/ripple/templates"
+	ExpressionAppName = "{{rippleApp}}"
+	HostPort          = "8090"
 )

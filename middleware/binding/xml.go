@@ -1,12 +1,8 @@
-// Copyright 2014 Manu Martinez-Almeida.  All rights reserved.
-// Use of this source code is governed by a MIT style
-// license that can be found in the LICENSE file.
-
 package binding
 
 import (
 	"encoding/xml"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 type xmlBinding struct{}

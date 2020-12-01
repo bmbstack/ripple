@@ -118,8 +118,8 @@ func initColors() {
 func NewLogger(args ...interface{}) (*Logger, error) {
 	initColors()
 
-	var module string = "DEFAULT"
-	var color int = 1
+	var module = "DEFAULT"
+	var color = 1
 	var out io.Writer = os.Stderr
 
 	for _, arg := range args {

@@ -1,8 +1,10 @@
 package helper
 
+import "time"
+
 const (
 	CacheRedisSection = "ripple"
-	CacheSeconds      = 3600 //600s
+	CacheSeconds      = 20 * time.Minute
 )
 
 const (

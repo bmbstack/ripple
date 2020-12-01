@@ -3,12 +3,16 @@ package ripple
 import (
 	"errors"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/jinzhu/gorm"
-	"github.com/labstack/gommon/color"
-	"reflect"
 	. "github.com/bmbstack/ripple/helper"
+	"github.com/labstack/gommon/color"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
+	mlogger "gorm.io/gorm/logger"
+	"log"
+	"os"
+	"reflect"
 	"strconv"
+	"time"
 )
 
 // Orm facilitate database interactions, support mysql
@@ -18,7 +22,7 @@ type Orm struct {
 }
 
 // NewOrm creates a new model, and opens database connection based on cfg settings
-func NewOrm(database Database) *Orm {
+func NewOrm(database DatabaseConfig, debug bool) *Orm {
 	orm := &Orm{
 		models: make(map[string]reflect.Value),
 	}
@@ -30,29 +34,47 @@ func NewOrm(database Database) *Orm {
 	username := database.Username
 	password := database.Password
 
-	connURI := ""
+	dsn := ""
 	switch dialect {
 	case "mysql":
-		connURI = username + ":" + password + "@tcp(" + host + ":" + strconv.Itoa(port) + ")/" + name + "?charset=utf8&parseTime=True&loc=Local"
+		dsn = username + ":" + password + "@tcp(" + host + ":" + strconv.Itoa(port) + ")/" + name + "?charset=utf8&parseTime=True&loc=Local"
 	default:
 		dialect = "mysql"
-		connURI = username + ":" + password + "@tcp(" + host + ":" + strconv.Itoa(port) + ")/" + name + "?charset=utf8&parseTime=True&loc=Local"
+		dsn = username + ":" + password + "@tcp(" + host + ":" + strconv.Itoa(port) + ")/" + name + "?charset=utf8&parseTime=True&loc=Local"
 	}
 
-	db, err := gorm.Open(dialect, connURI)
+	// only support mysql
+	logLevel := mlogger.Silent
+	logColorful := false
+	if debug {
+		logLevel = mlogger.Info
+		logColorful = true
+	}
+	newLogger := mlogger.New(
+		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
+		mlogger.Config{
+			SlowThreshold: time.Second, // Slow SQL threshold
+			LogLevel:      logLevel,    // Log level
+			Colorful:      logColorful, // Disable color
+		},
+	)
+
+	db, err := gorm.Open(mysql.New(mysql.Config{
+		DSN: dsn,
+	}), &gorm.Config{Logger: newLogger})
 	if err != nil {
-		Logger.Info(fmt.Sprintf("%s: %s, %s", color.Red("gorm.Open error"), dialect, connURI))
+		fmt.Println(fmt.Sprintf("%s: %s", color.Red("Connect.mysql error"), dsn))
 		panic(err)
 	}
 	orm.DB = db
-	Logger.Info(fmt.Sprintf("%s: %s, %s", color.Green("gorm.Open"), dialect, connURI))
+	fmt.Println(fmt.Sprintf("%s: %s", color.Green("Connect.mysql"), dsn))
 	return orm
 }
 
 // AutoMigrateAll runs migrations for all the registered models
 func (orm *Orm) AutoMigrateAll() {
 	for _, v := range orm.models {
-		orm.AutoMigrate(v.Interface())
+		_ = orm.AutoMigrate(v.Interface())
 	}
 }
 
@@ -81,5 +103,3 @@ func (orm *Orm) AddModels(values ...interface{}) error {
 	}
 	return nil
 }
-
-

@@ -2,7 +2,7 @@ package v1
 
 import (
 	"github.com/bmbstack/ripple"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"net/http"
 )
 

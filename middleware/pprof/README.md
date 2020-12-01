@@ -29,7 +29,7 @@ func main() {
     e.Run(":8080")
 }
 ```
-Start this server, and now visit http://127.0.0.1:8080/debug/pprof/ and you'll see what you want.
+Start this server, and now visit http://127.0.0.1:8090/debug/pprof/ and you'll see what you want.
 
 
 

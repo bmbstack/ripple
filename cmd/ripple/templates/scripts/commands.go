@@ -2,7 +2,7 @@ package scripts
 
 import (
 	"github.com/bmbstack/ripple/cmd/ripple/templates/logger"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 	"io"
 	"os"
 	"os/exec"
@@ -11,16 +11,17 @@ import (
 )
 
 // Commands
-func Commands() []cli.Command {
-	return []cli.Command{
+func Commands() []*cli.Command {
+	return []*cli.Command{
 		//Init application
 		{
 			Name:  "init",
 			Usage: "Init application(go packages / DB migration /Frontend compiler)",
-			Action: func(c *cli.Context) {
+			Action: func(c *cli.Context) error {
 				commands := GetInitCommands()
 				RunScript(commands)
 				logger.Logger.Info("Init application done")
+				return nil
 			},
 		},
 		//Run server
@@ -28,14 +29,15 @@ func Commands() []cli.Command {
 			Name:    "server",
 			Aliases: []string{"s"},
 			Usage:   "Run server",
-			Action: func(c *cli.Context) {
+			Action: func(c *cli.Context) error {
 				db := ""
-				if len(c.Args()) > 0 {
-					db = c.Args()[0]
+				if c.Args().Len() > 0 {
+					db = c.Args().First()
 				}
 				commands := GetServerCommands(db)
 				RunScript(commands)
 				RunServer()
+				return nil
 			},
 		},
 	}
@@ -52,23 +54,23 @@ func RunScript(commands []string) {
 	wait := sync.WaitGroup{}
 	wait.Add(3)
 	go func() {
-		io.Copy(stdin, entireScript)
-		stdin.Close()
+		_, _ = io.Copy(stdin, entireScript)
+		_ = stdin.Close()
 		wait.Done()
 
 	}()
 	go func() {
-		io.Copy(os.Stdout, stdout)
+		_, _ = io.Copy(os.Stdout, stdout)
 		wait.Done()
 
 	}()
 	go func() {
-		io.Copy(os.Stderr, stderr)
+		_, _ = io.Copy(os.Stderr, stderr)
 		wait.Done()
 
 	}()
 
-	bash.Start()
+	_ = bash.Start()
 	wait.Wait()
-	bash.Wait()
+	_ = bash.Wait()
 }

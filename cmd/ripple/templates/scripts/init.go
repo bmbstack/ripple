@@ -1,8 +1,8 @@
 package scripts
 
 import (
-	"os"
 	"github.com/bmbstack/ripple/cmd/ripple/templates/logger"
+	"os"
 )
 
 // init commands

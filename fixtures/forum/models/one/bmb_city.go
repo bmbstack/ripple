@@ -1,11 +1,11 @@
 package one
 
 import (
-	"fmt"
 	"encoding/json"
+	"fmt"
 	"github.com/bmbstack/ripple"
 	. "github.com/bmbstack/ripple/helper"
-	"github.com/labstack/echo"
+	"time"
 )
 
 type BmbCity struct {
@@ -23,14 +23,42 @@ func (BmbCity) TableName() string {
 	return "bmb_city"
 }
 
-func (this *BmbCity) FindCityListByPid(ctx echo.Context, pid int64) (list []BmbCity) {
-	cacheKey := fmt.Sprintf("FindCityListByPid:%d", pid)
-	cacheValue := this.GetCache(ctx, cacheKey)
+func (this *BmbCity) Save() bool {
+	this.DeleteCacheByPrefix("FindCity")
+	nowTime := time.Now()
+	if IsNotEmpty(this.ID) {
+		location, _ := time.LoadLocation(TimeLocationName)
+		createdDate, _ := time.ParseInLocation(DateFullLayout, this.CreatedTimeStr, location)
+		this.CreatedTime = &createdDate
+
+		this.UpdatedTime = &nowTime
+	}
+	if this.IsDeleted == 1 {
+		this.DeletedTime = &nowTime
+	}
+	return Orm.DB.Save(this).RowsAffected == 1
+}
+
+func (this *BmbCity) FindCityListByPid(pid int64) (list []BmbCity) {
+	cacheKey := fmt.Sprintf("%s:%d", CurrentMethodName(), pid)
+	cacheValue := this.GetCache(cacheKey)
 	if IsNotEmpty(cacheValue) {
-		json.Unmarshal([]byte(cacheValue), &list)
+		_ = json.Unmarshal([]byte(cacheValue), &list)
 	} else {
 		Orm.DB.Where("pid=? AND is_deleted=0", pid).Find(&list)
-		this.SetCache(ctx, cacheKey, list)
+		this.SetCache(cacheKey, list)
 	}
 	return list
+}
+
+func (this *BmbCity) FindCityID(id int64) (one BmbCity) {
+	cacheKey := fmt.Sprintf("%s:%d", CurrentMethodName(), id)
+	cacheValue := this.GetCache(cacheKey)
+	if IsNotEmpty(cacheValue) {
+		_ = json.Unmarshal([]byte(cacheValue), &one)
+	} else {
+		Orm.DB.Where("id=? AND is_deleted=0", id).Find(&one)
+		this.SetCache(cacheKey, one)
+	}
+	return one
 }

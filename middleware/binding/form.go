@@ -1,11 +1,7 @@
-// Copyright 2014 Manu Martinez-Almeida.  All rights reserved.
-// Use of this source code is governed by a MIT style
-// license that can be found in the LICENSE file.
-
 package binding
 
 import (
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 type formBinding struct{}
@@ -20,7 +16,8 @@ func (formBinding) Bind(obj interface{}, c echo.Context) error {
 	if err := c.Request().ParseForm(); err != nil {
 		return err
 	}
-	c.Request().ParseMultipartForm(32 << 10) // 32 MB
+	// 32 MB
+	_ = c.Request().ParseMultipartForm(32 << 10)
 	if err := mapForm(obj, c.Request().Form); err != nil {
 		return err
 	}

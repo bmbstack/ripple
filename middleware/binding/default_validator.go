@@ -1,9 +1,9 @@
 package binding
 
 import (
+	"github.com/go-playground/validator/v10"
 	"reflect"
 	"sync"
-	"gopkg.in/bluesuncorp/validator.v5"
 )
 
 type defaultValidator struct {
@@ -15,17 +15,18 @@ var _ StructValidator = &defaultValidator{}
 
 func (v *defaultValidator) ValidateStruct(obj interface{}) error {
 	if kindOfData(obj) == reflect.Struct {
-		v.lazyinit()
+		v.lazyInit()
 		if err := v.validate.Struct(obj); err != nil {
-			return error(err)
+			return err
 		}
 	}
 	return nil
 }
 
-func (v *defaultValidator) lazyinit() {
+func (v *defaultValidator) lazyInit() {
 	v.once.Do(func() {
-		v.validate = validator.New("binding", validator.BakedInValidators)
+		v.validate = validator.New()
+		v.validate.SetTagName("binding")
 	})
 }
 

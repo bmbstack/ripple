@@ -29,8 +29,9 @@ func NewApplication(appName string) {
 
 	// Copy the pristine new site over
 	goPathArray := strings.Split(os.Getenv("GOPATH"), ":")
+	fmt.Println("gopath: ", os.Getenv("GOPATH"))
 	goPath := goPathArray[0]
-	templateAppPath := path.Join(goPath, "src", PACKAGE_TEMPLATES)
+	templateAppPath := path.Join(goPath, "src", PackageTemplates)
 	err = copyApplication(templateAppPath, appPath)
 	if err != nil {
 		logger.Logger.Error(fmt.Sprintf("Error copying project %s", err))
@@ -61,7 +62,7 @@ func copyApplication(templateAppPath, appPath string) error {
 
 	// Check that the folders up to the path exist, if not create them
 	// Make directory
-	err := os.MkdirAll(path.Dir(appPath), permissions)
+	err := os.MkdirAll(path.Dir(appPath), Permissions)
 	if err != nil {
 		logger.Logger.Error(fmt.Sprintf("The project path could not be created: %s", err))
 		return err
@@ -145,8 +146,10 @@ func reifyApplication(templateAppPath, appPath string) error {
 	}
 
 	logger.Logger.Notice(fmt.Sprintf("Run command in bash: %s", color.Bold(color.Green("cd "+appPath))))
+	logger.Logger.Notice(fmt.Sprintf("Run command in bash: %s", color.Bold(color.Green("go mod init"))))
+	logger.Logger.Notice(fmt.Sprintf("Run command in bash: %s", color.Bold(color.Green("go mod download"))))
 	logger.Logger.Notice(fmt.Sprintf("Run command in bash: %s", color.Bold(color.Green("go run main.go s"))))
-	logger.Logger.Notice(fmt.Sprintf("Open this url: http://127.0.0.1:%s", HOST_PORT))
+	logger.Logger.Notice(fmt.Sprintf("Open this url: http://127.0.0.1:%s", HostPort))
 	return nil
 }
 
@@ -174,12 +177,12 @@ func replaceExpressionInTemplates(templateAppPath, appPath string, extentions []
 			fileString = strings.Replace(fileString, relativeTemplateAppPath, relativeAppPath, -1)
 		}
 
-		if strings.Contains(fileString, EXPRESSION_APP_NAME) {
+		if strings.Contains(fileString, ExpressionAppName) {
 			appName := utils.Substring(appPath, strings.LastIndex(appPath, "/")+1, len(appPath))
-			fileString = strings.Replace(fileString, EXPRESSION_APP_NAME, appName, -1)
+			fileString = strings.Replace(fileString, ExpressionAppName, appName, -1)
 		}
 
-		err = ioutil.WriteFile(f, []byte(fileString), permissions)
+		err = ioutil.WriteFile(f, []byte(fileString), Permissions)
 		if err != nil {
 			return err
 		}

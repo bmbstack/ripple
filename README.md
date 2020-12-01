@@ -156,7 +156,7 @@ password              | the cache password
 
 
 ## Models
-ripple uses the [gorm](https://github.com/jinzhu/gorm) library as its Object Relational Mapper, so you won't need to learn anything fancy. In our rippleApp app, we need to define a User model that will be used to store our todo details.
+ripple uses the [gorm](https://gorm.io/gorm) library as its Object Relational Mapper, so you won't need to learn anything fancy. In our rippleApp app, we need to define a User model that will be used to store our todo details.
 
 In the file models/user.go we define our rippleApp model like this
 ```go
@@ -164,7 +164,7 @@ package models
 
 import (
 	"github.com/bmbstack/ripple"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 type User struct {
@@ -325,21 +325,3 @@ $ go run main.go server
 ```
 	
 Then, Open the url:	[http://127.0.0.1:8090](http://127.0.0.1:8090)
-
-# Acknowledgements
-These amazing projects have made ripple possible:
-
-- https://github.com/labstack/echo
-- https://github.com/jinzhu/gorm
-- https://github.com/boj/redistore
-- https://github.com/urfave/cli
-- https://github.com/flosch/pongo2
-- https://github.com/garyburd/redigo
-- https://github.com/gorilla/sessions
-- https://github.com/weisd/cache
-- https://github.com/xyproto/cookie
-- https://github.com/xyproto/pinterface
-- https://github.com/xyproto/simpleredis
-- https://golang.org/x/crypto
-- https://gopkg.in/bluesuncorp/validator.v5
-- https://github.com/achiku/wbs

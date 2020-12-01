@@ -2,11 +2,11 @@ package scripts
 
 import (
 	"github.com/bmbstack/ripple"
+	"github.com/bmbstack/ripple/fixtures/forum/controllers"
 	_ "github.com/bmbstack/ripple/fixtures/forum/controllers"
 	"github.com/bmbstack/ripple/fixtures/forum/logger"
 	_ "github.com/bmbstack/ripple/fixtures/forum/models/one"
 	_ "github.com/bmbstack/ripple/fixtures/forum/models/two"
-	"github.com/bmbstack/ripple/fixtures/forum/controllers"
 )
 
 // Server commands

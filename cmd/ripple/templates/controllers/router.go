@@ -1,10 +1,10 @@
 package controllers
 
 import (
-	"github.com/bmbstack/ripple/cmd/ripple/templates/controllers/v1"
 	"github.com/bmbstack/ripple"
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
+	"github.com/bmbstack/ripple/cmd/ripple/templates/controllers/v1"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func RouteAPI() {
