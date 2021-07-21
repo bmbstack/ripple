@@ -12,10 +12,9 @@ require (
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/urfave/cli/v2 v2.3.0
-	golang.org/x/crypto v0.0.0-20201124201722-c8d3bf9c5392 // indirect
-	golang.org/x/net v0.0.0-20201110031124-69a78807bb2b // indirect
 	golang.org/x/sys v0.0.0-20201130171929-760e229fe7c5 // indirect
 	golang.org/x/text v0.3.4 // indirect
 	gorm.io/driver/mysql v1.0.3
-	gorm.io/gorm v1.20.7
+	gorm.io/driver/postgres v1.1.0
+	gorm.io/gorm v1.21.9
 )

@@ -6,6 +6,7 @@ import (
 	. "github.com/bmbstack/ripple/helper"
 	"github.com/labstack/gommon/color"
 	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	mlogger "gorm.io/gorm/logger"
 	"log"
@@ -34,16 +35,7 @@ func NewOrm(database DatabaseConfig, debug bool) *Orm {
 	username := database.Username
 	password := database.Password
 
-	dsn := ""
-	switch dialect {
-	case "mysql":
-		dsn = username + ":" + password + "@tcp(" + host + ":" + strconv.Itoa(port) + ")/" + name + "?charset=utf8&parseTime=True&loc=Local"
-	default:
-		dialect = "mysql"
-		dsn = username + ":" + password + "@tcp(" + host + ":" + strconv.Itoa(port) + ")/" + name + "?charset=utf8&parseTime=True&loc=Local"
-	}
-
-	// only support mysql
+	// logger
 	logLevel := mlogger.Silent
 	logColorful := false
 	if debug {
@@ -59,15 +51,37 @@ func NewOrm(database DatabaseConfig, debug bool) *Orm {
 		},
 	)
 
-	db, err := gorm.Open(mysql.New(mysql.Config{
-		DSN: dsn,
-	}), &gorm.Config{Logger: newLogger})
-	if err != nil {
-		fmt.Println(fmt.Sprintf("%s: %s", color.Red("Connect.mysql error"), dsn))
-		panic(err)
+	dsn := ""
+	switch dialect {
+	case "mysql":
+		dsn = username + ":" + password + "@tcp(" + host + ":" + strconv.Itoa(port) + ")/" + name + "?charset=utf8&parseTime=True&loc=Local"
+		db, err := gorm.Open(mysql.New(mysql.Config{
+			DSN: dsn,
+		}), &gorm.Config{Logger: newLogger})
+		if err != nil {
+			fmt.Println(fmt.Sprintf("%s: %s", color.Red(fmt.Sprintf("Connect.%s, error", dialect)), dsn))
+			panic(err)
+		}
+		orm.DB = db
+	case "postgresql":
+		dsn = "host=" + host + " user=" + username + " password=" + password + " dbname=" + name + " port=" + strconv.Itoa(port) + " sslmode=disable TimeZone=Asia/Shanghai"
+		db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{Logger: newLogger})
+		if err != nil {
+			fmt.Println(fmt.Sprintf("%s: %s", color.Red(fmt.Sprintf("Connect.%s, error", dialect)), dsn))
+			panic(err)
+		}
+		orm.DB = db
+	default:
+		dsn = username + ":" + password + "@tcp(" + host + ":" + strconv.Itoa(port) + ")/" + name + "?charset=utf8&parseTime=True&loc=Local"
+		db, err := gorm.Open(mysql.New(mysql.Config{DSN: dsn}), &gorm.Config{Logger: newLogger})
+		if err != nil {
+			fmt.Println(fmt.Sprintf("%s: %s", color.Red(fmt.Sprintf("Connect.%s, error", dialect)), dsn))
+			panic(err)
+		}
+		orm.DB = db
 	}
-	orm.DB = db
-	fmt.Println(fmt.Sprintf("%s: %s", color.Green("Connect.mysql"), dsn))
+
+	fmt.Println(fmt.Sprintf("%s: %s", color.Green(fmt.Sprintf("Connect.%s", dialect)), dsn))
 	return orm
 }
 
