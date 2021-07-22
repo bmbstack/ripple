@@ -34,11 +34,6 @@ type Ripple struct {
 	Caches map[string]*cache.Cache
 }
 
-func init() {
-	Logger = NewLogger()
-	baseRipple = NewRipple()
-}
-
 func NewLogger() *logger.Logger {
 	log, err := logger.NewLogger("ripple", 1, os.Stdout)
 	if err != nil {
@@ -141,6 +136,8 @@ func RegisterModels(orm *Orm, modelItems ...interface{}) {
 
 // Run run ripple application
 func Run() {
+	Logger = NewLogger()
+	baseRipple = NewRipple()
 	for alias := range baseRipple.Orms {
 		baseRipple.Orms[alias].AutoMigrateAll()
 	}
