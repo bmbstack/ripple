@@ -20,7 +20,7 @@ var firstRegModel = true
 var line1 = "=============================="
 var line2 = "================================"
 
-const VersionName = "0.1.0"
+const VersionName = "0.4.0"
 
 func Version() string {
 	return VersionName
@@ -134,10 +134,14 @@ func RegisterModels(orm *Orm, modelItems ...interface{}) {
 	firstRegModel = false
 }
 
-// Run run ripple application
-func Run() {
+// Init init ripple
+func Init() {
 	Logger = NewLogger()
 	baseRipple = NewRipple()
+}
+
+// Run run ripple application
+func Run() {
 	for alias := range baseRipple.Orms {
 		baseRipple.Orms[alias].AutoMigrateAll()
 	}
