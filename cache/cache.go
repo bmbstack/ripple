@@ -20,6 +20,8 @@ type Store interface {
 	Connect(opt Options) error
 	// Client get client
 	Client() interface{}
+	// Key key
+	Key(key string) string
 	// Set puts value into cache with key and expire time.
 	Set(key, val string, expiration time.Duration)
 	// Get gets cached value by given key.
@@ -99,6 +101,10 @@ func (this *Cache) Connect(opt Options) error {
 
 func (this *Cache) Client() interface{} {
 	return this.store.Client()
+}
+
+func (this *Cache) Key(key string) string {
+	return this.store.Key(key)
 }
 
 func (this *Cache) Set(key, val string, expiration time.Duration) {

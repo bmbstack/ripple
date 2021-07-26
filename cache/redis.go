@@ -21,13 +21,6 @@ func NewRedisCache() *RedisCache {
 	return &RedisCache{}
 }
 
-func (r *RedisCache) key(key string) string {
-	if r.hasPrefix {
-		return r.prefix + ":" + key
-	}
-	return key
-}
-
 func (r *RedisCache) Connect(opt Options) error {
 	r.hasPrefix = len(opt.Section) > 0
 	r.prefix = opt.Section
@@ -45,15 +38,22 @@ func (r *RedisCache) Client() interface{} {
 	return client
 }
 
+func (r *RedisCache) Key(key string) string {
+	if r.hasPrefix {
+		return r.prefix + ":" + key
+	}
+	return key
+}
+
 func (r *RedisCache) Set(key, val string, expiration time.Duration) {
-	err := client.Set(ctx, r.key(key), val, expiration).Err()
+	err := client.Set(ctx, r.Key(key), val, expiration).Err()
 	if err != nil {
 		fmt.Println(fmt.Sprintf("Redis.Set error: %s", err.Error()))
 	}
 }
 
 func (r *RedisCache) Get(key string) string {
-	result, err := client.Get(ctx, r.key(key)).Result()
+	result, err := client.Get(ctx, r.Key(key)).Result()
 	if err != nil {
 		fmt.Println(fmt.Sprintf("Redis.Get error: %s", err.Error()))
 		return ""
@@ -63,7 +63,7 @@ func (r *RedisCache) Get(key string) string {
 
 // Delete deletes cached value by given key.
 func (r *RedisCache) Delete(key string) {
-	err := client.Del(ctx, r.key(key)).Err()
+	err := client.Del(ctx, r.Key(key)).Err()
 	if err != nil {
 		fmt.Println(fmt.Sprintf("Redis.Delete error: %s", err.Error()))
 	}
@@ -71,7 +71,7 @@ func (r *RedisCache) Delete(key string) {
 
 // Delete deletes cached value by given prefix key.
 func (r *RedisCache) DeleteByPrefix(prefix string) {
-	iter := client.Scan(ctx, 0, r.key(prefix)+"*", 0).Iterator()
+	iter := client.Scan(ctx, 0, r.Key(prefix)+"*", 0).Iterator()
 	for iter.Next(ctx) {
 		err := client.Del(ctx, iter.Val()).Err()
 		if err != nil {
@@ -85,7 +85,7 @@ func (r *RedisCache) DeleteByPrefix(prefix string) {
 
 // Incr increases cached int-type value by given key as a counter.
 func (r *RedisCache) Incr(key string) int64 {
-	result, err := client.Incr(ctx, r.key(key)).Result()
+	result, err := client.Incr(ctx, r.Key(key)).Result()
 	if err != nil {
 		fmt.Println(fmt.Sprintf("Redis.Incr error: %s", err.Error()))
 		return 0
@@ -95,7 +95,7 @@ func (r *RedisCache) Incr(key string) int64 {
 
 // Decr decreases cached int-type value by given key as a counter.
 func (r *RedisCache) Decr(key string) int64 {
-	result, err := client.Decr(ctx, r.key(key)).Result()
+	result, err := client.Decr(ctx, r.Key(key)).Result()
 	if err != nil {
 		fmt.Println(fmt.Sprintf("Redis.Decr error: %s", err.Error()))
 		return 0
@@ -105,7 +105,7 @@ func (r *RedisCache) Decr(key string) int64 {
 
 // IsExist returns true if cached value exists.
 func (r *RedisCache) IsExist(key string) bool {
-	result, err := client.Exists(ctx, r.key(key)).Result()
+	result, err := client.Exists(ctx, r.Key(key)).Result()
 	if err != nil {
 		fmt.Println(fmt.Sprintf("Redis.IsExist error: %s", err.Error()))
 		return false
@@ -118,7 +118,7 @@ func (r *RedisCache) IsExist(key string) bool {
 
 // update expire time
 func (r *RedisCache) Touch(key string) {
-	err := client.Touch(ctx, r.key(key)).Err()
+	err := client.Touch(ctx, r.Key(key)).Err()
 	if err != nil {
 		fmt.Println(fmt.Sprintf("Redis.Touch error: %s", err.Error()))
 	}

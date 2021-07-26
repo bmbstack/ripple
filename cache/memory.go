@@ -44,6 +44,10 @@ func (r *MemoryCache) Client() interface{} {
 	return nil
 }
 
+func (r *MemoryCache) Key(key string) string {
+	return key
+}
+
 // Set puts value into cache with key and expire time.
 func (c *MemoryCache) Set(key, val string, expiration time.Duration) {
 }
