@@ -97,6 +97,10 @@ func (this *Cache) Connect(opt Options) error {
 	return this.store.Connect(opt)
 }
 
+func (this *Cache) Client() interface{} {
+	return this.store.Client()
+}
+
 func (this *Cache) Set(key, val string, expiration time.Duration) {
 	this.store.Set(key, val, expiration)
 }
