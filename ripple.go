@@ -22,6 +22,12 @@ var line2 = "================================"
 
 const VersionName = "0.4.0"
 
+// Init init ripple
+func init() {
+	Logger = NewLogger()
+	baseRipple = NewRipple()
+}
+
 func Version() string {
 	return VersionName
 }
@@ -132,12 +138,6 @@ func RegisterModels(orm *Orm, modelItems ...interface{}) {
 	}
 	_ = orm.AddModels(modelItems...)
 	firstRegModel = false
-}
-
-// Init init ripple
-func Init() {
-	Logger = NewLogger()
-	baseRipple = NewRipple()
 }
 
 // Run run ripple application
