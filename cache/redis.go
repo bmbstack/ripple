@@ -41,6 +41,10 @@ func (r *RedisCache) Connect(opt Options) error {
 	return nil
 }
 
+func (r *RedisCache) Client() interface{} {
+	return client
+}
+
 func (r *RedisCache) Set(key, val string, expiration time.Duration) {
 	err := client.Set(ctx, r.key(key), val, expiration).Err()
 	if err != nil {

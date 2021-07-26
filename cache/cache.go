@@ -14,17 +14,19 @@ func Version() string {
 
 var stores = make(map[string]Store)
 
-// Cache is the interface that operates the cache data.
+// Store Cache is the interface that operates the cache data.
 type Store interface {
 	// Connect based on config string settings.
 	Connect(opt Options) error
+	// Client get client
+	Client() interface{}
 	// Set puts value into cache with key and expire time.
 	Set(key, val string, expiration time.Duration)
 	// Get gets cached value by given key.
 	Get(key string) string
 	// Delete deletes cached value by given key.
 	Delete(key string)
-	// Delete deletes cached value by given prefix.
+	// DeleteByPrefix deletes cached value by given prefix.
 	DeleteByPrefix(prefix string)
 	// Incr increases cached int-type value by given key as a counter.
 	Incr(key string) int64
@@ -32,7 +34,7 @@ type Store interface {
 	Decr(key string) int64
 	// IsExist returns true if cached value exists.
 	IsExist(key string) bool
-	// update expire time
+	// Touch touch
 	Touch(key string)
 	// Flush deletes all cached data.
 	Flush()
