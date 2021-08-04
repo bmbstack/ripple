@@ -2,6 +2,7 @@ package binding
 
 import (
 	"github.com/labstack/echo/v4"
+	"strings"
 )
 
 type Binding interface {
@@ -33,14 +34,12 @@ func Default(method, contentType string) Binding {
 		return Form
 	} else {
 		// POST
-		switch contentType {
-		case echo.MIMEApplicationXML, echo.MIMETextXML:
-			return XML
-		case echo.MIMEApplicationJSON:
+		switch {
+		case strings.HasPrefix(contentType, echo.MIMEApplicationJSON):
 			return JSON
-		case echo.MIMEApplicationForm:
-			return Form
-		case echo.MIMEMultipartForm:
+		case strings.HasPrefix(contentType, echo.MIMEApplicationXML), strings.HasPrefix(contentType, echo.MIMETextXML):
+			return XML
+		case strings.HasPrefix(contentType, echo.MIMEApplicationForm), strings.HasPrefix(contentType, echo.MIMEMultipartForm):
 			return Form
 		default:
 			return Form
