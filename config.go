@@ -11,12 +11,13 @@ import (
 )
 
 type Config struct {
-	DebugOn   bool             `json:"debugOn"`             // debug_on=true
-	Domain    string           `json:"domain"`              // domain=127.0.0.1:8090
-	Static    string           `json:"static"`              // static=frontend/static
-	Templates string           `json:"templates"`           // templates=frontend/templates
-	Databases []DatabaseConfig `json:"databases,omitempty"` // databases
-	Caches    []CacheConfig    `json:"caches,omitempty"`    // caches
+	DebugOn     bool             `json:"debugOn"`             // debugOn
+	AutoMigrate bool             `json:"autoMigrate"`         // autoMigrate
+	Domain      string           `json:"domain"`              // domain=127.0.0.1:8090
+	Static      string           `json:"static"`              // static=frontend/static
+	Templates   string           `json:"templates"`           // templates=frontend/templates
+	Databases   []DatabaseConfig `json:"databases,omitempty"` // databases
+	Caches      []CacheConfig    `json:"caches,omitempty"`    // caches
 }
 
 type DatabaseConfig struct {
