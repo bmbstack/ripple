@@ -87,10 +87,8 @@ func NewOrm(database DatabaseConfig, debug bool) *Orm {
 
 // AutoMigrateAll runs migrations for all the registered models
 func (orm *Orm) AutoMigrateAll() {
-	if GetConfig().AutoMigrate {
-		for _, v := range orm.models {
-			_ = orm.AutoMigrate(v.Interface())
-		}
+	for _, v := range orm.models {
+		_ = orm.AutoMigrate(v.Interface())
 	}
 }
 
