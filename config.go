@@ -58,14 +58,14 @@ func NewConfig() *Config {
 	if err != nil {
 		data, err = ioutil.ReadFile(filepath.Join(workingDir, "config.json.example"))
 		if err != nil {
-			Logger.Info(fmt.Sprintf(color.Red("config.json or config.json.example is not exist!")))
+			fmt.Println(fmt.Sprintf(color.Red("config.json or config.json.example is not exist!")))
 			panic(err)
 		}
 	}
 
 	err = json.Unmarshal(data, config)
 	if err != nil {
-		Logger.Info(fmt.Sprintf(color.Red("config file parse error!")))
+		fmt.Println(fmt.Sprintf(color.Red("config file parse error!")))
 		panic(err)
 	}
 

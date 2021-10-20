@@ -8,7 +8,7 @@ import (
 )
 
 func RouteAPI() {
-	echoMux := ripple.GetEcho()
+	echoMux := ripple.Default().GetEcho()
 
 	//===========================================================
 	//                      common

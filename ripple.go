@@ -10,10 +10,8 @@ import (
 	mw "github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/color"
 	"os"
+	"sync"
 )
-
-var Logger *logger.Logger
-var baseRipple *Ripple
 
 var firstRegController = true
 var firstRegModel = true
@@ -22,24 +20,30 @@ var line2 = "================================"
 
 const VersionName = "0.5.9"
 
-// Init init ripple
-func init() {
-	Logger = NewLogger()
-	baseRipple = NewRipple()
-}
-
 func Version() string {
 	return VersionName
 }
 
+var ins *Ripple
+var once sync.Once
+
+func Default() *Ripple {
+	once.Do(func() {
+		ins = NewRipple()
+	})
+	return ins
+}
+
 // Ripple ripple struct
 type Ripple struct {
+	Logger *logger.Logger
 	Echo   *echo.Echo
 	Config *Config
 	Orms   map[string]*Orm
 	Caches map[string]*cache.Cache
 }
 
+// NewLogger new a logger instance
 func NewLogger() *logger.Logger {
 	log, err := logger.NewLogger("ripple", 1, os.Stdout)
 	if err != nil {
@@ -51,8 +55,9 @@ func NewLogger() *logger.Logger {
 // NewRipple new a ripple instance
 func NewRipple() *Ripple {
 	config := NewConfig()
-	r := &Ripple{}
 
+	r := &Ripple{}
+	r.Logger = NewLogger()
 	r.Config = config
 	r.Echo = echo.New()
 
@@ -90,46 +95,49 @@ func NewRipple() *Ripple {
 	return r
 }
 
+//================================================================
+//                      Ripple func
+//================================================================
 // GetEcho  return echo
-func GetEcho() *echo.Echo {
-	return baseRipple.Echo
+func (this *Ripple) GetEcho() *echo.Echo {
+	return this.Echo
 }
 
 // GetConfig return config
-func GetConfig() *Config {
-	return baseRipple.Config
+func (this *Ripple) GetConfig() *Config {
+	return this.Config
 }
 
 // GetOrm  return ripple model
-func GetOrm(alias string) *Orm {
-	if _, ok := baseRipple.Orms[alias]; !ok {
+func (this *Ripple) GetOrm(alias string) *Orm {
+	if _, ok := this.Orms[alias]; !ok {
 		panic(fmt.Errorf("GetOrm: cannot get orm alias '%s'", alias))
 	}
-	return baseRipple.Orms[alias]
+	return this.Orms[alias]
 }
 
 // GetCache  return ripple cache
-func GetCache(alias string) *cache.Cache {
-	if _, ok := baseRipple.Caches[alias]; !ok {
+func (this *Ripple) GetCache(alias string) *cache.Cache {
+	if _, ok := this.Caches[alias]; !ok {
 		panic(fmt.Errorf("GetCache: cannot get cache alias '%s'", alias))
 	}
-	return baseRipple.Caches[alias]
+	return this.Caches[alias]
 }
 
 // RegisterControllers register a controller for ripple App
-func RegisterController(c Controller) {
+func (this *Ripple) RegisterController(c Controller) {
 	if firstRegController {
 		fmt.Println(fmt.Sprintf("%s%s%s",
 			color.White(line1),
 			color.Bold(color.Green("Controller information")),
 			color.White(line1)))
 	}
-	AddController(baseRipple.Echo, c)
+	AddController(this.Echo, c)
 	firstRegController = false
 }
 
 // RegisterModels registers models in the global ripple App.
-func RegisterModels(orm *Orm, modelItems ...interface{}) {
+func (this *Ripple) RegisterModels(orm *Orm, modelItems ...interface{}) {
 	if firstRegModel {
 		fmt.Println(fmt.Sprintf("%s%s%s",
 			color.White(line2),
@@ -141,14 +149,18 @@ func RegisterModels(orm *Orm, modelItems ...interface{}) {
 }
 
 // Run run ripple application
-func Run() {
-	for alias := range baseRipple.Orms {
-		baseRipple.Orms[alias].AutoMigrateAll()
+func (this *Ripple) Run() {
+	// autoMigrate all orms
+	if this.GetConfig().AutoMigrate {
+		for alias := range this.Orms {
+			this.Orms[alias].AutoMigrateAll()
+		}
 	}
-	Logger.Info(fmt.Sprintf("Ripple ListenAndServe: %s", color.Green(baseRipple.Config.Domain)))
-	baseRipple.Echo.Debug = baseRipple.Config.DebugOn
-	err := baseRipple.Echo.Start(baseRipple.Config.Domain)
+
+	this.Logger.Info(fmt.Sprintf("Ripple ListenAndServe: %s", color.Green(this.Config.Domain)))
+	this.Echo.Debug = this.Config.DebugOn
+	err := this.Echo.Start(this.Config.Domain)
 	if err != nil {
-		Logger.Error(fmt.Sprintf("Ripple Start error: %s", color.Red(err)))
+		this.Logger.Error(fmt.Sprintf("Ripple Start error: %s", color.Red(err)))
 	}
 }

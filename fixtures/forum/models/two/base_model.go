@@ -10,8 +10,6 @@ import (
 	"time"
 )
 
-var Orm *ripple.Orm
-var Cache *cache.Cache
 var databaseAlias = "two"
 var cacheAlias = "two"
 
@@ -23,9 +21,12 @@ type BaseModel struct {
 	IsDeleted      int64      `json:"-" gorm:"column:is_deleted; type:tinyint(1); not null; default:0"`
 }
 
-func init() {
-	Orm = ripple.GetOrm(databaseAlias)
-	Cache = ripple.GetCache(cacheAlias)
+func Orm() *ripple.Orm {
+	return ripple.Default().GetOrm(databaseAlias)
+}
+
+func Cache() *cache.Cache {
+	return ripple.Default().GetCache(cacheAlias)
 }
 
 func (this *BaseModel) AfterFind(*gorm.DB) error {
@@ -36,22 +37,22 @@ func (this *BaseModel) AfterFind(*gorm.DB) error {
 }
 
 func (this *BaseModel) GetCache(cacheKey string) string {
-	return Cache.Get(cacheKey)
+	return Cache().Get(cacheKey)
 }
 
 func (this *BaseModel) SetCache(cacheKey string, data interface{}) {
 	if IsNotEmpty(data) {
 		bytes, err := json.Marshal(data)
 		if err == nil {
-			Cache.Set(cacheKey, string(bytes), CacheSeconds)
+			Cache().Set(cacheKey, string(bytes), CacheSeconds)
 		}
 	}
 }
 
 func (this *BaseModel) DeleteCache(key string) {
-	Cache.Delete(key)
+	Cache().Delete(key)
 }
 
 func (this *BaseModel) DeleteCacheByPrefix(prefix string) {
-	Cache.DeleteByPrefix(prefix)
+	Cache().DeleteByPrefix(prefix)
 }

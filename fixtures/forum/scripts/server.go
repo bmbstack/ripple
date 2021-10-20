@@ -24,5 +24,5 @@ func GetServerCommands(db string) []string {
 func RunServer() {
 	logger.Logger.Info("Run server ....")
 	controllers.RouteAPI()
-	ripple.Run()
+	ripple.Default().Run()
 }

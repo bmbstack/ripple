@@ -12,8 +12,8 @@ type HomeController struct {
 	String echo.HandlerFunc `controller:"GET string"`
 }
 
-func init() {
-	ripple.RegisterController(&HomeController{})
+func Register() {
+	ripple.Default().RegisterController(&HomeController{})
 }
 
 func (this HomeController) Path() string {

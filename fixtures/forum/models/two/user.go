@@ -1,8 +1,6 @@
 package two
 
-import (
-	"github.com/bmbstack/ripple"
-)
+import "github.com/bmbstack/ripple"
 
 type User struct {
 	Login       string `sql:"size:255;not null"`
@@ -20,6 +18,6 @@ type User struct {
 	BaseModel
 }
 
-func init() {
-	ripple.RegisterModels(Orm, &User{})
+func Register() {
+	ripple.Default().RegisterModels(Orm(), &User{})
 }
