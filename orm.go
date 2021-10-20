@@ -54,7 +54,7 @@ func NewOrm(database DatabaseConfig, debug bool) *Orm {
 	dsn := ""
 	switch dialect {
 	case "mysql":
-		dsn = username + ":" + password + "@tcp(" + host + ":" + strconv.Itoa(port) + ")/" + name + "?charset=utf8&parseTime=True&loc=Local"
+		dsn = username + ":" + password + "@tcp(" + host + ":" + strconv.Itoa(port) + ")/" + name + "?charset=utf8mb4&parseTime=True&loc=Local"
 		db, err := gorm.Open(mysql.New(mysql.Config{
 			DSN: dsn,
 		}), &gorm.Config{Logger: newLogger})
@@ -72,7 +72,7 @@ func NewOrm(database DatabaseConfig, debug bool) *Orm {
 		}
 		orm.DB = db
 	default:
-		dsn = username + ":" + password + "@tcp(" + host + ":" + strconv.Itoa(port) + ")/" + name + "?charset=utf8&parseTime=True&loc=Local"
+		dsn = username + ":" + password + "@tcp(" + host + ":" + strconv.Itoa(port) + ")/" + name + "?charset=utf8mb4&parseTime=True&loc=Local"
 		db, err := gorm.Open(mysql.New(mysql.Config{DSN: dsn}), &gorm.Config{Logger: newLogger})
 		if err != nil {
 			fmt.Println(fmt.Sprintf("%s: %s", color.Red(fmt.Sprintf("Connect.%s, error", dialect)), dsn))
