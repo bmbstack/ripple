@@ -20,7 +20,7 @@ var firstRegModel = true
 var line1 = "=============================="
 var line2 = "================================"
 
-const VersionName = "0.4.0"
+const VersionName = "0.5.9"
 
 // Init init ripple
 func init() {
