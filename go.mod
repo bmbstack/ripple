@@ -11,7 +11,7 @@ require (
 	github.com/labstack/gommon v0.3.0
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/urfave/cli/v2 v2.3.0
-	gorm.io/driver/mysql v1.0.3
-	gorm.io/driver/postgres v1.1.0
+	gorm.io/driver/mysql v1.2.0
+	gorm.io/driver/postgres v1.2.2
 	gorm.io/gorm v1.22.3
 )
