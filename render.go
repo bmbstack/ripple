@@ -23,7 +23,7 @@ type Renderer struct {
 	lock      sync.RWMutex
 }
 
-func NewRenderer(config *Config, options ...PongorOption) *Renderer {
+func NewRenderer(config *BaseConfig, options ...PongorOption) *Renderer {
 	var opt PongorOption
 	if IsNotEmpty(options) {
 		opt = options[0]
