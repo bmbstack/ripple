@@ -3,6 +3,7 @@ package scripts
 import (
 	"errors"
 	"fmt"
+	"github.com/bmbstack/ripple"
 	"github.com/bmbstack/ripple/cmd/ripple/logger"
 	"github.com/bmbstack/ripple/cmd/ripple/utils"
 	"github.com/labstack/gommon/color"
@@ -11,6 +12,16 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+)
+
+const (
+	Permissions       = 0744
+	ExpressionAppName = "{{rippleApp}}"
+	HostPort          = "8090"
+)
+
+var (
+	PackageTemplates = fmt.Sprintf("github.com/bmbstack/ripple/cmd/ripple@%s/templates", ripple.VersionName)
 )
 
 // NewApplication create a new application with the appName
@@ -34,7 +45,7 @@ func NewApplication(appName string) {
 	templateAppPath := path.Join(goPath, "pkg", "mod", PackageTemplates)
 	err = copyApplication(templateAppPath, appPath)
 	if err != nil {
-		logger.Logger.Error(fmt.Sprintf("Error copying project %s", err))
+		logger.Logger.Error(fmt.Sprintf("Error copying project %s, srcPath: %s", err, templateAppPath))
 		return
 	}
 }
