@@ -31,7 +31,7 @@ func NewApplication(appName string) {
 	goPathArray := strings.Split(os.Getenv("GOPATH"), ":")
 	fmt.Println("gopath: ", os.Getenv("GOPATH"))
 	goPath := goPathArray[0]
-	templateAppPath := path.Join(goPath, "src", PackageTemplates)
+	templateAppPath := path.Join(goPath, "pkg", "mod", PackageTemplates)
 	err = copyApplication(templateAppPath, appPath)
 	if err != nil {
 		logger.Logger.Error(fmt.Sprintf("Error copying project %s", err))
