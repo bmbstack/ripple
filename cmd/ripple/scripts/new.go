@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	Permissions       = 0744
+	Permissions       = 0755
 	ExpressionAppName = "{{rippleApp}}"
 	HostPort          = "8090"
 )
@@ -85,6 +85,10 @@ func copyApplication(templateAppPath, appPath string) error {
 	if err != nil {
 		return err
 	}
+	_, err = chmodPath(appPath)
+	if err != nil {
+		return err
+	}
 
 	// Delete the .git folder at that path
 	gitPath := path.Join(appPath, ".git")
@@ -121,7 +125,12 @@ func fileExists(path string) bool {
 // so we use unix command (sorry windows!)
 func copyPath(src, dst string) ([]byte, error) {
 	// Replace this with an os independent version using filepath.Walk
-	return RunCommand("cp", "-r", src, dst)
+	return RunCommand("cp", "-R", src, dst)
+}
+
+func chmodPath(src string) ([]byte, error) {
+	// Replace this with an os independent version using filepath.Walk
+	return RunCommand("chmod", "-R", "755", src)
 }
 
 // projectPathRelative return the relative path to the appPath

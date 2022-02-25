@@ -280,8 +280,8 @@ ripple templates are golang templates(use [pongo2](https://github.com/flosch/pon
 ## Installation
 
 ```shell
-go get github.com/bmbstack/ripple@v0.8.1
-go install github.com/bmbstack/ripple/cmd/ripple@v0.8.1
+go get github.com/bmbstack/ripple@v0.8.2
+go install github.com/bmbstack/ripple/cmd/ripple@v0.8.2
 ripple new rippleApp
 cd $GOPATH/src/rippleApp
 go mod init
