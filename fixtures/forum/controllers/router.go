@@ -36,6 +36,9 @@ func RouteAPI() {
 	//===========================================================
 	v1Group := echoMux.Group("/v1")
 
+	homes := v1.HomeController{}
+	homes.Register()
+
 	citys := v1.CityController{Group: v1Group}
 	citys.Setup()
 }

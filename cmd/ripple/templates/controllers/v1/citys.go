@@ -13,7 +13,7 @@ type CityController struct {
 }
 
 func (this CityController) Setup() {
-	this.Group.GET("/citys", this.ActionIndex)
+	this.Group.GET("/list", this.ActionIndex)
 }
 
 //================================================================================================

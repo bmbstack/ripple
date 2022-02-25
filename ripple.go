@@ -10,6 +10,7 @@ import (
 	mw "github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/color"
 	"os"
+	"strings"
 	"sync"
 )
 
@@ -18,7 +19,8 @@ var firstRegModel = true
 var line1 = "=============================="
 var line2 = "================================"
 
-const VersionName = "0.5.9"
+// VersionName 0.7.0以后使用yaml配置文件
+const VersionName = "0.7.0"
 
 func Version() string {
 	return VersionName
@@ -38,7 +40,6 @@ func Default() *Ripple {
 type Ripple struct {
 	Logger *logger.Logger
 	Echo   *echo.Echo
-	Config *Config
 	Orms   map[string]*Orm
 	Caches map[string]*cache.Cache
 }
@@ -54,11 +55,10 @@ func NewLogger() *logger.Logger {
 
 // NewRipple new a ripple instance
 func NewRipple() *Ripple {
-	config := NewConfig()
+	config := GetBaseConfig()
 
 	r := &Ripple{}
 	r.Logger = NewLogger()
-	r.Config = config
 	r.Echo = echo.New()
 
 	r.Echo.Use(mw.Recover())
@@ -71,7 +71,7 @@ func NewRipple() *Ripple {
 	orms := make(map[string]*Orm)
 	if IsNotEmpty(config.Databases) {
 		for _, item := range config.Databases {
-			orms[item.Alias] = NewOrm(item, r.Config.DebugOn)
+			orms[item.Alias] = NewOrm(item, !strings.EqualFold("prod", GetEnv()))
 		}
 	}
 	r.Orms = orms
@@ -101,11 +101,6 @@ func NewRipple() *Ripple {
 // GetEcho  return echo
 func (this *Ripple) GetEcho() *echo.Echo {
 	return this.Echo
-}
-
-// GetConfig return config
-func (this *Ripple) GetConfig() *Config {
-	return this.Config
 }
 
 // GetOrm  return ripple model
@@ -151,15 +146,15 @@ func (this *Ripple) RegisterModels(orm *Orm, modelItems ...interface{}) {
 // Run run ripple application
 func (this *Ripple) Run() {
 	// autoMigrate all orms
-	if this.GetConfig().AutoMigrate {
+	if GetBaseConfig().AutoMigrate {
 		for alias := range this.Orms {
 			this.Orms[alias].AutoMigrateAll()
 		}
 	}
 
-	this.Logger.Info(fmt.Sprintf("Ripple ListenAndServe: %s", color.Green(this.Config.Domain)))
-	this.Echo.Debug = this.Config.DebugOn
-	err := this.Echo.Start(this.Config.Domain)
+	this.Logger.Info(fmt.Sprintf("Ripple ListenAndServe: %s", color.Green(GetBaseConfig().Domain)))
+	this.Echo.Debug = !strings.EqualFold("prod", GetEnv())
+	err := this.Echo.Start(GetBaseConfig().Domain)
 	if err != nil {
 		this.Logger.Error(fmt.Sprintf("Ripple Start error: %s", color.Red(err)))
 	}

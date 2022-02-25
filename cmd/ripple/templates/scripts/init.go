@@ -1,17 +1,12 @@
 package scripts
 
 import (
-	"github.com/bmbstack/ripple/cmd/ripple/templates/logger"
-	"os"
+	"github.com/bmbstack/ripple"
+	"github.com/bmbstack/ripple/cmd/ripple/templates/initial"
+	"github.com/urfave/cli/v2"
 )
 
-// init commands
-func GetInitCommands() []string {
-	commands := make([]string, 8)
-	dir, err := os.Getwd()
-	if err != nil {
-		logger.Logger.Error(err.Error())
-	}
-	commands = append(commands, "SCRIPTPATH="+dir)
-	return commands
+func Init(c *cli.Context) {
+	ripple.InitConfig(c.String("env"))
+	initial.InitLogger()
 }

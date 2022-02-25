@@ -10,6 +10,7 @@ require (
 	github.com/labstack/echo/v4 v4.6.1
 	github.com/labstack/gommon v0.3.0
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
+	github.com/spf13/viper v1.10.1
 	github.com/urfave/cli/v2 v2.3.0
 	gorm.io/driver/mysql v1.2.0
 	gorm.io/driver/postgres v1.2.2

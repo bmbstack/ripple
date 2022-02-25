@@ -8,7 +8,7 @@ import (
 )
 
 func RouteAPI() {
-	echoMux := ripple.GetEcho()
+	echoMux := ripple.Default().GetEcho()
 
 	//===========================================================
 	//                      common
@@ -35,6 +35,9 @@ func RouteAPI() {
 	//                      v1
 	//===========================================================
 	v1Group := echoMux.Group("/v1")
+
+	homes := v1.HomeController{}
+	homes.Register()
 
 	citys := v1.CityController{Group: v1Group}
 	citys.Setup()

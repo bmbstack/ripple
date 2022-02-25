@@ -147,8 +147,8 @@ func reifyApplication(templateAppPath, appPath string) error {
 
 	logger.Logger.Notice(fmt.Sprintf("Run command in bash: %s", color.Bold(color.Green("cd "+appPath))))
 	logger.Logger.Notice(fmt.Sprintf("Run command in bash: %s", color.Bold(color.Green("go mod init"))))
-	logger.Logger.Notice(fmt.Sprintf("Run command in bash: %s", color.Bold(color.Green("go mod download"))))
-	logger.Logger.Notice(fmt.Sprintf("Run command in bash: %s", color.Bold(color.Green("go run main.go s"))))
+	logger.Logger.Notice(fmt.Sprintf("Run command in bash: %s", color.Bold(color.Green("go mod tidy"))))
+	logger.Logger.Notice(fmt.Sprintf("Run command in bash: %s", color.Bold(color.Green("go run main.go --env dev s"))))
 	logger.Logger.Notice(fmt.Sprintf("Open this url: http://127.0.0.1:%s", HostPort))
 	return nil
 }
