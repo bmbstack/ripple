@@ -1,9 +1,11 @@
 # Ripple
+
 a lightweight web framework for Go(base on [Echo](https://github.com/labstack/echo))
 
 ## Which features to include in a framework
 
 A framework has 3 parts. A router receiving a request and directing it to a handler, a middleware system to add reusable pieces of software before and after the handler, and the handler processing the request and writing the response.
+
 - Router
 - Middlewares
 - Handler processing
@@ -11,6 +13,7 @@ A framework has 3 parts. A router receiving a request and directing it to a hand
 <img src="https://raw.githubusercontent.com/bmbstack/ripple/master/screenshots/framework.png" width="720" height="576" />
 
 Middlewares handle:
+
 - error/panic
 - logging
 - security
@@ -19,6 +22,7 @@ Middlewares handle:
 - body parsing
 
 ## Features
+
 * [x] MySQL and Foundation database support
 * [x] Modular (you can choose which components to use)
 * [x] Middleware support, compatible Middleware works out of the box
@@ -26,12 +30,15 @@ Middlewares handle:
 * [x] Multiple configuration files support (currently ```.env```)
 
 ## Overview
+
 `ripple` is a lightweight framework. It is based on the principles of simplicity, relevance and elegance.
+
 - Simplicity. The design is simple, easy to understand and doesn't introduce many layers between you and the standard library. It is a goal of the project that users should be able to understand the whole framework in a single day.
 - Relevance. `ripple` doesn't assume anything. We focus on things that matter, this way we are able to ensure easy maintenance and keep the system well-organized, well-planned and sweet.
 - Elegance. `ripple` uses golang best practises. We are not afraid of heights, it's just that we need a parachute in our backpack. The source code is heavily documented, any functionality should be well explained and well tested.
 
 ## Project structure
+
 This is the structure of the `rippleApp` list application that will showcase how you can build web apps with `ripple`:
 
 ```shell
@@ -115,8 +122,8 @@ caches: [
 ]
 
 ```
-You can override the values from the config file by setting environment variables.
-The names of the environment variables are shown below (with their details)
+
+You can override the values from the config file by setting environment variables. The names of the environment variables are shown below (with their details)
 
 setting               | details
 ----------------------|----------------
@@ -140,9 +147,11 @@ port                  | the cache port
 password              | the cache password
 
 ## Models
+
 ripple uses the [gorm](https://gorm.io/gorm) library as its Object Relational Mapper, so you won't need to learn anything fancy. In our rippleApp app, we need to define a User model that will be used to store our todo details.
 
 In the file models/user.go we define our rippleApp model like this
+
 ```go
 package models
 
@@ -172,6 +181,7 @@ func init() {
 }
 
 ```
+
 Notice that we need to register our model by calling ripple.RegisterModels(&User{}) in the init function otherwise ripple won't be aware of the model.
 
 ripple will automatically create the table users if it doesn't exist.
@@ -184,10 +194,12 @@ ripple controllers are structs that implement the Controller interface. To help 
 
 ```go
 type Controller interface {
-    Path() string
+Path() string
 }
 ```
+
 This creates a new Echo group at the Controller#Path, in our example /posts, with all the defined actions.
+
 ```shell
  GET /posts     => #ActionIndex
  GET /posts/:id => #ActionShow
@@ -205,9 +217,9 @@ import (
 )
 
 type HomeController struct {
-	Index echo.HandlerFunc `controller:"GET /"`
-	Html echo.HandlerFunc `controller:"GET html"`
-	String  echo.HandlerFunc `controller:"GET string"`
+	Index  echo.HandlerFunc `controller:"GET /"`
+	Html   echo.HandlerFunc `controller:"GET html"`
+	String echo.HandlerFunc `controller:"GET string"`
 }
 
 func init() {
@@ -235,10 +247,13 @@ func (this HomeController) ActionString(ctx echo.Context) error {
 }
 
 ```
+
 Note that we registered our controller by calling ripple.RegisterController($HomeController{}) in the init function so as to make ripple aware of our controller. See Routing section below for more explanation of what the controller is doing.
 
 ## Templates
+
 ripple templates are golang templates(use [pongo2](https://github.com/flosch/pongo2)). This is the content of frontend/templates/home/index.html:
+
 ```html
 <!DOCTYPE html>
 <html lang="en">
@@ -261,15 +276,17 @@ ripple templates are golang templates(use [pongo2](https://github.com/flosch/pon
 </body>
 </html>
 ```
+
 ## Installation
+
 ```shell
-$ go get github.com/bmbstack/ripple@v0.7.3
-$ go install github.com/bmbstack/ripple/cmd/ripple@v0.7.3
-$ ripple new rippleApp
-$ cd $GOPATH/src/rippleApp
-$ go mod init
-$ go mod tidy
-$ go run main.go --env dev s
+go get github.com/bmbstack/ripple@v0.7.3
+go install github.com/bmbstack/ripple/cmd/ripple@v0.7.3
+ripple new rippleApp
+cd $GOPATH/src/rippleApp
+go mod init
+go mod tidy
+go run main.go --env dev s
 ```
-	
-Then, Open the url:	[http://127.0.0.1:8090](http://127.0.0.1:8090)
+
+Then, Open the url:    [http://127.0.0.1:8090](http://127.0.0.1:8090)

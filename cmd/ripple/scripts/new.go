@@ -21,7 +21,7 @@ const (
 )
 
 var (
-	PackageTemplates = fmt.Sprintf("github.com/bmbstack/ripple/cmd/ripple@%s/templates", ripple.VersionName)
+	PackageTemplates = fmt.Sprintf("github.com/bmbstack/ripple@%s/cmd/ripple/templates", ripple.VersionName)
 )
 
 // NewApplication create a new application with the appName
