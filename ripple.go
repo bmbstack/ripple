@@ -19,8 +19,8 @@ var firstRegModel = true
 var line1 = "=============================="
 var line2 = "================================"
 
-// VersionName 0.7.3以后使用yaml配置文件
-const VersionName = "0.7.3"
+// VersionName 0.8.0以后使用yaml配置文件
+const VersionName = "0.8.0"
 
 func Version() string {
 	return VersionName
