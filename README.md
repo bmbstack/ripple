@@ -36,41 +36,29 @@ This is the structure of the `rippleApp` list application that will showcase how
 
 ```shell
 .
-├── config.json.example
+├── config
+│   ├── config.dev.yaml
+│   ├── config.prod.yaml
+│   └── config.test.yaml
 ├── controllers
 │   ├── router.go
 │   └── v1
-│       ├── base.go
-│       ├── citys.go
-│       └── home.go
-├── forum
 ├── frontend
 │   ├── static
-│   │   ├── css
-│   │   └── js
 │   └── templates
-│       └── home
 ├── helper
 │   └── helper.go
-├── logger
+├── initial
 │   └── logger.go
 ├── main.go
 ├── models
 │   ├── one
-│   │   ├── base_model.go
-│   │   ├── bmb_city.go
-│   │   └── user.go
 │   └── two
-│       ├── base_model.go
-│       ├── bmb_city.go
-│       └── user.go
 └── scripts
-    ├── commands.go
-    ├── const.go
     ├── init.go
     └── server.go
 
-12 directories, 19 files
+12 directories, 9 files
 
 ```
 
@@ -80,53 +68,51 @@ ripple support .env configurations files. In our rippleApp app, we put the confi
 
 ripple searches for a file named .env in the config directory. The first to be found is the one to be used.
 
-This is the content of ```.env.example``` file:
+This is the content of ```config.dev.yaml/config.test.yaml/config.prod.yaml``` file:
 
 ```shell
-{
-  "debugOn": true,
-  "domain": "127.0.0.1:8090",
-  "static": "frontend/static",
-  "templates": "frontend/templates",
-  "databases": [
-    {
-      "alias": "one",
-      "dialect": "mysql",
-      "host": "127.0.0.1",
-      "port": 3306,
-      "name": "one",
-      "username": "root",
-      "password": "123456"
-    },
-    {
-      "alias": "two",
-      "dialect": "mysql",
-      "host": "127.0.0.1",
-      "port": 3306,
-      "name": "two",
-      "username": "root",
-      "password": "123456"
-    }
-  ],
-  "caches": [
-    {
-      "alias": "one",
-      "section": "one",
-      "adapter": "redis",
-      "host": "127.0.0.1",
-      "port": 6379,
-      "password": "123456"
-    },
-    {
-      "alias": "two",
-      "section": "two",
-      "adapter": "redis",
-      "host": "127.0.0.1",
-      "port": 6379,
-      "password": "123456"
-    }
-  ]
-}
+domain: "127.0.0.1:8090"
+static: "frontend/static"
+templates: "frontend/templates"
+autoMigrate: false
+databases: [
+  {
+    "alias": "one",
+    "dialect": "mysql",
+    "host": "127.0.0.1",
+    "port": 3306,
+    "name": "one",
+    "username": "root",
+    "password": "123456"
+  },
+  {
+    "alias": "two",
+    "dialect": "mysql",
+    "host": "127.0.0.1",
+    "port": 3306,
+    "name": "two",
+    "username": "root",
+    "password": "123456"
+  }
+]
+caches: [
+  {
+    "alias": "one",
+    "section": "one",
+    "adapter": "redis",
+    "host": "127.0.0.1",
+    "port": 6379,
+    "password": "123456"
+  },
+  {
+    "alias": "two",
+    "section": "two",
+    "adapter": "redis",
+    "host": "127.0.0.1",
+    "port": 6379,
+    "password": "123456"
+  }
+]
 
 ```
 You can override the values from the config file by setting environment variables.
@@ -134,7 +120,6 @@ The names of the environment variables are shown below (with their details)
 
 setting               | details
 ----------------------|----------------
-debugOn               | you can open application debug mode when developing
 domain                | the vps ip address or domain
 static                | Static serves static files from the directory
 templates             | directory to look for templates
@@ -153,7 +138,6 @@ adapter               | the cache adapter
 host                  | the cache host
 port                  | the cache port
 password              | the cache password
-
 
 ## Models
 ripple uses the [gorm](https://gorm.io/gorm) library as its Object Relational Mapper, so you won't need to learn anything fancy. In our rippleApp app, we need to define a User model that will be used to store our todo details.
@@ -184,7 +168,7 @@ type User struct {
 }
 
 func init() {
-	ripple.RegisterModels(&User{})
+	ripple.Default().RegisterModels(&User{})
 }
 
 ```
@@ -217,7 +201,7 @@ package controllers
 import (
 	"net/http"
 	"github.com/bmbstack/ripple"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 type HomeController struct {
@@ -227,7 +211,7 @@ type HomeController struct {
 }
 
 func init() {
-	ripple.RegisterController(&HomeController{})
+	ripple.Default().RegisterController(&HomeController{})
 }
 
 func (this HomeController) Path() string {
@@ -235,19 +219,15 @@ func (this HomeController) Path() string {
 }
 
 func (this HomeController) ActionIndex(ctx echo.Context) error {
-	ctx.Render(http.StatusOK, "home/index.html", map[string]interface{}{
+	return ctx.Render(http.StatusOK, "home/index.html", map[string]interface{}{
 		"title": "Hello, forum is a Ripple application ",
 	})
-
-	return nil
 }
 
 func (this HomeController) ActionHtml(ctx echo.Context) error {
-	ctx.Render(http.StatusOK, "home/html.html", map[string]interface{}{
+	return ctx.Render(http.StatusOK, "home/html.html", map[string]interface{}{
 		"title": "Hello, this is a html template",
 	})
-
-	return nil
 }
 
 func (this HomeController) ActionString(ctx echo.Context) error {
@@ -281,47 +261,13 @@ ripple templates are golang templates(use [pongo2](https://github.com/flosch/pon
 </body>
 </html>
 ```
-
-## The server.go file
-
-```go
-package scripts
-
-import (
-	_ "github.com/bmbstack/ripple/fixtures/forum/controllers"
-	_ "github.com/bmbstack/ripple/fixtures/forum/models"
-	"github.com/bmbstack/ripple/fixtures/forum/logger"
-	"github.com/bmbstack/ripple"
-)
-
-// Server commands
-func GetServerCommands(db string) []string {
-	commands := make([]string, 2)
-	switch db {
-	case "mysql":
-		commands = append(commands, "/usr/local/bin/mysqld_safe &")
-		commands = append(commands, "sleep 10s")
-	}
-	return commands
-}
-
-// Run server
-func RunServer() {
-	logger.Logger.Info("Run server ....")
-
-	ripple.Run()
-}
-
-```
-
 ## Installation
 ```shell
-$ curl https://glide.sh/get | sh
-$ go get github.com/bmbstack/ripple
-$ go get github.com/bmbstack/ripple/cmd/ripple
 $ ripple new rippleApp
 $ cd $GOPATH/src/rippleApp
-$ go run main.go server
+$ go mod init
+$ go mod tidy
+$ go run main.go --env dev s
 ```
 	
 Then, Open the url:	[http://127.0.0.1:8090](http://127.0.0.1:8090)
