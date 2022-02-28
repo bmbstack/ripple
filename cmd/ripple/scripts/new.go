@@ -15,9 +15,10 @@ import (
 )
 
 const (
-	Permissions       = 0755
-	ExpressionAppName = "{{rippleApp}}"
-	HostPort          = "8090"
+	Permissions           = 0755
+	ExpressionAppName     = "{{rippleApp}}"
+	ExpressionTemplatePkg = "github.com/bmbstack/ripple/cmd/ripple/templates"
+	HostPort              = "8090"
 )
 
 var (
@@ -200,6 +201,7 @@ func replaceExpressionInTemplates(templateAppPath, appPath string, extentions []
 		if strings.Contains(fileString, ExpressionAppName) {
 			appName := utils.Substring(appPath, strings.LastIndex(appPath, "/")+1, len(appPath))
 			fileString = strings.Replace(fileString, ExpressionAppName, appName, -1)
+			fileString = strings.Replace(fileString, ExpressionTemplatePkg, appName, -1)
 		}
 
 		err = ioutil.WriteFile(f, []byte(fileString), Permissions)
