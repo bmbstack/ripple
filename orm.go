@@ -34,6 +34,8 @@ func NewOrm(database DatabaseConfig, debug bool) *Orm {
 	name := database.Name
 	username := database.Username
 	password := database.Password
+	maxIdleConns := database.MaxIdleConns
+	maxOpenConns := database.MaxOpenConns
 
 	// logger
 	logLevel := mlogger.Silent
@@ -80,8 +82,14 @@ func NewOrm(database DatabaseConfig, debug bool) *Orm {
 		}
 		orm.DB = db
 	}
-
 	fmt.Println(fmt.Sprintf("%s: %s", color.Green(fmt.Sprintf("Connect.%s", dialect)), dsn))
+
+	sqlDB, err := orm.DB.DB()
+	if err != nil {
+		return orm
+	}
+	sqlDB.SetMaxIdleConns(maxIdleConns)
+	sqlDB.SetMaxOpenConns(maxOpenConns)
 	return orm
 }
 

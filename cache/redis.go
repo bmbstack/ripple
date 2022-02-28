@@ -28,6 +28,7 @@ func (r *RedisCache) Connect(opt Options) error {
 	client = redis.NewClient(&redis.Options{
 		Addr:     opt.AdapterConfig.Addr,
 		Password: opt.AdapterConfig.Password,
+		DB:       opt.AdapterConfig.DB,
 	})
 
 	fmt.Println(fmt.Sprintf("%s: %s, %s", color.Green("Connect.redis"), opt.Section, opt.AdapterConfig.Addr))

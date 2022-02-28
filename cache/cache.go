@@ -50,6 +50,7 @@ type Cache struct {
 type AdapterConfig struct {
 	Addr     string
 	Password string
+	DB       int
 }
 
 type Options struct {

@@ -16,13 +16,15 @@ type BaseConfig struct {
 }
 
 type DatabaseConfig struct {
-	Alias    string `mapstructure:"alias"`    // alias=forum
-	Dialect  string `mapstructure:"dialect"`  // dialect=mysql
-	Host     string `mapstructure:"host"`     // host=127.0.0.1
-	Port     int    `mapstructure:"port"`     // port=3306
-	Name     string `mapstructure:"name"`     // name=forum
-	Username string `mapstructure:"username"` // username=root
-	Password string `mapstructure:"password"` // password=123456
+	Alias        string `mapstructure:"alias"`        // alias=forum
+	Dialect      string `mapstructure:"dialect"`      // dialect=mysql
+	Host         string `mapstructure:"host"`         // host=127.0.0.1
+	Port         int    `mapstructure:"port"`         // port=3306
+	Name         string `mapstructure:"name"`         // name=forum
+	Username     string `mapstructure:"username"`     // username=root
+	Password     string `mapstructure:"password"`     // password=123456
+	MaxIdleConns int    `mapstructure:"maxIdleConns"` // maxIdleConns
+	MaxOpenConns int    `mapstructure:"maxOpenConns"` // maxOpenConns
 }
 
 type CacheConfig struct {
@@ -32,11 +34,12 @@ type CacheConfig struct {
 	Host     string `mapstructure:"host"`     // host=127.0.0.1
 	Port     int    `mapstructure:"port"`     // port=6379
 	Password string `mapstructure:"password"` // password=123456
+	DB       int    `mapstructure:"db"`       // db, select db
 }
 
 var (
-	e string
-	v *viper.Viper
+	e  string
+	v  *viper.Viper
 	bc *BaseConfig
 )
 
@@ -84,5 +87,6 @@ func (cacheConfig CacheConfig) GetCacheAdapterConfig() cache.AdapterConfig {
 	return cache.AdapterConfig{
 		Addr:     fmt.Sprintf("%s:%d", cacheConfig.Host, cacheConfig.Port),
 		Password: cacheConfig.Password,
+		DB:       cacheConfig.DB,
 	}
 }
