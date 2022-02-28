@@ -86,6 +86,7 @@ func NewOrm(database DatabaseConfig, debug bool) *Orm {
 
 	sqlDB, err := orm.DB.DB()
 	if err != nil {
+		fmt.Println(color.Red(fmt.Sprintf("sqlDB config error.%s", err.Error())))
 		return orm
 	}
 	sqlDB.SetMaxIdleConns(maxIdleConns)

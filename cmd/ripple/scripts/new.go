@@ -198,7 +198,7 @@ func replaceExpressionInTemplates(templateAppPath, appPath string, extentions []
 			fileString = strings.Replace(fileString, relativeTemplateAppPath, relativeAppPath, -1)
 		}
 
-		if strings.Contains(fileString, ExpressionAppName) {
+		if strings.Contains(fileString, ExpressionAppName) || strings.Contains(fileString, ExpressionTemplatePkg) {
 			appName := utils.Substring(appPath, strings.LastIndex(appPath, "/")+1, len(appPath))
 			fileString = strings.Replace(fileString, ExpressionAppName, appName, -1)
 			fileString = strings.Replace(fileString, ExpressionTemplatePkg, appName, -1)
