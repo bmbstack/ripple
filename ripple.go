@@ -9,7 +9,9 @@ import (
 	"github.com/labstack/echo/v4"
 	mw "github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/color"
+	"io"
 	"os"
+	"os/exec"
 	"strings"
 	"sync"
 )
@@ -20,7 +22,7 @@ var line1 = "=============================="
 var line2 = "================================"
 
 // VersionName 0.8.2以后使用yaml配置文件
-const VersionName = "0.8.4"
+const VersionName = "0.8.5"
 
 func Version() string {
 	return VersionName
@@ -159,3 +161,33 @@ func (this *Ripple) Run() {
 		this.Logger.Error(fmt.Sprintf("Ripple Start error: %s", color.Red(err)))
 	}
 }
+
+// RunScript run script
+func RunScript(commands []string) {
+	entireScript := strings.NewReader(strings.Join(commands, "\n"))
+	bash := exec.Command("/bin/bash")
+	stdin, _ := bash.StdinPipe()
+	stdout, _ := bash.StdoutPipe()
+	stderr, _ := bash.StderrPipe()
+
+	wait := sync.WaitGroup{}
+	wait.Add(3)
+	go func() {
+		_, _ = io.Copy(stdin, entireScript)
+		_ = stdin.Close()
+		wait.Done()
+	}()
+	go func() {
+		_, _ = io.Copy(os.Stdout, stdout)
+		wait.Done()
+	}()
+	go func() {
+		_, _ = io.Copy(os.Stderr, stderr)
+		wait.Done()
+	}()
+
+	_ = bash.Start()
+	wait.Wait()
+	_ = bash.Wait()
+}
+
