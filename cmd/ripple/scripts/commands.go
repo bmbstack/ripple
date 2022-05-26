@@ -16,7 +16,7 @@ func Commands() []*cli.Command {
 			Usage: "Create a Ripple application",
 			Action: func(c *cli.Context) error {
 				if c.Args().Len() == 0 {
-					msg := "Please input the application name[ripple new appName]"
+					msg := "please input the application name[ripple new appName]"
 					logger.Logger.Error(msg)
 					return errors.New(msg)
 				}
@@ -32,11 +32,25 @@ func Commands() []*cli.Command {
 			Usage:   "Run the Ripple application",
 			Action: func(c *cli.Context) error {
 				if c.Args().Len() > 0 {
-					msg := "Don't need input args"
+					msg := "don't need input args"
 					logger.Logger.Error(msg)
 					return errors.New(msg)
 				}
 				RunApplication()
+				return nil
+			},
+		},
+		//Generate file
+		{
+			Name:    "gen",
+			Aliases: []string{"g"},
+			Usage:   "Auto generate code (*.pb.go), args: path, eg: ripple g proto",
+			Action: func(c *cli.Context) error {
+				protoPath := "proto"
+				if c.Args().Len() > 0 {
+					protoPath = c.Args().First()
+				}
+				Generate(protoPath)
 				return nil
 			},
 		},

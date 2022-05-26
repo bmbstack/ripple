@@ -1,14 +1,29 @@
 package controllers
 
 import (
+	"context"
 	"github.com/bmbstack/ripple"
 	"github.com/bmbstack/ripple/fixtures/forum/controllers/v1"
+	. "github.com/bmbstack/ripple/fixtures/forum/helper"
+	"github.com/bmbstack/ripple/fixtures/forum/proto"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"net/http"
 )
 
 func RouteAPI() {
 	echoMux := ripple.Default().GetEcho()
+	echoMux.GET("/", func(ctx echo.Context) error {
+		userClient := proto.NewUserClient("DEFAULT_GROUP", "ripple_user")
+		req := &proto.GetInfoReq{
+			Id: 1,
+		}
+		reply, _ := userClient.GetInfo(context.Background(), req)
+		result := map[string]interface{}{
+			"username": reply.Name,
+		}
+		return ctx.JSON(http.StatusOK, SuccessJSON(result))
+	})
 
 	//===========================================================
 	//                      common

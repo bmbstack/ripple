@@ -46,3 +46,13 @@ caches: [
     "db": 1
   }
 ]
+nacos:
+  host: "mse-7b574dc2-nacos-ans.mse.aliyuncs.com"
+  port: 8848
+  namespaceId: "public"
+  clusterPrefix: "ripple_"
+  cluster: "ripple_user"
+  group: "DEFAULT_GROUP"
+  cacheDir: "./cache"
+  logDir: "./log"
+  server: "127.0.0.1:18090"

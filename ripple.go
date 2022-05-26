@@ -9,6 +9,7 @@ import (
 	"github.com/labstack/echo/v4"
 	mw "github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/color"
+	"github.com/smallnest/rpcx/server"
 	"io"
 	"os"
 	"os/exec"
@@ -22,7 +23,7 @@ var line1 = "=============================="
 var line2 = "================================"
 
 // VersionName 0.8.2以后使用yaml配置文件
-const VersionName = "0.8.5"
+const VersionName = "0.8.6"
 
 func Version() string {
 	return VersionName
@@ -40,10 +41,11 @@ func Default() *Ripple {
 
 // Ripple ripple struct
 type Ripple struct {
-	Logger *logger.Logger
-	Echo   *echo.Echo
-	Orms   map[string]*Orm
-	Caches map[string]*cache.Cache
+	Logger    *logger.Logger
+	Echo      *echo.Echo
+	Orms      map[string]*Orm
+	Caches    map[string]*cache.Cache
+	RpcServer *server.Server
 }
 
 // NewLogger new a logger instance
@@ -70,6 +72,7 @@ func NewRipple() *Ripple {
 	r.Echo.Renderer = NewRenderer(config)
 	r.Echo.Static("/static", config.Static)
 
+	// orm
 	orms := make(map[string]*Orm)
 	if IsNotEmpty(config.Databases) {
 		for _, item := range config.Databases {
@@ -78,6 +81,7 @@ func NewRipple() *Ripple {
 	}
 	r.Orms = orms
 
+	// cache
 	caches := make(map[string]*cache.Cache)
 	if IsNotEmpty(config.Caches) {
 		for _, item := range config.Caches {
@@ -94,12 +98,14 @@ func NewRipple() *Ripple {
 		}
 	}
 	r.Caches = caches
+
+	// rpc, rpcx, nacos
+	if IsNotEmpty(config.Nacos) {
+		r.RpcServer = NewRpcServerNacos(config.Nacos)
+	}
 	return r
 }
 
-//================================================================
-//                      Ripple func
-//================================================================
 // GetEcho  return echo
 func (this *Ripple) GetEcho() *echo.Echo {
 	return this.Echo
@@ -143,6 +149,41 @@ func (this *Ripple) RegisterModels(orm *Orm, modelItems ...interface{}) {
 	}
 	_ = orm.AddModels(modelItems...)
 	firstRegModel = false
+}
+
+// RegisterRpc register rpc service
+func (this *Ripple) RegisterRpc(name string, rpc interface{}, metadata string) {
+	if this.RpcServer != nil {
+		err := this.RpcServer.RegisterName(name, rpc, metadata)
+		if err != nil {
+			this.Logger.Error(fmt.Sprintf("Rpc register service error: %s", err.Error()))
+		}
+	}
+}
+
+// UnregisterRpc unregisters all rpc services.
+func (this *Ripple) UnregisterRpc() {
+	if this.RpcServer != nil {
+		err := this.RpcServer.UnregisterAll()
+		if err != nil {
+			this.Logger.Error(fmt.Sprintf("Rpc unregisters services error: %s", err.Error()))
+		}
+	}
+}
+
+// RunRpc run rpc server
+func (this *Ripple) RunRpc() {
+	if this.RpcServer != nil {
+		conf := GetBaseConfig()
+		if IsNotEmpty(conf.Nacos) {
+			go func() {
+				err := this.RpcServer.Serve("tcp", conf.Nacos.Server)
+				if err != nil {
+					this.Logger.Error(fmt.Sprintf("Rpc run error: %s", err.Error()))
+				}
+			}()
+		}
+	}
 }
 
 // Run run ripple application
@@ -190,4 +231,3 @@ func RunScript(commands []string) {
 	wait.Wait()
 	_ = bash.Wait()
 }
-

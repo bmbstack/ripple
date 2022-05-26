@@ -3,6 +3,7 @@ package ripple
 import (
 	"fmt"
 	"github.com/bmbstack/ripple/cache"
+	. "github.com/bmbstack/ripple/helper"
 	"github.com/spf13/viper"
 )
 
@@ -13,6 +14,7 @@ type BaseConfig struct {
 	Templates   string           `mapstructure:"templates,omitempty"`   // templates=frontend/templates
 	Databases   []DatabaseConfig `mapstructure:"databases,omitempty"`   // databases
 	Caches      []CacheConfig    `mapstructure:"caches,omitempty"`      // caches
+	Nacos       Nacos            `mapstructure:"nacos,omitempty"`       // nacos
 }
 
 type DatabaseConfig struct {
@@ -37,19 +39,34 @@ type CacheConfig struct {
 	DB       int    `mapstructure:"db"`       // db, select db
 }
 
+type Nacos struct {
+	Host        string `mapstructure:"host"`
+	Port        uint64 `mapstructure:"port"`
+	NamespaceId string `mapstructure:"namespaceId"`
+	Cluster     string `mapstructure:"cluster"`
+	Group       string `mapstructure:"group"`
+	CacheDir    string `mapstructure:"cacheDir"`
+	LogDir      string `mapstructure:"logDir"`
+	Server      string `mapstructure:"server"`
+}
+
 var (
 	e  string
 	v  *viper.Viper
 	bc *BaseConfig
 )
 
-func InitConfig(env string) {
+func InitConfig(env string, configPath *string) {
+	path := "./config/"
+	if IsNotEmpty(configPath) {
+		path = *configPath
+	}
 	fmt.Println(fmt.Sprintf("执行环境: %s", env))
 	e = env
 	v = viper.New()
 	v.SetConfigName(fmt.Sprintf("config.%s", env))
 	v.SetConfigType("yaml")
-	v.AddConfigPath("./config/")
+	v.AddConfigPath(path)
 	if err := v.ReadInConfig(); err != nil {
 		fmt.Println(fmt.Sprintf("Viper ReadInConfig err:%s\n", err))
 	}

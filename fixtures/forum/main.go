@@ -22,6 +22,7 @@ func Commands() []*cli.Command {
 					fmt.Println("OnStop, clean server...")
 				})
 				scripts.Init(c)
+				scripts.RunRpc()
 				scripts.RunServer()
 				return nil
 			},
