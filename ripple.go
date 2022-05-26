@@ -23,7 +23,7 @@ var line1 = "=============================="
 var line2 = "================================"
 
 // VersionName 0.8.2以后使用yaml配置文件
-const VersionName = "0.8.6"
+const VersionName = "0.8.7"
 
 func Version() string {
 	return VersionName

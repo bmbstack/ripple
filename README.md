@@ -2,6 +2,33 @@
 
 a lightweight web framework for Go(base on [Echo](https://github.com/labstack/echo))
 
+## Upgrade
+
+```shell
+go get github.com/bmbstack/ripple@v0.8.7
+go install github.com/bmbstack/ripple/cmd/ripple@v0.8.7
+go install github.com/bmbstack/ripple/protoc/protoc-gen-gofast
+go mod tidy
+go mod vendor
+go run main.go --env dev s
+```
+
+## Installation
+
+```shell
+go get github.com/bmbstack/ripple@v0.8.7
+go install github.com/bmbstack/ripple/cmd/ripple@v0.8.7
+go install github.com/bmbstack/ripple/protoc/protoc-gen-gofast
+ripple new rippleApp
+cd $GOPATH/src/rippleApp
+go mod init
+go mod tidy
+go run main.go --env dev s
+```
+
+Then, Open the url:    [http://127.0.0.1:8090](http://127.0.0.1:8090)
+
+
 ## Which features to include in a framework
 
 A framework has 3 parts. A router receiving a request and directing it to a handler, a middleware system to add reusable pieces of software before and after the handler, and the handler processing the request and writing the response.
@@ -120,7 +147,15 @@ caches: [
     "password": "123456"
   }
 ]
-
+nacos:
+  host: "my.nacos.com"
+  port: 8848
+  namespaceId: "public"
+  cluster: "ripple_user"
+  group: "DEFAULT_GROUP"
+  cacheDir: "./cache"
+  logDir: "./log"
+  server: "127.0.0.1:18090"
 ```
 
 You can override the values from the config file by setting environment variables. The names of the environment variables are shown below (with their details)
@@ -145,7 +180,7 @@ adapter               | the cache adapter
 host                  | the cache host
 port                  | the cache port
 password              | the cache password
-
+nacos              | the aliyun nacos config
 ## Models
 
 ripple uses the [gorm](https://gorm.io/gorm) library as its Object Relational Mapper, so you won't need to learn anything fancy. In our rippleApp app, we need to define a User model that will be used to store our todo details.
@@ -276,17 +311,3 @@ ripple templates are golang templates(use [pongo2](https://github.com/flosch/pon
 </body>
 </html>
 ```
-
-## Installation
-
-```shell
-go get github.com/bmbstack/ripple@v0.8.4
-go install github.com/bmbstack/ripple/cmd/ripple@v0.8.4
-ripple new rippleApp
-cd $GOPATH/src/rippleApp
-go mod init
-go mod tidy
-go run main.go --env dev s
-```
-
-Then, Open the url:    [http://127.0.0.1:8090](http://127.0.0.1:8090)

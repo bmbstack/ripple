@@ -3,7 +3,6 @@ package ripple
 import (
 	"fmt"
 	"github.com/bmbstack/ripple/cache"
-	. "github.com/bmbstack/ripple/helper"
 	"github.com/spf13/viper"
 )
 
@@ -56,17 +55,17 @@ var (
 	bc *BaseConfig
 )
 
-func InitConfig(env string, configPath *string) {
-	path := "./config/"
-	if IsNotEmpty(configPath) {
-		path = *configPath
-	}
+func InitConfig(env string) {
+	InitConfigWithPath(env, "./config/")
+}
+
+func InitConfigWithPath(env string, configPath string) {
 	fmt.Println(fmt.Sprintf("执行环境: %s", env))
 	e = env
 	v = viper.New()
 	v.SetConfigName(fmt.Sprintf("config.%s", env))
 	v.SetConfigType("yaml")
-	v.AddConfigPath(path)
+	v.AddConfigPath(configPath)
 	if err := v.ReadInConfig(); err != nil {
 		fmt.Println(fmt.Sprintf("Viper ReadInConfig err:%s\n", err))
 	}
