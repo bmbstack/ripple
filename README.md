@@ -2,17 +2,6 @@
 
 a lightweight web framework for Go(base on [Echo](https://github.com/labstack/echo))
 
-## Upgrade
-
-```shell
-go get github.com/bmbstack/ripple@v0.8.7
-go install github.com/bmbstack/ripple/cmd/ripple@v0.8.7
-go install github.com/bmbstack/ripple/protoc/protoc-gen-gofast
-go mod tidy
-go mod vendor
-go run main.go --env dev s
-```
-
 ## Installation
 
 ```shell
@@ -27,6 +16,17 @@ go run main.go --env dev s
 ```
 
 Then, Open the url:    [http://127.0.0.1:8090](http://127.0.0.1:8090)
+
+## Upgrade
+
+```shell
+go get github.com/bmbstack/ripple@v0.8.7
+go install github.com/bmbstack/ripple/cmd/ripple@v0.8.7
+go install github.com/bmbstack/ripple/protoc/protoc-gen-gofast
+go mod tidy
+go mod vendor
+go run main.go --env dev s
+```
 
 ## RPC client call, eg(fixture/form):
 ```
