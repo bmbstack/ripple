@@ -13,7 +13,7 @@ require (
 	github.com/nacos-group/nacos-sdk-go/v2 v2.0.1
 	github.com/rpcxio/rpcx-nacos v0.0.0-20220327105555-9ed88c3146d4
 	github.com/smallnest/rpcx v1.7.3
-	github.com/spf13/viper v1.10.1
+	github.com/spf13/viper v1.11.0
 	github.com/urfave/cli/v2 v2.3.0
 	gorm.io/driver/mysql v1.2.0
 	gorm.io/driver/postgres v1.2.2

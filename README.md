@@ -27,6 +27,32 @@ go mod tidy
 go mod vendor
 go run main.go --env dev s
 ```
+## Command
+```
+NAME:
+   ripple - Command line tool to managing your Ripple application
+
+USAGE:
+   ripple [global options] command [command options] [arguments...]
+
+VERSION:
+   0.8.7
+
+AUTHOR:
+   wangmingjob <wangmingjob@icloud.com>
+
+COMMANDS:
+   new      Create a Ripple application
+   run, r   Run the Ripple application
+   gen, g   Auto generate code (*.pb.go), args: path, eg: ripple g proto
+   help, h  Shows a list of commands or help for one command
+
+GLOBAL OPTIONS:
+   --help, -h     show help (default: false)
+   --version, -v  print the version (default: false)
+```
+
+1. `ripple g`或者`ripple g dir`会生成一些代码，目前支持生成proto文件对应的*.pb.go 
 
 ## RPC client call, eg(fixture/form):
 ```
