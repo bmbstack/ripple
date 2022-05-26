@@ -28,6 +28,31 @@ go run main.go --env dev s
 
 Then, Open the url:    [http://127.0.0.1:8090](http://127.0.0.1:8090)
 
+## RPC client call, eg(fixture/form):
+```
+userClient := proto.NewUserClient("DEFAULT_GROUP", "ripple_user")
+req := &proto.GetInfoReq{
+	Id: 1,
+}
+reply, _ := userClient.GetInfo(context.Background(), req)
+```
+## RPC server register, eg(fixture/form):
+```
+ripple.Default().RegisterRpc(proto.ServiceNameOfUser, &UserRpc{}, "")
+ripple.Default().RunRpc()
+
+// service impl
+type UserRpc struct {
+}
+
+// GetInfo is server rpc method as defined
+func (s *UserRpc) GetInfo(ctx context.Context, req *proto.GetInfoReq, reply *proto.GetInfoReply) (err error) {
+	// TODO: add business logics
+	*reply = proto.GetInfoReply{}
+	reply.Name = "tomcat"
+	return nil
+}
+```
 
 ## Which features to include in a framework
 
