@@ -1,0 +1,10 @@
+2022-05-26T20:09:39.818+0800	INFO	naming_http/push_receiver.go:86	udp server start, port: 55197
+2022-05-26T20:09:39.818+0800	INFO	rpc/rpc_client.go:276	6396d49d-bdf4-4782-b1a2-7a61ee6b8286 register server push request:ConnectResetRequest handler%!(EXTRA *rpc.ConnectResetRequestHandler=&{})
+2022-05-26T20:09:39.818+0800	INFO	rpc/rpc_client.go:276	6396d49d-bdf4-4782-b1a2-7a61ee6b8286 register server push request:ClientDetectionRequest handler%!(EXTRA *rpc.ClientDetectionRequestHandler=&{})
+2022-05-26T20:09:39.818+0800	INFO	rpc/rpc_client.go:214	[RpcClient.Start] 6396d49d-bdf4-4782-b1a2-7a61ee6b8286 try to connect to server on start up, server: {serverIp:nacos.com serverPort:8848}
+2022-05-26T20:09:39.820+0800	INFO	util/common.go:96	Local IP:192.168.30.11
+2022-05-26T20:10:03.805+0800	INFO	naming_http/push_receiver.go:86	udp server start, port: 55589
+2022-05-26T20:10:03.805+0800	INFO	rpc/rpc_client.go:276	a6870280-58d4-40e6-9f20-cc1fa1817c6b register server push request:ConnectResetRequest handler%!(EXTRA *rpc.ConnectResetRequestHandler=&{})
+2022-05-26T20:10:03.805+0800	INFO	rpc/rpc_client.go:276	a6870280-58d4-40e6-9f20-cc1fa1817c6b register server push request:ClientDetectionRequest handler%!(EXTRA *rpc.ClientDetectionRequestHandler=&{})
+2022-05-26T20:10:03.806+0800	INFO	rpc/rpc_client.go:214	[RpcClient.Start] a6870280-58d4-40e6-9f20-cc1fa1817c6b try to connect to server on start up, server: {serverIp:nacos.com serverPort:8848}
+2022-05-26T20:10:03.807+0800	INFO	util/common.go:96	Local IP:192.168.30.11

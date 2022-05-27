@@ -44,20 +44,20 @@ func Commands() []*cli.Command {
 		{
 			Name:    "gen",
 			Aliases: []string{"g"},
-			Usage:   "Auto generate code (*.pb.go), args: path, eg: ripple g proto",
+			Usage:   "Auto generate code, *.proto => *.pb.go; req,resp => *.controller.go && *.service.go, eg: ripple g path",
 			Action: func(c *cli.Context) error {
-				protoPath := "proto"
+				path := "."
 				if c.Args().Len() > 0 {
-					protoPath = c.Args().First()
+					path = c.Args().First()
 				}
-				Generate(protoPath)
+				Generate(path)
 				return nil
 			},
 		},
 	}
 }
 
-// runCommand runs a command with exec.Command
+// RunCommand runs a command with exec.Command
 func RunCommand(command string, args ...string) ([]byte, error) {
 	cmd := exec.Command(command, args...)
 	output, err := cmd.CombinedOutput()

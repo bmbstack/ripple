@@ -15,8 +15,6 @@ go mod tidy
 go run main.go --env dev s
 ```
 
-Then, Open the url:    [http://127.0.0.1:8090](http://127.0.0.1:8090)
-
 ## Upgrade
 
 ```shell
@@ -27,6 +25,12 @@ go mod tidy
 go mod vendor
 go run main.go --env dev s
 ```
+If you use nacos, we recommend you:
+```shell
+go get github.com/smallnest/rpcx v1.7.3
+```
+Then, Open the url:    [http://127.0.0.1:8090](http://127.0.0.1:8090)
+
 ## Command
 ```
 NAME:
