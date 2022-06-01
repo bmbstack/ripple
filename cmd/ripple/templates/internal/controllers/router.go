@@ -2,13 +2,21 @@ package controllers
 
 import (
 	"github.com/bmbstack/ripple"
-	v12 "github.com/bmbstack/ripple/cmd/ripple/templates/internal/controllers/v1"
+	"github.com/bmbstack/ripple/cmd/ripple/templates/internal/controllers/v1"
+	. "github.com/bmbstack/ripple/cmd/ripple/templates/internal/helper"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"net/http"
 )
 
 func RouteAPI() {
 	echoMux := ripple.Default().GetEcho()
+	echoMux.GET("/", func(ctx echo.Context) error {
+		result := map[string]interface{}{
+			"username": "tom",
+		}
+		return ctx.JSON(http.StatusOK, SuccessJSON(result))
+	})
 
 	//===========================================================
 	//                      common
@@ -36,9 +44,9 @@ func RouteAPI() {
 	//===========================================================
 	v1Group := echoMux.Group("/v1")
 
-	homes := v12.HomeController{}
+	homes := v1.HomeController{}
 	homes.Register()
 
-	citys := v12.CityController{Group: v1Group}
+	citys := v1.CityController{Group: v1Group}
 	citys.Setup()
 }
