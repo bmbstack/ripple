@@ -2,11 +2,11 @@ package v1
 
 import (
 	"fmt"
+	. "github.com/bmbstack/ripple/fixtures/forum/internal/helper"
+	"github.com/bmbstack/ripple/fixtures/forum/internal/models/one"
+	"github.com/bmbstack/ripple/fixtures/forum/internal/models/two"
 	"net/http"
 
-	. "github.com/bmbstack/ripple/fixtures/forum/helper"
-	"github.com/bmbstack/ripple/fixtures/forum/models/one"
-	"github.com/bmbstack/ripple/fixtures/forum/models/two"
 	"github.com/labstack/echo/v4"
 )
 

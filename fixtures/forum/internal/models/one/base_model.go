@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"github.com/bmbstack/ripple"
 	"github.com/bmbstack/ripple/cache"
-	. "github.com/bmbstack/ripple/fixtures/forum/helper"
+	. "github.com/bmbstack/ripple/fixtures/forum/internal/helper"
 	. "github.com/bmbstack/ripple/helper"
 	"gorm.io/gorm"
 	"time"

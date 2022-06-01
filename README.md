@@ -5,9 +5,9 @@ a lightweight web framework for Go(base on [Echo](https://github.com/labstack/ec
 ## Installation
 
 ```shell
-go get github.com/bmbstack/ripple@v0.8.7
-go install github.com/bmbstack/ripple/cmd/ripple@v0.8.7
-go install github.com/bmbstack/ripple/protoc/protoc-gen-gofast
+go get github.com/bmbstack/ripple@latest
+go install github.com/bmbstack/ripple/cmd/ripple@latest
+go install github.com/bmbstack/ripple/protoc/protoc-gen-gofast@latest
 ripple new rippleApp
 cd $GOPATH/src/rippleApp
 go mod init

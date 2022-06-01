@@ -46,3 +46,12 @@ caches: [
     "db": 1
   }
 ]
+nacos:
+  host: "nacos.com"
+  port: 8848
+  namespaceId: "public"
+  cluster: "ripple_user"
+  group: "DEFAULT_GROUP"
+  cacheDir: "./cache"
+  logDir: "./log"
+  server: "127.0.0.1:18090"

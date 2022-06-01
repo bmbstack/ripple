@@ -8,6 +8,7 @@ package proto;
 // The User service definition.
 service User {
   rpc GetInfo (GetInfoReq) returns (GetInfoReply) {}
+  rpc SayHello (SayHelloReq) returns (SayHelloReply) {}
 }
 
 message GetInfoReq {
@@ -16,4 +17,12 @@ message GetInfoReq {
 
 message GetInfoReply {
   string name = 1;
+}
+
+message SayHelloReq {
+  uint64 num = 1;
+}
+
+message SayHelloReply {
+  string content = 1;
 }

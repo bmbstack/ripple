@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/bmbstack/ripple/fixtures/forum/scripts"
+	"github.com/bmbstack/ripple/fixtures/forum/internal/scripts"
 	. "github.com/bmbstack/ripple/helper"
 	"github.com/labstack/gommon/color"
 	"github.com/urfave/cli/v2"
@@ -39,6 +39,11 @@ func main() {
 		Email: "wangmingjob@icloud.com",
 	}}
 	app.Flags = []cli.Flag{
+		&cli.StringFlag{
+			Name:        "conf",
+			DefaultText: "./config",
+			Usage:       "配置文件路径",
+		},
 		&cli.StringFlag{
 			Name:        "env",
 			DefaultText: "dev",
