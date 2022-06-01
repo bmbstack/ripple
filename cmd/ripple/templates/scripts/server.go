@@ -2,7 +2,6 @@ package scripts
 
 import (
 	"github.com/bmbstack/ripple"
-	_ "github.com/bmbstack/ripple/cmd/ripple/templates/controllers"
 	"github.com/bmbstack/ripple/cmd/ripple/templates/internal/controllers"
 	"github.com/bmbstack/ripple/cmd/ripple/templates/internal/initial"
 )
