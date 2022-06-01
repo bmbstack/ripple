@@ -18,9 +18,9 @@ go run main.go --env dev s
 ## Upgrade
 
 ```shell
-go get github.com/bmbstack/ripple@v0.8.7
-go install github.com/bmbstack/ripple/cmd/ripple@v0.8.7
-go install github.com/bmbstack/ripple/protoc/protoc-gen-gofast
+go get github.com/bmbstack/ripple@latest
+go install github.com/bmbstack/ripple/cmd/ripple@latest
+go install github.com/bmbstack/ripple/protoc/protoc-gen-gofast@latest
 go mod tidy
 go mod vendor
 go run main.go --env dev s
