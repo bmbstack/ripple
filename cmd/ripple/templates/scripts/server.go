@@ -2,9 +2,9 @@ package scripts
 
 import (
 	"github.com/bmbstack/ripple"
-	"github.com/bmbstack/ripple/cmd/ripple/templates/controllers"
 	_ "github.com/bmbstack/ripple/cmd/ripple/templates/controllers"
-	"github.com/bmbstack/ripple/cmd/ripple/templates/initial"
+	"github.com/bmbstack/ripple/cmd/ripple/templates/internal/controllers"
+	"github.com/bmbstack/ripple/cmd/ripple/templates/internal/initial"
 )
 
 func RunServer() {

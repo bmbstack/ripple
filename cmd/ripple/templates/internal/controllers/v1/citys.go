@@ -1,9 +1,9 @@
 package v1
 
 import (
+	. "github.com/bmbstack/ripple/cmd/ripple/templates/internal/helper"
 	"net/http"
 
-	. "github.com/bmbstack/ripple/cmd/ripple/templates/helper"
 	"github.com/labstack/echo/v4"
 )
 
