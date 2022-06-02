@@ -12,7 +12,8 @@ ripple new rippleApp
 cd $GOPATH/src/rippleApp
 go mod init
 go mod tidy
-go run main.go --env dev s
+go mod vendor
+go run cmd/main.go --env dev s
 ```
 
 ## Upgrade
@@ -23,15 +24,19 @@ go install github.com/bmbstack/ripple/cmd/ripple@latest
 go install github.com/bmbstack/ripple/protoc/protoc-gen-gofast@latest
 go mod tidy
 go mod vendor
-go run main.go --env dev s
+go run cmd/main.go --env dev s
 ```
+
 If you use nacos, we recommend you:
+
 ```shell
 go get github.com/smallnest/rpcx@v1.7.3
 ```
-Then, Open the url:    [http://127.0.0.1:8090](http://127.0.0.1:8090)
+
+Then, Open the url: [http://127.0.0.1:8090](http://127.0.0.1:8090)
 
 ## Command
+
 ```
 NAME:
    ripple - Command line tool to managing your Ripple application
@@ -40,7 +45,7 @@ USAGE:
    ripple [global options] command [command options] [arguments...]
 
 VERSION:
-   0.8.7
+   1.0.1
 
 AUTHOR:
    wangmingjob <wangmingjob@icloud.com>
@@ -48,7 +53,7 @@ AUTHOR:
 COMMANDS:
    new      Create a Ripple application
    run, r   Run the Ripple application
-   gen, g   Auto generate code (*.pb.go), args: path, eg: ripple g proto
+   gen, g   Auto generate code, *.proto => *.pb.go; req,resp => *.controller.go && *.service.go, eg: ripple g path
    help, h  Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
@@ -56,9 +61,62 @@ GLOBAL OPTIONS:
    --version, -v  print the version (default: false)
 ```
 
-1. `ripple g`或者`ripple g dir`会生成一些代码，目前支持生成proto文件对应的*.pb.go 
+备注：`ripple g`或者`ripple g path`会生成一些代码，其中path必须是go.mod的父级目录，也就是工程的主目录。
+**例如本项目参考工程fixtures/form, 执行：`ripple g fixture/form`**
 
-## RPC client call, eg(fixture/form):
+* *.proto => \*.pb.go, *.rpc.go(internal/rpc目录下)
+* *.dto.go => *.controller.go(internal/controllers/v1目录下), *.service.go(internal/service目录下)
+
+*.dto.go的写法
+```go
+// ReqUserInfo
+// @RippleApi
+// @Uri /v1/user/info
+// @Method GET
+type ReqUserInfo struct {
+	ID uint64 `form:"id" json:"id" binding:"required"`
+}
+
+type RespUserInfo struct {
+	ID   uint64 `json:"id"`
+	Name string `json:"name"`
+}
+
+```
+
+This is the structure of the `rippleApp` list application that will showcase how you can build web apps with `ripple`:
+
+```shell
+.
+├── Makefile
+├── cmd                         // 程序入口
+│   └── main.go
+├── config                      // 配置文件
+│   ├── config.dev.yaml
+│   ├── config.prod.yaml
+│   └── config.test.yaml
+├── frontend                    // 前端页面
+│   ├── static
+│   └── templates
+├── internal
+│   ├── controllers             // `ripple gen`固定输出目录 controllers/v1
+│   ├── dto                     // `ripple gen`输入源 *.dto.go
+│   ├── helper
+│   ├── initial
+│   ├── models
+│   ├── rpc                     // `ripple gen`固定输出目录
+│   ├── scripts
+│   └── services                // `ripple gen`固定输出目录
+└── proto                       // `ripple gen`固定输入源 *.proto
+    ├── user.pb.go
+    └── user.proto
+
+15 directories, 7 files
+
+```
+
+## Rpc client call, eg (fixture/form):
+
 ```
 userClient := proto.NewUserClient("DEFAULT_GROUP", "ripple_user")
 req := &proto.GetInfoReq{
@@ -66,7 +124,9 @@ req := &proto.GetInfoReq{
 }
 reply, _ := userClient.GetInfo(context.Background(), req)
 ```
-## RPC server register, eg(fixture/form):
+
+## Rpc server register, eg (fixture/form):
+
 ```
 ripple.Default().RegisterRpc(proto.ServiceNameOfUser, &UserRpc{}, "")
 ripple.Default().RunRpc()
@@ -118,38 +178,6 @@ Middlewares handle:
 - Simplicity. The design is simple, easy to understand and doesn't introduce many layers between you and the standard library. It is a goal of the project that users should be able to understand the whole framework in a single day.
 - Relevance. `ripple` doesn't assume anything. We focus on things that matter, this way we are able to ensure easy maintenance and keep the system well-organized, well-planned and sweet.
 - Elegance. `ripple` uses golang best practises. We are not afraid of heights, it's just that we need a parachute in our backpack. The source code is heavily documented, any functionality should be well explained and well tested.
-
-## Project structure
-
-This is the structure of the `rippleApp` list application that will showcase how you can build web apps with `ripple`:
-
-```shell
-.
-├── config
-│   ├── config.dev.yaml
-│   ├── config.prod.yaml
-│   └── config.test.yaml
-├── controllers
-│   ├── router.go
-│   └── v1
-├── frontend
-│   ├── static
-│   └── templates
-├── helper
-│   └── helper.go
-├── initial
-│   └── logger.go
-├── main.go
-├── models
-│   ├── one
-│   └── two
-└── scripts
-    ├── init.go
-    └── server.go
-
-12 directories, 9 files
-
-```
 
 ## Configurations
 
@@ -236,6 +264,7 @@ host                  | the cache host
 port                  | the cache port
 password              | the cache password
 nacos              | the aliyun nacos config
+
 ## Models
 
 ripple uses the [gorm](https://gorm.io/gorm) library as its Object Relational Mapper, so you won't need to learn anything fancy. In our rippleApp app, we need to define a User model that will be used to store our todo details.
