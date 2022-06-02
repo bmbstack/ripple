@@ -61,11 +61,19 @@ GLOBAL OPTIONS:
    --version, -v  print the version (default: false)
 ```
 
-备注：`ripple g`或者`ripple g path`会生成一些代码，其中path必须是go.mod的父级目录，也就是工程的主目录。
-**例如本项目参考工程fixtures/form, 执行：`ripple g fixture/form`**
+Note: `ripple g` or `ripple g path` will generate some code, and the path must be the parent directory of go.mod, that is, the main directory of the project. 
+For example, the demo project `fixtures/form`, and you will execute command: 
+```shell
+ripple g fixture/form
+```
+or 
+```shell
+cd fixture/form
+ripple g
+```
 
-* *.proto => \*.pb.go, *.rpc.go(internal/rpc目录下)
-* *.dto.go => *.controller.go(internal/controllers/v1目录下), *.service.go(internal/service目录下)
+* *.proto => \*.pb.go, *.rpc.go(internal/rpc)
+* *.dto.go => *.controller.go(internal/controllers/v1), *.service.go(internal/service)
 
 *.dto.go的写法
 ```go
