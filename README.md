@@ -45,7 +45,7 @@ USAGE:
    ripple [global options] command [command options] [arguments...]
 
 VERSION:
-   1.0.1
+   1.0.2
 
 AUTHOR:
    wangmingjob <wangmingjob@icloud.com>
@@ -53,10 +53,11 @@ AUTHOR:
 COMMANDS:
    new      Create a Ripple application
    run, r   Run the Ripple application
-   gen, g   Auto generate code, *.proto => *.pb.go; req,resp => *.controller.go && *.service.go, eg: ripple g path
+   gen, g   Auto generate code, *.proto => *.pb.go *.rpc.go; *.dto.go => *.controller.go && *.service.go, eg: ripple g path
    help, h  Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
+   --env value    执行环境 (开发环境dev(只有ripple作者会使用)、线上环境prod) (default: prod)
    --help, -h     show help (default: false)
    --version, -v  print the version (default: false)
 ```
