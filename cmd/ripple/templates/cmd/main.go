@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/bmbstack/ripple/cmd/ripple/templates/scripts"
+	"github.com/bmbstack/ripple/cmd/ripple/templates/internal/scripts"
 	. "github.com/bmbstack/ripple/helper"
 	"github.com/labstack/gommon/color"
 	"github.com/urfave/cli/v2"
@@ -39,7 +39,14 @@ func main() {
 	}}
 	app.Flags = []cli.Flag{
 		&cli.StringFlag{
+			Name:        "conf",
+			Value:       "./config",
+			DefaultText: "./config",
+			Usage:       "配置文件目录",
+		},
+		&cli.StringFlag{
 			Name:        "env",
+			Value:       "dev",
 			DefaultText: "dev",
 			Usage:       "执行环境 (开发环境dev、测试环境test、线上环境prod)",
 		},

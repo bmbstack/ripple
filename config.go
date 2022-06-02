@@ -60,6 +60,7 @@ func InitConfig(env string) {
 }
 
 func InitConfigWithPath(env string, configPath string) {
+	fmt.Println(fmt.Sprintf("配置文件路径: %s", configPath))
 	fmt.Println(fmt.Sprintf("执行环境: %s", env))
 	e = env
 	v = viper.New()

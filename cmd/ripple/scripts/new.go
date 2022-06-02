@@ -22,11 +22,12 @@ const (
 )
 
 var (
-	PackageTemplates = fmt.Sprintf("github.com/bmbstack/ripple@v%s/cmd/ripple/templates", ripple.Version())
+	PackageTemplates    = fmt.Sprintf("github.com/bmbstack/ripple@v%s/cmd/ripple/templates", ripple.Version())
+	PackageTemplatesDev = "github.com/bmbstack/ripple/cmd/ripple/templates"
 )
 
 // NewApplication create a new application with the appName
-func NewApplication(appName string) {
+func NewApplication(env, appName string) {
 	logger.Logger.Info("New application " + appName)
 	appPath, err := getAppPath(appName)
 	if err != nil {
@@ -44,6 +45,9 @@ func NewApplication(appName string) {
 	fmt.Println("gopath: ", os.Getenv("GOPATH"))
 	goPath := goPathArray[0]
 	templateAppPath := path.Join(goPath, "pkg", "mod", PackageTemplates)
+	if strings.EqualFold(env, "dev") {
+		templateAppPath = path.Join(goPath, "src", PackageTemplatesDev)
+	}
 	err = copyApplication(templateAppPath, appPath)
 	if err != nil {
 		logger.Logger.Error(fmt.Sprintf("Error copying project %s, srcPath: %s", err, templateAppPath))

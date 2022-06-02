@@ -21,7 +21,7 @@ func Commands() []*cli.Command {
 					return errors.New(msg)
 				}
 				applicationName := c.Args().First()
-				NewApplication(applicationName)
+				NewApplication(c.String("env"), applicationName)
 				return nil
 			},
 		},
@@ -44,7 +44,7 @@ func Commands() []*cli.Command {
 		{
 			Name:    "gen",
 			Aliases: []string{"g"},
-			Usage:   "Auto generate code, *.proto => *.pb.go; req,resp => *.controller.go && *.service.go, eg: ripple g path",
+			Usage:   "Auto generate code, *.proto => *.pb.go *.rpc.go; *.dto.go => *.controller.go && *.service.go, eg: ripple g path",
 			Action: func(c *cli.Context) error {
 				path := "."
 				if c.Args().Len() > 0 {

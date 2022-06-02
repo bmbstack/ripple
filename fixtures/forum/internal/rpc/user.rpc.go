@@ -5,19 +5,20 @@ package rpc
 
 import (
 	"context"
-
 	"github.com/bmbstack/ripple/fixtures/forum/proto"
 )
 
 type UserRpc struct {
 }
 
+// GetInfo is server rpc method as defined
 func (this *UserRpc) GetInfo(ctx context.Context, req *proto.GetInfoReq, reply *proto.GetInfoReply) (err error) {
 	// TODO: add some code
 	*reply = proto.GetInfoReply{}
 	return nil
 }
 
+// SayHello is server rpc method as defined
 func (this *UserRpc) SayHello(ctx context.Context, req *proto.SayHelloReq, reply *proto.SayHelloReply) (err error) {
 	// TODO: add some code
 	*reply = proto.SayHelloReply{}

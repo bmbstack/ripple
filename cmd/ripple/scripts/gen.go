@@ -111,7 +111,7 @@ func generateCtl(currentPath, source, module string) {
 	// create *.controller.go
 	logger.Logger.Info(fmt.Sprintf("auto generate %s.controller.go, ref file: %s", module, source))
 	pkg := "v1"
-	dir := path.Join(path.Dir(currentPath), "internal", "controllers", pkg)
+	dir := path.Join(currentPath, "internal", "controllers", pkg)
 	err = os.MkdirAll(dir, Permissions)
 	if err != nil {
 		logger.Logger.Error(fmt.Sprintf("The project path could not be created: %s", err))
@@ -208,7 +208,7 @@ func generateService(currentPath string, source, module string) {
 	logger.Logger.Info(fmt.Sprintf("auto generate %s.service.go, ref file: %s", module, source))
 
 	pkg := "services"
-	dir := path.Join(path.Dir(currentPath), "internal", pkg)
+	dir := path.Join(currentPath, "internal", pkg)
 	err := os.MkdirAll(dir, Permissions)
 	if err != nil {
 		logger.Logger.Error(fmt.Sprintf("The project path could not be created: %s", err))

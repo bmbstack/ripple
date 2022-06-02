@@ -7,6 +7,6 @@ import (
 )
 
 func Init(c *cli.Context) {
-	ripple.InitConfig(c.String("env"))
+	ripple.InitConfigWithPath(c.String("env"), c.String("conf"))
 	initial.InitLogger()
 }

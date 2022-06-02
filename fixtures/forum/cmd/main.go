@@ -41,11 +41,13 @@ func main() {
 	app.Flags = []cli.Flag{
 		&cli.StringFlag{
 			Name:        "conf",
+			Value:       "./config",
 			DefaultText: "./config",
 			Usage:       "配置文件路径",
 		},
 		&cli.StringFlag{
 			Name:        "env",
+			Value:       "dev",
 			DefaultText: "dev",
 			Usage:       "执行环境 (开发环境dev、测试环境test、线上环境prod)",
 		},

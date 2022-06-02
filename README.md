@@ -75,7 +75,7 @@ ripple g
 * *.proto => \*.pb.go, *.rpc.go(internal/rpc)
 * *.dto.go => *.controller.go(internal/controllers/v1), *.service.go(internal/service)
 
-*.dto.go的写法
+`*.dto.go` example:
 ```go
 // ReqUserInfo
 // @RippleApi
@@ -97,29 +97,28 @@ This is the structure of the `rippleApp` list application that will showcase how
 ```shell
 .
 ├── Makefile
-├── cmd                         // 程序入口
+├── cmd                               // 程序入口
 │   └── main.go
-├── config                      // 配置文件
+├── config                            // 配置文件
 │   ├── config.dev.yaml
 │   ├── config.prod.yaml
 │   └── config.test.yaml
-├── frontend                    // 前端页面
+├── frontend                          // 前端页面
 │   ├── static
 │   └── templates
+├── go.mod
+├── go.sum
 ├── internal
-│   ├── controllers             // `ripple gen`固定输出目录 controllers/v1
-│   ├── dto                     // `ripple gen`输入源 *.dto.go
+│   ├── controllers                  // `ripple gen`固定输出目录 controllers/v1
+│   ├── dto                          // `ripple gen`的输入源 *.dto.go
 │   ├── helper
 │   ├── initial
-│   ├── models
-│   ├── rpc                     // `ripple gen`固定输出目录
+│   ├── rpc                          // `ripple gen`固定输出目录
 │   ├── scripts
-│   └── services                // `ripple gen`固定输出目录
-└── proto                       // `ripple gen`固定输入源 *.proto
+│   └── services                     // `ripple gen`固定输出目录
+└── proto                            // `ripple gen`固定输入源 *.proto
     ├── user.pb.go
     └── user.proto
-
-15 directories, 7 files
 
 ```
 
