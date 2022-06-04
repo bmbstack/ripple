@@ -14,7 +14,7 @@ import (
 func RouteAPI() {
 	echoMux := ripple.Default().GetEcho()
 	echoMux.GET("/", func(ctx echo.Context) error {
-		userClient := proto.NewUserClient("DEFAULT_GROUP", "ripple_user")
+		userClient := proto.NewUserClient()
 		req := &proto.GetInfoReq{
 			Id: 1,
 		}
