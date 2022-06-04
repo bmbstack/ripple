@@ -89,9 +89,9 @@ func generateCtl(currentPath, source, module string) {
 			logger.Logger.Debug(line)
 
 			if strings.HasPrefix(line, "@Uri") {
-				uri = parseRouterUri(line)
+				uri = parseKey("@Uri", line)
 			} else if strings.HasPrefix(line, "@Method") {
-				method = parseRouterMethod(line)
+				method = parseKey("@Method", line)
 			}
 		}
 		if !strings.HasPrefix(item.Name, "Req") {
@@ -302,24 +302,14 @@ func collect(currentPath string, suffix string) (list []fileInfo) {
 	return list
 }
 
-func parseRouterUri(line string) (uri string) {
+func parseKey(key, line string) (uri string) {
 	arr := strings.Split(line, " ")
 	if len(arr) >= 2 {
-		if strings.EqualFold("@Uri", arr[0]) {
+		if strings.EqualFold(key, arr[0]) {
 			uri = arr[1]
 		}
 	}
 	return uri
-}
-
-func parseRouterMethod(line string) (method string) {
-	arr := strings.Split(line, " ")
-	if len(arr) >= 2 {
-		if strings.EqualFold("@Method", arr[0]) {
-			method = arr[1]
-		}
-	}
-	return method
 }
 
 func getAppPkg() (string, error) {

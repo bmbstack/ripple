@@ -16,9 +16,3 @@ func (this *UserRpc) GetInfo(ctx context.Context, req *proto.GetInfoReq, reply *
 	*reply = proto.GetInfoReply{}
 	return nil
 }
-
-func (this *UserRpc) SayHello(ctx context.Context, req *proto.SayHelloReq, reply *proto.SayHelloReply) (err error) {
-	// TODO: add some code
-	*reply = proto.SayHelloReply{}
-	return nil
-}
