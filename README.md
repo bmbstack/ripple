@@ -76,6 +76,31 @@ ripple g
 * *.proto => \*.pb.go, *.rpc.go(internal/rpc)
 * *.dto.go => *.controller.go(internal/controllers/v1), *.service.go(internal/service)
 
+*.proto example
+```protobuf
+syntax = "proto3";
+
+// @RippleRpc
+// @NacosGroup DEFAULT_GROUP
+// @NacosCluster orderserver
+package proto;
+
+// The User service definition.
+service User {
+  rpc GetInfo (GetInfoReq) returns (GetInfoReply) {}
+}
+
+message GetInfoReq {
+  uint64 id = 1;
+}
+
+message GetInfoReply {
+  string name = 1;
+}
+
+```
+`Note`: @RippleRpc, @NacosGroup, @NacosCluster
+
 `*.dto.go` example:
 ```go
 // ReqUserInfo
@@ -92,6 +117,7 @@ type RespUserInfo struct {
 }
 
 ```
+`Note`: @RippleApi, @Uri, @Method
 
 This is the structure of the `rippleApp` list application that will showcase how you can build web apps with `ripple`:
 
@@ -126,7 +152,7 @@ This is the structure of the `rippleApp` list application that will showcase how
 ## Rpc client call, eg (fixture/form):
 
 ```
-userClient := proto.NewUserClient("DEFAULT_GROUP", "ripple_user")
+userClient := proto.NewUserClient()
 req := &proto.GetInfoReq{
 	Id: 1,
 }
