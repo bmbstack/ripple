@@ -2,8 +2,9 @@ package dto
 
 // ReqUserInfo
 // @RippleApi
-// @Uri /v1/user/info
+// @Uri /user/info
 // @Method GET
+// @Version v1
 type ReqUserInfo struct {
 	ID uint64 `form:"id" json:"id" binding:"required"`
 }
@@ -15,8 +16,9 @@ type RespUserInfo struct {
 
 // ReqUserExtra
 // @RippleApi
-// @Uri /v1/user/extra
+// @Uri /user/extra
 // @Method GET
+// @Version v1
 type ReqUserExtra struct {
 	ID uint64 `form:"id" json:"id" binding:"required"`
 }
@@ -28,8 +30,9 @@ type RespUserExtra struct {
 
 // ReqUserSay
 // @RippleApi
-// @Uri /v1/user/say
+// @Uri /user/say
 // @Method POST
+// @Version v1
 type ReqUserSay struct {
 	ID uint64 `form:"id" json:"id" binding:"required"`
 }

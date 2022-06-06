@@ -4,10 +4,8 @@
 package v1
 
 import (
-	"net/http"
-
 	"github.com/bmbstack/ripple/fixtures/forum/internal/dto"
-	"github.com/bmbstack/ripple/fixtures/forum/internal/helper"
+	"github.com/bmbstack/ripple/fixtures/forum/internal/ecode"
 	"github.com/labstack/echo/v4"
 )
 
@@ -17,43 +15,43 @@ type UserController struct {
 }
 
 func (this UserController) Setup() {
-	this.Group.GET("/v1/user/info", this.ActionUserInfo)
-	this.Group.GET("/v1/user/extra", this.ActionUserExtra)
-	this.Group.POST("/v1/user/say", this.ActionUserSay)
+	this.Group.GET("/user/info", this.ActionUserInfo)
+	this.Group.GET("/user/extra", this.ActionUserExtra)
+	this.Group.POST("/user/say", this.ActionUserSay)
 }
 
 func (this UserController) ActionUserInfo(ctx echo.Context) error {
 	params := &dto.ReqUserInfo{}
 	err := ctx.Bind(params)
 	if err != nil {
-		return ctx.JSON(http.StatusOK, helper.ErrorJSON(helper.ErrorMsgParamsValidateFailed, helper.ErrorCodeParamsValidateFailed))
+		return ecode.Error(ctx, ecode.ParamError)
 	}
 
 	// TODO: add some code
 	result := &dto.RespUserInfo{}
-	return ctx.JSON(http.StatusOK, helper.SuccessJSON(result))
+	return ecode.OK(ctx, result)
 }
 
 func (this UserController) ActionUserExtra(ctx echo.Context) error {
 	params := &dto.ReqUserExtra{}
 	err := ctx.Bind(params)
 	if err != nil {
-		return ctx.JSON(http.StatusOK, helper.ErrorJSON(helper.ErrorMsgParamsValidateFailed, helper.ErrorCodeParamsValidateFailed))
+		return ecode.Error(ctx, ecode.ParamError)
 	}
 
 	// TODO: add some code
 	result := &dto.RespUserExtra{}
-	return ctx.JSON(http.StatusOK, helper.SuccessJSON(result))
+	return ecode.OK(ctx, result)
 }
 
 func (this UserController) ActionUserSay(ctx echo.Context) error {
 	params := &dto.ReqUserSay{}
 	err := ctx.Bind(params)
 	if err != nil {
-		return ctx.JSON(http.StatusOK, helper.ErrorJSON(helper.ErrorMsgParamsValidateFailed, helper.ErrorCodeParamsValidateFailed))
+		return ecode.Error(ctx, ecode.ParamError)
 	}
 
 	// TODO: add some code
 	result := &dto.RespUserSay{}
-	return ctx.JSON(http.StatusOK, helper.SuccessJSON(result))
+	return ecode.OK(ctx, result)
 }

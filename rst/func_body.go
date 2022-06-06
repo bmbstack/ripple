@@ -135,7 +135,37 @@ func DeleteStmtFromFuncBody(df *dst.File, funcName string, stmt dst.Stmt) (modif
 	return
 }
 
-// DeleteCallExprFromFuncBody deletes any SelectorExpr equal to the given one, inside the body of function.
+// DeleteAllStmtFromFuncBodyWithRecv deletes any statement, inside the body of function,
+// that is semantically equal to the given statement.
+func DeleteAllStmtFromFuncBodyWithRecv(df *dst.File, recvName, funcName string) (modified bool) {
+	pre := func(c *dstutil.Cursor) bool {
+		node := c.Node()
+
+		switch node.(type) {
+		case *dst.FuncDecl:
+			if nn := node.(*dst.FuncDecl); nn.Name.Name == funcName {
+				if nn.Recv.NumFields() > 0 {
+					recvType := nn.Recv.List[0].Type
+					id := &dst.Ident{Name: recvName, Path: ""}
+					star := &dst.StarExpr{
+						X: id,
+					}
+					if nodesEqual(recvType, id) || nodesEqual(recvType, star) {
+						nn.Body.List = []dst.Stmt{}
+						modified = true
+						return false
+					}
+				}
+			}
+		}
+		return true
+	}
+
+	dstutil.Apply(df, pre, nil)
+	return
+}
+
+// DeleteSelectorExprFromFuncBody deletes any SelectorExpr equal to the given one, inside the body of function.
 func DeleteSelectorExprFromFuncBody(df *dst.File, funcName string, selectorExpr dst.Expr) (modified bool) {
 	var inside bool
 	var found bool

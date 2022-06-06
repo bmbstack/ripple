@@ -46,7 +46,7 @@ caches: [
     "db": 1
   }
 ]
-nacos:
+nacos2:
   host: "nacos.com"
   port: 8848
   namespaceId: "public"

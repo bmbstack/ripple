@@ -3,7 +3,7 @@ package controllers
 import (
 	"context"
 	"github.com/bmbstack/ripple"
-	v12 "github.com/bmbstack/ripple/fixtures/forum/internal/controllers/v1"
+	"github.com/bmbstack/ripple/fixtures/forum/internal/controllers/v1"
 	. "github.com/bmbstack/ripple/fixtures/forum/internal/helper"
 	"github.com/bmbstack/ripple/fixtures/forum/proto"
 	"github.com/labstack/echo/v4"
@@ -51,9 +51,12 @@ func RouteAPI() {
 	//===========================================================
 	v1Group := echoMux.Group("/v1")
 
-	homes := v12.HomeController{}
+	homes := v1.HomeController{}
 	homes.Register()
 
-	citys := v12.CityController{Group: v1Group}
+	citys := v1.CityController{Group: v1Group}
 	citys.Setup()
+
+	users := v1.UserController{Group: v1Group}
+	users.Setup()
 }
