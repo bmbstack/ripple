@@ -7,7 +7,7 @@ define build_arch
 	go mod tidy
 	go mod download
 	go mod vendor
-	CGO_ENABLED=0 GOOS=$(1) GOARCH=amd64 go build -mod=vendor -v
+	CGO_ENABLED=0 GOOS=$(1) GOARCH=amd64 go build -mod=vendor -o forum -v cmd/main.go
 endef
 
 build:
