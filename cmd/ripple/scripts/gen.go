@@ -3,7 +3,7 @@ package scripts
 import (
 	"fmt"
 	"github.com/bmbstack/ripple/cmd/ripple/logger"
-	"github.com/bmbstack/ripple/cmd/ripple/utils"
+	"github.com/bmbstack/ripple/cmd/ripple/util"
 	"github.com/bmbstack/ripple/rst"
 	"github.com/dave/dst"
 	"github.com/dave/dst/decorator/resolver/guess"
@@ -118,10 +118,10 @@ func generateCtl(currentPath, source, module string) {
 		return
 	}
 	target := filepath.Join(dir, fmt.Sprintf("%s.controller.go", module))
-	logger.Logger.Notice(fmt.Sprintf("check: %s, file exist: %t", target, utils.Exist(target)))
+	logger.Logger.Notice(fmt.Sprintf("check: %s, file exist: %t", target, util.Exist(target)))
 
-	upper := utils.StartToUpper(module)
-	if !utils.Exist(target) {
+	upper := util.StartToUpper(module)
+	if !util.Exist(target) {
 		// create file, write code to file
 		_, err := os.Create(target)
 		if err != nil {
@@ -214,11 +214,11 @@ func generateService(currentPath string, source, module string) {
 		logger.Logger.Error(fmt.Sprintf("The project path could not be created: %s", err))
 	}
 	target := filepath.Join(dir, fmt.Sprintf("%s.service.go", module))
-	logger.Logger.Notice(fmt.Sprintf("check: %s, file exist: %t", target, utils.Exist(target)))
+	logger.Logger.Notice(fmt.Sprintf("check: %s, file exist: %t", target, util.Exist(target)))
 
-	lower := utils.StartToLower(module)
-	upper := utils.StartToUpper(module)
-	if !utils.Exist(target) {
+	lower := util.StartToLower(module)
+	upper := util.StartToUpper(module)
+	if !util.Exist(target) {
 		// create file, write code to file
 		_, err := os.Create(target)
 		if err != nil {

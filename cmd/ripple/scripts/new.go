@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/bmbstack/ripple"
 	"github.com/bmbstack/ripple/cmd/ripple/logger"
-	"github.com/bmbstack/ripple/cmd/ripple/utils"
+	"github.com/bmbstack/ripple/cmd/ripple/util"
 	"github.com/labstack/gommon/color"
 	"io/ioutil"
 	"os"
@@ -181,7 +181,7 @@ func reifyApplication(templateAppPath, appPath string) error {
 
 // replaceExpressionInTemplates replace expression in the template
 func replaceExpressionInTemplates(templateAppPath, appPath string, extentions []string) error {
-	files, err := utils.CollectFiles(appPath, extentions)
+	files, err := util.CollectFiles(appPath, extentions)
 	if err != nil {
 		return err
 	}
@@ -204,7 +204,7 @@ func replaceExpressionInTemplates(templateAppPath, appPath string, extentions []
 		}
 
 		if strings.Contains(fileString, ExpressionAppName) || strings.Contains(fileString, ExpressionTemplatePkg) {
-			appName := utils.Substring(appPath, strings.LastIndex(appPath, "/")+1, len(appPath))
+			appName := util.Substring(appPath, strings.LastIndex(appPath, "/")+1, len(appPath))
 			fileString = strings.Replace(fileString, ExpressionAppName, appName, -1)
 			fileString = strings.Replace(fileString, ExpressionTemplatePkg, appName, -1)
 		}

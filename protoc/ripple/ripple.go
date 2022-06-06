@@ -3,7 +3,7 @@ package ripple
 import (
 	"bufio"
 	"fmt"
-	"github.com/bmbstack/ripple/cmd/ripple/utils"
+	"github.com/bmbstack/ripple/cmd/ripple/util"
 	"github.com/bmbstack/ripple/rst"
 	"github.com/dave/dst"
 	"github.com/dave/dst/decorator/resolver/guess"
@@ -306,10 +306,10 @@ func (r *ripple) generateRpcSource(file *generator.FileDescriptor, service *pb.S
 	if err != nil {
 		return
 	}
-	target := filepath.Join(dir, fmt.Sprintf("%s.rpc.go", utils.StartToLower(service.GetName())))
-	upper := utils.StartToUpper(service.GetName())
+	target := filepath.Join(dir, fmt.Sprintf("%s.rpc.go", util.StartToLower(service.GetName())))
+	upper := util.StartToUpper(service.GetName())
 	protoPkg := filepath.Join(appPkg, currentPath, "proto")
-	if !utils.Exist(target) {
+	if !util.Exist(target) {
 		// create file, write code to file
 		_, err := os.Create(target)
 		if err != nil {

@@ -1,7 +1,7 @@
 package rst
 
 import (
-	"github.com/bmbstack/ripple/cmd/ripple/utils"
+	"github.com/bmbstack/ripple/cmd/ripple/util"
 	"github.com/dave/dst"
 	"github.com/dave/dst/dstutil"
 	"go/token"
@@ -72,7 +72,7 @@ func GetAnnotLineInFuncDeclComment(df *dst.File, funcName, sign, annot string) (
 			if nn.Name.Name == funcName {
 				if hasTagInNodeDecs(nn.Decs.Start, sign) {
 					ret = getTagLineInNodeDecs(nn.Decs.Start, annot)
-					if utils.IsNotEmpty(ret) {
+					if util.IsNotEmpty(ret) {
 						return false
 					}
 				}
