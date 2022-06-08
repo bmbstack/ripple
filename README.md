@@ -45,7 +45,7 @@ USAGE:
    ripple [global options] command [command options] [arguments...]
 
 VERSION:
-   1.0.2
+   1.0.5
 
 AUTHOR:
    wangmingjob <wangmingjob@icloud.com>
@@ -53,7 +53,7 @@ AUTHOR:
 COMMANDS:
    new      Create a Ripple application
    run, r   Run the Ripple application
-   gen, g   Auto generate code, *.proto => *.pb.go *.rpc.go; *.dto.go => *.controller.go && *.service.go, eg: ripple g path
+   gen, g   Auto generate code, *.proto => *.pb.go *.rpc.go; *.dto.go => *.controller.go && *.service.go, eg: ripple g path component (path: dir/file; component: ''/proto/controller/service)
    help, h  Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
@@ -62,7 +62,7 @@ GLOBAL OPTIONS:
    --version, -v  print the version (default: false)
 ```
 
-Note: `ripple g` or `ripple g path` will generate some code, and the path must be the parent directory of go.mod, that is, the main directory of the project. 
+Note: `ripple g` or `ripple g path` or `ripple g path component` will generate some code, and the path must be the parent directory of go.mod, that is, the main directory of the project. 
 For example, the demo project `fixtures/form`, and you will execute command: 
 ```shell
 ripple g fixture/form
