@@ -17,7 +17,6 @@ type UserController struct {
 func (this UserController) Setup() {
 	this.Group.GET("/user/info", this.ActionUserInfo)
 	this.Group.GET("/user/extra", this.ActionUserExtra)
-	this.Group.POST("/user/say", this.ActionUserSay)
 }
 
 func (this UserController) ActionUserInfo(ctx echo.Context) error {
@@ -41,17 +40,5 @@ func (this UserController) ActionUserExtra(ctx echo.Context) error {
 
 	// TODO: add some code
 	result := &dto.RespUserExtra{}
-	return ecode.OK(ctx, result)
-}
-
-func (this UserController) ActionUserSay(ctx echo.Context) error {
-	params := &dto.ReqUserSay{}
-	err := ctx.Bind(params)
-	if err != nil {
-		return ecode.Error(ctx, ecode.ParamError)
-	}
-
-	// TODO: add some code
-	result := &dto.RespUserSay{}
 	return ecode.OK(ctx, result)
 }

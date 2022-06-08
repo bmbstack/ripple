@@ -2,6 +2,7 @@ package cache
 
 import (
 	"fmt"
+	"github.com/go-redis/redis/v8"
 	"strings"
 	"time"
 )
@@ -16,29 +17,56 @@ var stores = make(map[string]Store)
 
 // Store Cache is the interface that operates the cache data.
 type Store interface {
-	// Connect based on config string settings.
-	Connect(opt Options) error
-	// Client get client
+	connect(opt Options) error
+
 	Client() interface{}
-	// Key key
+
 	Key(key string) string
-	// Set puts value into cache with key and expire time.
 	Set(key, val string, expiration time.Duration)
-	// Get gets cached value by given key.
 	Get(key string) string
-	// Delete deletes cached value by given key.
+
+	HGet(key, field string) string
+	HGetAll(key string) map[string]string
+	HSet(key string, values ...interface{}) int64
+	HExists(key, field string) bool
+
+	HMGet(key string, fields ...string) []interface{}
+	HMSet(key string, values ...interface{}) bool
+
+	SCard(key string) int64
+	SAdd(key string, members ...interface{}) int64
+	SRem(key string, members ...interface{}) int64
+
+	LRange(key string, start, stop int64) []string
+	LPush(key string, values ...interface{}) int64
+	LLen(key string) int64
+
+	ZAdd(key string, members ...*redis.Z) int64
+	ZRange(key string, start, stop int64) []string
+	ZRank(key, member string) int64
+	ZScore(key, member string) float64
+	ZRem(key string, members ...interface{}) int64
+
+	SetEX(key string, value interface{}, expiration time.Duration) string
+	SetNX(key string, value interface{}, expiration time.Duration) bool
+	HSetNX(key, field string, value interface{}) bool
+	SScan(key string, cursor uint64, match string, count int64) ([]string, uint64)
+
+	Del(keys ...string) int64
 	Delete(key string)
-	// DeleteByPrefix deletes cached value by given prefix.
 	DeleteByPrefix(prefix string)
-	// Incr increases cached int-type value by given key as a counter.
+	HDel(key string, fields ...string) int64
+
 	Incr(key string) int64
-	// Decr decreases cached int-type value by given key as a counter.
 	Decr(key string) int64
-	// IsExist returns true if cached value exists.
+
+	Type(key string) string
+	TTL(key string) time.Duration
+	Expire(key string, expiration time.Duration) bool
+	Exists(keys ...string) int64
+
 	IsExist(key string) bool
-	// Touch touch
 	Touch(key string)
-	// Flush deletes all cached data.
 	Flush()
 }
 
@@ -54,6 +82,8 @@ type AdapterConfig struct {
 }
 
 type Options struct {
+	// alias
+	Alias string
 	// Name of adapter. Default is "redis".
 	Adapter string
 	// Adapter configuration, it's corresponding to adapter.
@@ -62,21 +92,16 @@ type Options struct {
 	Section string
 }
 
-func prepareOptions(options []Options) Options {
-	var opt Options
-	if len(options) > 0 {
-		opt = options[0]
-	}
-
+func prepareOptions(opt Options) Options {
 	if len(opt.Adapter) == 0 {
 		opt.Adapter = "redis"
 	}
 	return opt
 }
 
-func NewCache(alias string, options ...Options) (*Cache, error) {
+func NewCache(options Options) (*Cache, error) {
 	opt := prepareOptions(options)
-	adapterKey := fmt.Sprintf("%s_%s", opt.Adapter, alias)
+	adapterKey := fmt.Sprintf("%s_%s", opt.Adapter, opt.Alias)
 	if strings.EqualFold(opt.Adapter, "redis") {
 		Register(adapterKey, NewRedisCache())
 	} else if strings.EqualFold(opt.Adapter, "memory") {
@@ -93,11 +118,7 @@ func NewCache(alias string, options ...Options) (*Cache, error) {
 	newCache := &Cache{}
 	newCache.store = store
 	newCache.Opt = opt
-	return newCache, store.Connect(opt)
-}
-
-func (this *Cache) Connect(opt Options) error {
-	return this.store.Connect(opt)
+	return newCache, store.connect(opt)
 }
 
 func (this *Cache) Client() interface{} {

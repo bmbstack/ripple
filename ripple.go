@@ -23,7 +23,7 @@ var line1 = "=============================="
 var line2 = "================================"
 
 // VersionName 0.8.2以后使用yaml配置文件, 1.0.1升级了脚手架(protoc, ast gen)
-const VersionName = "1.0.4"
+const VersionName = "1.0.5"
 
 func Version() string {
 	return VersionName
@@ -85,7 +85,8 @@ func NewRipple() *Ripple {
 	caches := make(map[string]*cache.Cache)
 	if IsNotEmpty(config.Caches) {
 		for _, item := range config.Caches {
-			newCache, err := cache.NewCache(item.Alias, cache.Options{
+			newCache, err := cache.NewCache(cache.Options{
+				Alias:         item.Alias,
 				Adapter:       item.Adapter,
 				AdapterConfig: item.GetCacheAdapterConfig(),
 				Section:       item.Section,
@@ -127,7 +128,7 @@ func (this *Ripple) GetCache(alias string) *cache.Cache {
 	return this.Caches[alias]
 }
 
-// RegisterControllers register a controller for ripple App
+// RegisterController register a controller for ripple App
 func (this *Ripple) RegisterController(c Controller) {
 	if firstRegController {
 		fmt.Println(fmt.Sprintf("%s%s%s",

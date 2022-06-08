@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/bmbstack/ripple/cmd/ripple/templates/internal/scripts"
 	. "github.com/bmbstack/ripple/helper"
 	"github.com/labstack/gommon/color"
 	"github.com/urfave/cli/v2"
 	"os"
 	"time"
+
+	"github.com/bmbstack/ripple/cmd/ripple/templates/internal/scripts"
 )
 
 func Commands() []*cli.Command {

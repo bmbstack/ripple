@@ -19,7 +19,6 @@ import (
 )
 
 func Generate(currentPath, component string) {
-	logger.Logger.Info("generate code (*.pb.go, *.controller.go, *.service.go) ...")
 	appPkg, err := getAppPkg()
 	if err != nil {
 		logger.Logger.Error(fmt.Sprintf("parse go.mod err: %v", err))
@@ -28,18 +27,40 @@ func Generate(currentPath, component string) {
 	}
 	logger.Logger.Notice(fmt.Sprintf("the project package: %s", appPkg))
 
+	if strings.HasSuffix(currentPath, ".proto") {
+		logger.Logger.Debug(fmt.Sprintf("[%s]generate code *.pb.go, *.rpc.go, ref file: %s ...", "singleFile", currentPath))
+		goPath := getGoPath()
+		generateOnePb(goPath, currentPath)
+		return
+	} else if strings.HasSuffix(currentPath, ".dto.go") {
+		logger.Logger.Debug(fmt.Sprintf("[%s]generate code *.controller.go, *.service.go, ref file: %s ...", "singleFile", currentPath))
+		item := fileInfo{Name: getFileNameByPath(currentPath), Path: currentPath}
+		if !strings.Contains(currentPath, "internal") {
+			logger.Logger.Error("please put your dto file into the internal directory")
+			return
+		}
+		currentPath = currentPath[0:strings.Index(currentPath, "internal")]
+		generateOneController(currentPath, appPkg, item.Name, item.Path)
+		generateOneService(currentPath, item.Name, item.Path)
+		return
+	}
+
 	if strings.EqualFold(component, "") {
+		logger.Logger.Debug(fmt.Sprintf("[%s]generate code *.pb.go, *.rpc.go, *.controller.go, *.service.go ...", "all"))
 		generatePb(currentPath)
 		generateController(currentPath)
 		generateService(currentPath)
 	} else if strings.EqualFold(component, "proto") {
+		logger.Logger.Debug(fmt.Sprintf("[%s]generate code *.pb.go, *.rpc.go ...", component))
 		generatePb(currentPath)
 	} else if strings.EqualFold(component, "controller") {
+		logger.Logger.Debug(fmt.Sprintf("[%s]generate code *.controller.go ...", component))
 		generateController(currentPath)
 	} else if strings.EqualFold(component, "service") {
+		logger.Logger.Debug(fmt.Sprintf("[%s]generate code *.service.go ...", component))
 		generateService(currentPath)
 	} else {
-		logger.Logger.Error("Please input component name: '', prot, controlle, service")
+		logger.Logger.Error("Please input component name: '', proto, controller, service")
 	}
 
 	logger.Logger.Notice("auto generate file finish")
@@ -51,16 +72,20 @@ func generatePb(currentPath string) {
 
 	list := collect(currentPath, ".proto")
 	for _, item := range list {
-		logger.Logger.Info(fmt.Sprintf("auto generate *.pb.go, ref file: %s", item.Path))
-		cmd := fmt.Sprintf("protoc -I.:%s/src --gofast_out=plugins=ripple:. %s", goPath, item.Path)
-		logger.Logger.Debug(fmt.Sprintf("Run command: %s", cmd))
-		out, err := RunCommand("bash", "-c", cmd)
-		logger.Logger.Info(fmt.Sprintf("protoc gen out: %s", string(out)))
-		if err != nil {
-			logger.Logger.Error(fmt.Sprintf("protoc gen err: %s", err.Error()))
-		} else {
-			logger.Logger.Notice(fmt.Sprintf("ref file: %s, generate *.pb.go, *.rpc.go success", item.Path))
-		}
+		generateOnePb(goPath, item.Path)
+	}
+}
+
+func generateOnePb(goPath, itemPath string) {
+	logger.Logger.Info(fmt.Sprintf("auto generate *.pb.go, ref file: %s", itemPath))
+	cmd := fmt.Sprintf("protoc -I.:%s/src --gofast_out=plugins=ripple:. %s", goPath, itemPath)
+	logger.Logger.Debug(fmt.Sprintf("Run command: %s", cmd))
+	out, err := RunCommand("bash", "-c", cmd)
+	logger.Logger.Info(fmt.Sprintf("protoc gen out: %s", string(out)))
+	if err != nil {
+		logger.Logger.Error(fmt.Sprintf("protoc gen err: %s", err.Error()))
+	} else {
+		logger.Logger.Notice(fmt.Sprintf("ref file: %s, generate *.pb.go, *.rpc.go success", itemPath))
 	}
 }
 
@@ -74,48 +99,53 @@ func generateController(currentPath string) {
 
 	list := collect(currentPath, ".dto.go")
 	for _, item := range list {
-		nameArr := strings.Split(item.Name, ".")
-		if !strings.HasPrefix(item.Name, ".") && len(nameArr) > 0 {
-			module := nameArr[0]
-			source := item.Path
+		generateOneController(currentPath, appPkg, item.Name, item.Path)
+	}
+}
 
-			logger.Logger.Info(fmt.Sprintf("auto parse %s annotation according to the ast", source))
+func generateOneController(currentPath, appPkg, itemName, itemPath string) {
+	nameArr := strings.Split(itemName, ".")
+	if !strings.HasPrefix(itemName, ".") && len(nameArr) > 0 {
+		module := nameArr[0]
+		source := itemPath
 
-			pkgNames := map[string]string{"github.com/labstack/echo/v4": "echo"}
-			resolver := guess.WithMap(pkgNames)
-			dfs, _ := rst.ParseSrcFile(source, resolver)
+		logger.Logger.Info(fmt.Sprintf("auto parse %s annotation according to the ast", source))
 
-			routers := parseRouterFromAnnot(dfs, source)
-			if util.IsEmpty(routers) {
-				continue
-			}
+		pkgNames := map[string]string{"github.com/labstack/echo/v4": "echo"}
+		resolver := guess.WithMap(pkgNames)
+		dfs, _ := rst.ParseSrcFile(source, resolver)
 
-			// create ecode.go
-			generateEcode(currentPath)
+		routers := parseRouterFromAnnot(dfs, source)
+		if util.IsEmpty(routers) {
+			return
+		}
 
-			// create *.controller.go
-			logger.Logger.Info(fmt.Sprintf("auto generate %s.controller.go, ref file: %s", module, source))
-			pkg := "v1"
-			dir := path.Join(currentPath, "internal", "controllers", pkg)
-			err = os.MkdirAll(dir, Permissions)
+		// create ecode.go
+		generateEcode(currentPath)
+
+		// create *.controller.go
+		logger.Logger.Info(fmt.Sprintf("auto generate %s.controller.go, ref file: %s", module, source))
+		pkg := "v1"
+		dir := path.Join(currentPath, "internal", "controllers", pkg)
+		err := os.MkdirAll(dir, Permissions)
+		if err != nil {
+			logger.Logger.Error(fmt.Sprintf("The project path could not be created: %s", err))
+			return
+		}
+		target := filepath.Join(dir, fmt.Sprintf("%s.controller.go", module))
+		logger.Logger.Info(fmt.Sprintf("check: %s, file exist: %t", target, util.Exist(target)))
+
+		upper := util.StartToUpper(module)
+		if !util.Exist(target) {
+			// create file, write code to file
+			_, err := os.Create(target)
 			if err != nil {
-				logger.Logger.Error(fmt.Sprintf("The project path could not be created: %s", err))
+				logger.Logger.Error(fmt.Sprintf("%s not be created: %v", target, err))
 				return
 			}
-			target := filepath.Join(dir, fmt.Sprintf("%s.controller.go", module))
-			logger.Logger.Info(fmt.Sprintf("check: %s, file exist: %t", target, util.Exist(target)))
+			logger.Logger.Info(fmt.Sprintf("file: %s, create success", target))
 
-			upper := util.StartToUpper(module)
-			if !util.Exist(target) {
-				// create file, write code to file
-				_, err := os.Create(target)
-				if err != nil {
-					logger.Logger.Error(fmt.Sprintf("%s not be created: %v", target, err))
-					return
-				}
-				logger.Logger.Info(fmt.Sprintf("file: %s, create success", target))
-
-				code := fmt.Sprintf(`// Code generated by ripple g, You can edit it again.
+			code := fmt.Sprintf(`// Code generated by ripple g, You can edit it again.
 // source: %s
 
 package %s
@@ -131,62 +161,68 @@ type %[3]sController struct {
 
 func (this %[3]sController) Setup() {}
 		`, source, pkg, upper)
-				err = ioutil.WriteFile(target, []byte(code), Permissions)
-				if err != nil {
-					logger.Logger.Error(fmt.Sprintf("%s not be write: %v", target, err))
-					return
-				}
-			}
-
-			// convert to ast, append action && setup uri
-			df, err := rst.ParseSrcFile(target, resolver)
-			if err != nil {
-				logger.Logger.Error(fmt.Sprintf("file: %s, file syntax error, convert to ast error: %v", target, err))
-				return
-			}
-			logger.Logger.Info(fmt.Sprintf("file: %s, convert to ast success", target))
-
-			rst.DeleteAllStmtFromFuncBodyWithRecv(df, fmt.Sprintf("%sController", upper), "Setup")
-			for _, item := range routers {
-				// Action
-				hasAction := rst.HasFuncDeclWithRecvInFile(df, dst.FuncDecl{
-					Name: &dst.Ident{Name: item.Action},
-				}, fmt.Sprintf("%sController", upper))
-				hasResp := rst.HasStructDeclInFile(dfs, item.RespIdent)
-				if !hasResp {
-					logger.Logger.Error(fmt.Sprintf("resp struct is error, you must have the corresponding Resp struct: %s, ref file: %s", item.RespIdent, source))
-				}
-				if !hasAction && hasResp {
-					fd := createActionFunc(appPkg, currentPath, upper, item)
-					df.Decls = append(df.Decls, fd)
-				}
-
-				// Setup
-				routeStmt := &dst.ExprStmt{
-					X: &dst.CallExpr{
-						Fun: &dst.SelectorExpr{
-							X: &dst.SelectorExpr{
-								X:   dst.NewIdent("this"),
-								Sel: dst.NewIdent("Group"),
-							},
-							Sel: dst.NewIdent(item.Method),
-						},
-						Args: []dst.Expr{
-							&dst.BasicLit{Kind: token.STRING, Value: strconv.Quote(item.Uri)},
-							&dst.SelectorExpr{X: dst.NewIdent("this"), Sel: dst.NewIdent(item.Action)},
-						},
-					},
-				}
-				rst.AddStmtToFuncBodyEndWithRecv(df, fmt.Sprintf("%sController", upper), "Setup", routeStmt)
-			}
-
-			buf := rst.PrintToBuf(df, resolver, []rst.PkgAlias{})
-			err = ioutil.WriteFile(target, buf.Bytes(), Permissions)
+			err = ioutil.WriteFile(target, []byte(code), Permissions)
 			if err != nil {
 				logger.Logger.Error(fmt.Sprintf("%s not be write: %v", target, err))
-			} else {
-				logger.Logger.Notice(fmt.Sprintf("file: %s, generate success", target))
+				return
 			}
+		}
+
+		// convert to ast, append action && setup uri
+		df, err := rst.ParseSrcFile(target, resolver)
+		if err != nil {
+			logger.Logger.Error(fmt.Sprintf("file: %s, file syntax error, convert to ast error: %v", target, err))
+			return
+		}
+		logger.Logger.Info(fmt.Sprintf("file: %s, convert to ast success", target))
+
+		for _, item := range routers {
+			// Action
+			hasAction := rst.HasFuncDeclWithRecvInFile(df, dst.FuncDecl{
+				Name: &dst.Ident{Name: item.Action},
+			}, fmt.Sprintf("%sController", upper))
+			hasResp := rst.HasStructDeclInFile(dfs, item.RespIdent)
+			if !hasResp {
+				logger.Logger.Error(fmt.Sprintf("resp struct is error, you must have the corresponding Resp struct: %s, ref file: %s", item.RespIdent, source))
+			}
+			if !hasAction && hasResp {
+				fd := createActionFunc(appPkg, currentPath, upper, item)
+				df.Decls = append(df.Decls, fd)
+			}
+
+			// Setup
+			routeStmt := &dst.ExprStmt{
+				X: &dst.CallExpr{
+					Fun: &dst.SelectorExpr{
+						X: &dst.SelectorExpr{
+							X:   dst.NewIdent("this"),
+							Sel: dst.NewIdent("Group"),
+						},
+						Sel: dst.NewIdent(item.Method),
+					},
+					Args: []dst.Expr{
+						&dst.BasicLit{Kind: token.STRING, Value: strconv.Quote(item.Uri)},
+						&dst.SelectorExpr{X: dst.NewIdent("this"), Sel: dst.NewIdent(item.Action)},
+					},
+				},
+			}
+
+			arg := &dst.BasicLit{Kind: token.STRING, Value: strconv.Quote(item.Uri)}
+			sign := &dst.SelectorExpr{X: dst.NewIdent("this"), Sel: dst.NewIdent(item.Action)}
+			has := rst.HasArgInCallExpr(df, rst.Scope{FuncName: "Setup"}, item.Method, sign)
+			if has {
+				rst.ReplaceArgWithIndexInCallExpr(df, rst.Scope{FuncName: "Setup"}, item.Method, sign, 0, arg)
+			} else {
+				rst.AddStmtToFuncBodyEndWithRecv(df, fmt.Sprintf("%sController", upper), "Setup", routeStmt)
+			}
+		}
+
+		buf := rst.PrintToBuf(df, resolver, []rst.PkgAlias{})
+		err = ioutil.WriteFile(target, buf.Bytes(), Permissions)
+		if err != nil {
+			logger.Logger.Error(fmt.Sprintf("%s not be write: %v", target, err))
+		} else {
+			logger.Logger.Notice(fmt.Sprintf("file: %s, generate success", target))
 		}
 	}
 }
@@ -194,43 +230,48 @@ func (this %[3]sController) Setup() {}
 func generateService(currentPath string) {
 	list := collect(currentPath, ".dto.go")
 	for _, item := range list {
-		nameArr := strings.Split(item.Name, ".")
-		if !strings.HasPrefix(item.Name, ".") && len(nameArr) > 0 {
-			module := nameArr[0]
-			source := item.Path
+		generateOneService(currentPath, item.Name, item.Path)
+	}
+}
 
-			pkgNames := map[string]string{"github.com/labstack/echo/v4": "echo"}
-			resolver := guess.WithMap(pkgNames)
-			dfs, _ := rst.ParseSrcFile(source, resolver)
+func generateOneService(currentPath, itemName, itemPath string) {
+	nameArr := strings.Split(itemName, ".")
+	if !strings.HasPrefix(itemName, ".") && len(nameArr) > 0 {
+		module := nameArr[0]
+		source := itemPath
 
-			routers := parseRouterFromAnnot(dfs, source)
-			if util.IsEmpty(routers) {
-				continue
-			}
+		pkgNames := map[string]string{"github.com/labstack/echo/v4": "echo"}
+		resolver := guess.WithMap(pkgNames)
+		dfs, _ := rst.ParseSrcFile(source, resolver)
 
-			logger.Logger.Info(fmt.Sprintf("auto generate %s.service.go, ref file: %s", module, source))
+		routers := parseRouterFromAnnot(dfs, source)
+		if util.IsEmpty(routers) {
+			return
+		}
 
-			pkg := "services"
-			dir := path.Join(currentPath, "internal", pkg)
-			err := os.MkdirAll(dir, Permissions)
+		logger.Logger.Info(fmt.Sprintf("auto generate %s.service.go, ref file: %s", module, source))
+
+		pkg := "services"
+		dir := path.Join(currentPath, "internal", pkg)
+		err := os.MkdirAll(dir, Permissions)
+		if err != nil {
+			logger.Logger.Error(fmt.Sprintf("The project path could not be created: %s", err))
+		}
+		target := filepath.Join(dir, fmt.Sprintf("%s.service.go", module))
+		logger.Logger.Info(fmt.Sprintf("check: %s, file exist: %t", target, util.Exist(target)))
+
+		lower := util.StartToLower(module)
+		upper := util.StartToUpper(module)
+		if !util.Exist(target) {
+			// create file, write code to file
+			_, err := os.Create(target)
 			if err != nil {
-				logger.Logger.Error(fmt.Sprintf("The project path could not be created: %s", err))
+				logger.Logger.Error(fmt.Sprintf("%s not be created: %v", target, err))
+				return
 			}
-			target := filepath.Join(dir, fmt.Sprintf("%s.service.go", module))
-			logger.Logger.Info(fmt.Sprintf("check: %s, file exist: %t", target, util.Exist(target)))
+			logger.Logger.Info(fmt.Sprintf("file: %s, create success", target))
 
-			lower := util.StartToLower(module)
-			upper := util.StartToUpper(module)
-			if !util.Exist(target) {
-				// create file, write code to file
-				_, err := os.Create(target)
-				if err != nil {
-					logger.Logger.Error(fmt.Sprintf("%s not be created: %v", target, err))
-					return
-				}
-				logger.Logger.Info(fmt.Sprintf("file: %s, create success", target))
-
-				code := fmt.Sprintf(`// Code generated by ripple g, You can edit it again.
+			code := fmt.Sprintf(`// Code generated by ripple g, You can edit it again.
 // source: %s
 
 package %s
@@ -259,12 +300,11 @@ type %[4]sService struct {
 }
 		`, source, pkg, lower, upper)
 
-				err = ioutil.WriteFile(target, []byte(code), Permissions)
-				if err != nil {
-					logger.Logger.Error(fmt.Sprintf("%s not be write: %v", target, err))
-				} else {
-					logger.Logger.Notice(fmt.Sprintf("file: %s, generate success", target))
-				}
+			err = ioutil.WriteFile(target, []byte(code), Permissions)
+			if err != nil {
+				logger.Logger.Error(fmt.Sprintf("%s not be write: %v", target, err))
+			} else {
+				logger.Logger.Notice(fmt.Sprintf("file: %s, generate success", target))
 			}
 		}
 	}
@@ -427,6 +467,22 @@ func getAppPkg() (string, error) {
 		return "", err
 	}
 	return modFile.Module.Mod.Path, nil
+}
+
+func getGoPath() string {
+	goPathArray := strings.Split(os.Getenv("GOPATH"), ":")
+	if len(goPathArray) > 0 {
+		return goPathArray[0]
+	}
+	return ""
+}
+
+func getFileNameByPath(path string) string {
+	arr := strings.Split(path, "/")
+	if len(arr) >= 1 {
+		return arr[len(arr)-1]
+	}
+	return ""
 }
 
 func parseRouterFromAnnot(dfs *dst.File, source string) []routerInfo {

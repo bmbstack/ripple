@@ -49,6 +49,53 @@ func HasArgInCallExpr(df *dst.File, scope Scope, funcName string, arg dst.Expr) 
 	return
 }
 
+// ReplaceArgWithIndexInCallExpr replace arguments of the function call has given sign arg, then replace arg
+func ReplaceArgWithIndexInCallExpr(df *dst.File, scope Scope, funcName string, sign dst.Expr, pos int, arg dst.Expr) (ret bool) {
+	pre := func(c *dstutil.Cursor) bool {
+		node := c.Node()
+
+		switch node.(type) {
+		case *dst.CallExpr:
+			if !scope.IsInScope() {
+				return true
+			}
+
+			var found bool
+			nn := node.(*dst.CallExpr)
+			if ie, ok := nn.Fun.(*dst.Ident); ok && ie.Name == funcName {
+				found = true
+			}
+
+			if se, ok := nn.Fun.(*dst.SelectorExpr); ok && se.Sel.Name == funcName {
+				found = true
+			}
+
+			if found {
+				for _, cArg := range nn.Args {
+					if nodesEqual(sign, cArg) {
+						if pos >= 0 && pos < len(nn.Args) {
+							nn.Args[pos] = dst.Clone(arg).(dst.Expr)
+							ret = true
+						}
+					}
+				}
+				return false
+			}
+		default:
+			scope.TryEnterScope(node)
+		}
+		return true
+	}
+
+	post := func(c *dstutil.Cursor) bool {
+		scope.TryLeaveScope(c.Node())
+		return true
+	}
+
+	dstutil.Apply(df, pre, post)
+	return
+}
+
 // DeleteArgFromCallExpr deletes any arg, in the function call's argument list,
 // that is semantically equal to the given arg.
 func DeleteArgFromCallExpr(df *dst.File, scope Scope, funcName string, arg dst.Expr) (modified bool) {
@@ -126,6 +173,52 @@ func AddArgToCallExpr(df *dst.File, scope Scope, funcName string, arg dst.Expr, 
 				ce.Args = append(
 					args[:pos],
 					append([]dst.Expr{dst.Clone(arg).(dst.Expr)}, args[pos:]...)...)
+				modified = true
+				return false
+			}
+		default:
+			scope.TryEnterScope(node)
+		}
+		return true
+	}
+
+	post := func(c *dstutil.Cursor) bool {
+		scope.TryLeaveScope(c.Node())
+		return true
+	}
+
+	dstutil.Apply(df, pre, post)
+	return
+}
+
+// DeleteArgToCallExpr delete arg, to the function call's argument list, in the given position
+func DeleteArgToCallExpr(df *dst.File, scope Scope, funcName string, pos int) (modified bool) {
+	pre := func(c *dstutil.Cursor) bool {
+		node := c.Node()
+
+		switch node.(type) {
+		case *dst.CallExpr:
+			if !scope.IsInScope() {
+				return true
+			}
+
+			nn := node.(*dst.CallExpr)
+			var ce *dst.CallExpr
+
+			if ie, ok := nn.Fun.(*dst.Ident); ok && ie.Name == funcName {
+				ce = nn
+			}
+
+			if se, ok := nn.Fun.(*dst.SelectorExpr); ok && se.Sel.Name == funcName {
+				ce = nn
+			}
+
+			if ce != nil {
+				args := ce.Args
+				pos = normalizePos(pos, len(args))
+				ce.Args = append(
+					args[:pos],
+					args[pos+1:]...)
 				modified = true
 				return false
 			}

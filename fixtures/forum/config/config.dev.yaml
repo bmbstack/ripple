@@ -34,7 +34,7 @@ caches: [
     "host": "127.0.0.1",
     "port": 6379,
     "password": "123456",
-    "db": 1
+    "db": 12
   },
   {
     "alias": "two",
@@ -43,11 +43,11 @@ caches: [
     "host": "127.0.0.1",
     "port": 6379,
     "password": "123456",
-    "db": 1
+    "db": 11
   }
 ]
 nacos:
-  host: "nacos.com"
+  host: "mse-7b574dc2-nacos-ans.mse.aliyuncs.com"
   port: 8848
   namespaceId: "public"
   cluster: "ripple_user"

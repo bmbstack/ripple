@@ -1,0 +1,22 @@
+// 定义项目 API 的 proto 文件 可以同时描述 gRPC 和 HTTP API
+// protobuf 文件参考:
+//  - https://developers.google.com/protocol-buffers/
+syntax = "proto3";
+
+// @RippleRpc
+// @NacosGroup DEFAULT_GROUP
+// @NacosCluster orderserver
+package proto;
+
+// The Student service definition.
+service Student {
+  rpc Hello (HelloReq) returns (HelloReply) {}
+}
+
+message HelloReq {
+  uint64 id = 1;
+}
+
+message HelloReply {
+  string name = 1;
+}

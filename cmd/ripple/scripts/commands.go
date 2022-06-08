@@ -44,7 +44,7 @@ func Commands() []*cli.Command {
 		{
 			Name:    "gen",
 			Aliases: []string{"g"},
-			Usage:   "Auto generate code, *.proto => *.pb.go *.rpc.go; *.dto.go => *.controller.go && *.service.go, eg: ripple g path component (component: '', proto, controller, service)",
+			Usage:   "Auto generate code, *.proto => *.pb.go *.rpc.go; *.dto.go => *.controller.go && *.service.go, eg: ripple g path component (path: dir/file; component: ''/proto/controller/service)",
 			Action: func(c *cli.Context) error {
 				path := "."
 				component := ""

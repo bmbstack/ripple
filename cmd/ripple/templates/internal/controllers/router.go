@@ -2,11 +2,11 @@ package controllers
 
 import (
 	"github.com/bmbstack/ripple"
-	"github.com/bmbstack/ripple/cmd/ripple/templates/internal/controllers/v1"
-	. "github.com/bmbstack/ripple/cmd/ripple/templates/internal/helper"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"net/http"
+	
+	"github.com/bmbstack/ripple/cmd/ripple/templates/internal/controllers/v1"
+	"github.com/bmbstack/ripple/cmd/ripple/templates/internal/ecode"
 )
 
 func RouteAPI() {
@@ -15,7 +15,7 @@ func RouteAPI() {
 		result := map[string]interface{}{
 			"username": "tom",
 		}
-		return ctx.JSON(http.StatusOK, SuccessJSON(result))
+		return ecode.OK(ctx, result)
 	})
 
 	//===========================================================
