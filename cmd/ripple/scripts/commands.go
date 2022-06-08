@@ -44,13 +44,15 @@ func Commands() []*cli.Command {
 		{
 			Name:    "gen",
 			Aliases: []string{"g"},
-			Usage:   "Auto generate code, *.proto => *.pb.go *.rpc.go; *.dto.go => *.controller.go && *.service.go, eg: ripple g path",
+			Usage:   "Auto generate code, *.proto => *.pb.go *.rpc.go; *.dto.go => *.controller.go && *.service.go, eg: ripple g path component (component: '', proto, controller, service)",
 			Action: func(c *cli.Context) error {
 				path := "."
+				component := ""
 				if c.Args().Len() > 0 {
-					path = c.Args().First()
+					path = c.Args().Get(0)
+					component = c.Args().Get(1)
 				}
-				Generate(path)
+				Generate(path, component)
 				return nil
 			},
 		},
