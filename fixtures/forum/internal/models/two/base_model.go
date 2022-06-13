@@ -37,7 +37,8 @@ func (this *BaseModel) AfterFind(*gorm.DB) error {
 }
 
 func (this *BaseModel) GetCache(cacheKey string) string {
-	return Cache().Get(cacheKey)
+	result, _ := Cache().Get(cacheKey)
+	return result
 }
 
 func (this *BaseModel) SetCache(cacheKey string, data interface{}) {

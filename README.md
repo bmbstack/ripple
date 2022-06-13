@@ -45,7 +45,7 @@ USAGE:
    ripple [global options] command [command options] [arguments...]
 
 VERSION:
-   1.0.5
+   1.1.0
 
 AUTHOR:
    wangmingjob <wangmingjob@icloud.com>
@@ -53,7 +53,7 @@ AUTHOR:
 COMMANDS:
    new      Create a Ripple application
    run, r   Run the Ripple application
-   gen, g   Auto generate code, *.proto => *.pb.go *.rpc.go; *.dto.go => *.controller.go && *.service.go, eg: ripple g path component (path: dir/file; component: ''/proto/controller/service)
+   gen, g   Auto generate code, *.proto => *.pb.go *.rpc.go; *.dto.go => *.controller.go && *.service.go, eg: ripple g path component name (path: dir/file; component: ''/proto/controller/service, name: component name)
    help, h  Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
@@ -177,6 +177,19 @@ func (s *UserRpc) GetInfo(ctx context.Context, req *proto.GetInfoReq, reply *pro
 	return nil
 }
 ```
+
+## Cache (Redis)
+```go
+cache := ripple.Default().GetCache("cacheAlias")
+result, err := cache.HGetAll(context.Background(), "key").Result()
+```
+or 
+```go
+cache := ripple.Default().GetCache("cacheAlias")
+client := cache.Client().(*redis.Client)
+result, err := client.HGetAll(context.Background(), "key").Result()
+```
+
 
 ## Which features to include in a framework
 
