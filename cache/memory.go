@@ -6,6 +6,11 @@ import (
 	"time"
 )
 
+// NewMemoryCache creates and returns a new memory cache.
+func NewMemoryCache() *MemoryCache {
+	return &MemoryCache{items: make(map[string]*MemoryItem)}
+}
+
 // MemoryItem represents a memory cache item.
 type MemoryItem struct {
 	val        string
@@ -17,36 +22,6 @@ type MemoryItem struct {
 type MemoryCache struct {
 	lock  sync.RWMutex
 	items map[string]*MemoryItem
-}
-
-// NewMemoryCache creates and returns a new memory cache.
-func NewMemoryCache() *MemoryCache {
-	return &MemoryCache{items: make(map[string]*MemoryItem)}
-}
-
-// Forever put value into cache with key forever save
-func (c *MemoryCache) Forever(key, val string) error {
-	c.lock.Lock()
-	defer c.lock.Unlock()
-
-	c.items[key] = &MemoryItem{
-		val:        val,
-		created:    time.Now().Unix(),
-		expiration: 0,
-	}
-	return nil
-}
-
-func (c *MemoryCache) connect(opt Options) error {
-	return nil
-}
-
-func (r *MemoryCache) Client() interface{} {
-	return nil
-}
-
-func (r *MemoryCache) Key(key string) string {
-	return key
 }
 
 func (c *MemoryCache) Set(key, val string, expiration time.Duration) error {
@@ -119,6 +94,31 @@ func (c *MemoryCache) LLen(key string) (int64, error) {
 	panic("implement me")
 }
 
+func (c *MemoryCache) RPop(key string) (string, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *MemoryCache) RPopCount(key string, count int) ([]string, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *MemoryCache) RPopLPush(source, destination string) (string, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *MemoryCache) RPush(key string, values ...interface{}) (int64, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *MemoryCache) RPushX(key string, values ...interface{}) (int64, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (c *MemoryCache) ZAdd(key string, members ...*redis.Z) (int64, error) {
 	//TODO implement me
 	panic("implement me")
@@ -160,6 +160,56 @@ func (c *MemoryCache) HSetNX(key, field string, value interface{}) (bool, error)
 }
 
 func (c *MemoryCache) SScan(key string, cursor uint64, match string, count int64) ([]string, uint64, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *MemoryCache) RunScript(src string, keys []string, args ...interface{}) (interface{}, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *MemoryCache) GetBit(key string, offset int64) (int64, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *MemoryCache) SetBit(key string, offset int64, value int) (int64, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *MemoryCache) BitCount(key string, bitCount *redis.BitCount) (int64, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *MemoryCache) BitOpAnd(destKey string, keys ...string) (int64, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *MemoryCache) BitOpOr(destKey string, keys ...string) (int64, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *MemoryCache) BitOpXor(destKey string, keys ...string) (int64, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *MemoryCache) BitOpNot(destKey string, key string) (int64, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *MemoryCache) BitPos(key string, bit int64, pos ...int64) (int64, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *MemoryCache) BitField(key string, args ...interface{}) ([]int64, error) {
 	//TODO implement me
 	panic("implement me")
 }
@@ -227,4 +277,29 @@ func (c *MemoryCache) Touch(key string) error {
 func (c *MemoryCache) Flush() error {
 	//TODO implement me
 	panic("implement me")
+}
+
+// Forever put value into cache with key forever save
+func (c *MemoryCache) Forever(key, val string) error {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	c.items[key] = &MemoryItem{
+		val:        val,
+		created:    time.Now().Unix(),
+		expiration: 0,
+	}
+	return nil
+}
+
+func (c *MemoryCache) connect(opt Options) error {
+	return nil
+}
+
+func (r *MemoryCache) Client() interface{} {
+	return nil
+}
+
+func (r *MemoryCache) Key(key string) string {
+	return key
 }

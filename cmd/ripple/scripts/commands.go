@@ -5,6 +5,7 @@ import (
 	"github.com/bmbstack/ripple/cmd/ripple/logger"
 	"github.com/urfave/cli/v2"
 	"os/exec"
+	"strings"
 )
 
 // Commands
@@ -44,15 +45,22 @@ func Commands() []*cli.Command {
 		{
 			Name:    "gen",
 			Aliases: []string{"g"},
-			Usage:   "Auto generate code, *.proto => *.pb.go *.rpc.go; *.dto.go => *.controller.go && *.service.go, eg: ripple g path component (path: dir/file; component: ''/proto/controller/service)",
+			Usage:   "Auto generate code, *.proto => *.pb.go *.rpc.go; *.dto.go => *.controller.go && *.service.go, eg: ripple g path component name (path: dir/file; component: ''/proto/controller/service, name: component name)",
 			Action: func(c *cli.Context) error {
+				args := c.Args()
 				path := "."
-				component := ""
-				if c.Args().Len() > 0 {
-					path = c.Args().Get(0)
-					component = c.Args().Get(1)
+				component := "all"
+				name := ""
+				if !strings.EqualFold(args.Get(0), "") {
+					path = args.Get(0)
 				}
-				Generate(path, component)
+				if !strings.EqualFold(args.Get(1), "") {
+					component = args.Get(1)
+				}
+				if !strings.EqualFold(args.Get(2), "") {
+					name = args.Get(2)
+				}
+				Generate(path, component, name)
 				return nil
 			},
 		},

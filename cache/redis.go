@@ -112,6 +112,26 @@ func (r *RedisCache) LLen(key string) (int64, error) {
 	return r.client().LLen(context.Background(), r.Key(key)).Result()
 }
 
+func (r *RedisCache) RPop(key string) (string, error) {
+	return r.client().RPop(context.Background(), r.Key(key)).Result()
+}
+
+func (r *RedisCache) RPopCount(key string, count int) ([]string, error) {
+	return r.client().RPopCount(context.Background(), r.Key(key), count).Result()
+}
+
+func (r *RedisCache) RPopLPush(source, destination string) (string, error) {
+	return r.client().RPopLPush(context.Background(), r.Key(source), r.Key(destination)).Result()
+}
+
+func (r *RedisCache) RPush(key string, values ...interface{}) (int64, error) {
+	return r.client().RPush(context.Background(), r.Key(key), values...).Result()
+}
+
+func (r *RedisCache) RPushX(key string, values ...interface{}) (int64, error) {
+	return r.client().RPushX(context.Background(), r.Key(key), values...).Result()
+}
+
 func (r *RedisCache) ZAdd(key string, members ...*redis.Z) (int64, error) {
 	return r.client().ZAdd(context.Background(), r.Key(key), members...).Result()
 }
@@ -147,6 +167,11 @@ func (r *RedisCache) HSetNX(key, field string, value interface{}) (bool, error) 
 func (r *RedisCache) SScan(key string, cursor uint64, match string, count int64) (keys []string, cursorOut uint64, err error) {
 	keys, cursorOut, err = r.client().SScan(context.Background(), r.Key(key), cursor, match, count).Result()
 	return keys, cursorOut, err
+}
+
+func (r *RedisCache) RunScript(src string, keys []string, args ...interface{}) (interface{}, error) {
+	script := redis.NewScript(src)
+	return script.Run(context.Background(), r.client(), keys, args).Result()
 }
 
 func (r *RedisCache) Del(keys ...string) (int64, error) {
@@ -203,6 +228,54 @@ func (r *RedisCache) Exists(keys ...string) (int64, error) {
 		keyArray = append(keyArray, r.Key(key))
 	}
 	return r.client().Exists(context.Background(), keyArray...).Result()
+}
+
+func (r *RedisCache) GetBit(key string, offset int64) (int64, error) {
+	return r.client().GetBit(context.Background(), r.Key(key), offset).Result()
+}
+
+func (r *RedisCache) SetBit(key string, offset int64, value int) (int64, error) {
+	return r.client().SetBit(context.Background(), r.Key(key), offset, value).Result()
+}
+
+func (r *RedisCache) BitCount(key string, bitCount *redis.BitCount) (int64, error) {
+	return r.client().BitCount(context.Background(), r.Key(key), bitCount).Result()
+}
+
+func (r *RedisCache) BitOpAnd(destKey string, keys ...string) (int64, error) {
+	var keyArray []string
+	for _, key := range keys {
+		keyArray = append(keyArray, r.Key(key))
+	}
+	return r.client().BitOpAnd(context.Background(), r.Key(destKey), keyArray...).Result()
+}
+
+func (r *RedisCache) BitOpOr(destKey string, keys ...string) (int64, error) {
+	var keyArray []string
+	for _, key := range keys {
+		keyArray = append(keyArray, r.Key(key))
+	}
+	return r.client().BitOpOr(context.Background(), r.Key(destKey), keyArray...).Result()
+}
+
+func (r *RedisCache) BitOpXor(destKey string, keys ...string) (int64, error) {
+	var keyArray []string
+	for _, key := range keys {
+		keyArray = append(keyArray, r.Key(key))
+	}
+	return r.client().BitOpXor(context.Background(), r.Key(destKey), keyArray...).Result()
+}
+
+func (r *RedisCache) BitOpNot(destKey string, key string) (int64, error) {
+	return r.client().BitOpNot(context.Background(), r.Key(destKey), r.Key(key)).Result()
+}
+
+func (r *RedisCache) BitPos(key string, bit int64, pos ...int64) (int64, error) {
+	return r.client().BitPos(context.Background(), r.Key(key), bit, pos...).Result()
+}
+
+func (r *RedisCache) BitField(key string, args ...interface{}) ([]int64, error) {
+	return r.client().BitField(context.Background(), r.Key(key), args...).Result()
 }
 
 func (r *RedisCache) Exist(key string) bool {

@@ -23,7 +23,7 @@ var line1 = "=============================="
 var line2 = "================================"
 
 // VersionName 0.8.2以后使用yaml配置文件, 1.0.1升级了脚手架(protoc, ast gen)
-const VersionName = "1.0.6"
+const VersionName = "1.0.7"
 
 func Version() string {
 	return VersionName
@@ -158,6 +158,8 @@ func (this *Ripple) RegisterRpc(name string, rpc interface{}, metadata string) {
 		err := this.RpcServer.RegisterName(name, rpc, metadata)
 		if err != nil {
 			this.Logger.Error(fmt.Sprintf("Rpc register service error: %s", err.Error()))
+		} else {
+			this.Logger.Notice(fmt.Sprintf("Rpc register service success: %s, %v", name, rpc))
 		}
 	}
 }
@@ -167,7 +169,9 @@ func (this *Ripple) UnregisterRpc() {
 	if this.RpcServer != nil {
 		err := this.RpcServer.UnregisterAll()
 		if err != nil {
-			this.Logger.Error(fmt.Sprintf("Rpc unregisters services error: %s", err.Error()))
+			this.Logger.Error(fmt.Sprintf("Rpc unregisters all services error: %s", err.Error()))
+		} else {
+			this.Logger.Notice("Rpc unregisters all service success")
 		}
 	}
 }
@@ -181,6 +185,8 @@ func (this *Ripple) RunRpc() {
 				err := this.RpcServer.Serve("tcp", conf.Nacos.Server)
 				if err != nil {
 					this.Logger.Error(fmt.Sprintf("Rpc run error: %s", err.Error()))
+				} else {
+					this.Logger.Notice("Rpc run success")
 				}
 			}()
 		}

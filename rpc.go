@@ -13,11 +13,11 @@ import (
 // NewRpcServerNacos create rpc server
 func NewRpcServerNacos(nacos Nacos) *server.Server {
 	if IsEmpty(nacos.Server) {
-		fmt.Println(color.Green("=====Just RPC service caller, not RPC service provider====="))
+		fmt.Println(color.Green("RPC: Just RPC service caller, not RPC service provider"))
 		return nil
 	}
 	s := server.NewServer()
-	fmt.Println(color.Green("=====RPC service provider====="))
+	fmt.Println(color.Green("RPC: RPC service provider"))
 	clientConfig := constant.ClientConfig{
 		TimeoutMs:            10 * 1000,
 		BeatInterval:         5 * 1000,

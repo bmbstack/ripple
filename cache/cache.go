@@ -41,6 +41,11 @@ type Store interface {
 	LRange(key string, start, stop int64) ([]string, error)
 	LPush(key string, values ...interface{}) (int64, error)
 	LLen(key string) (int64, error)
+	RPop(key string) (string, error)
+	RPopCount(key string, count int) ([]string, error)
+	RPopLPush(source, destination string) (string, error)
+	RPush(key string, values ...interface{}) (int64, error)
+	RPushX(key string, values ...interface{}) (int64, error)
 
 	ZAdd(key string, members ...*redis.Z) (int64, error)
 	ZRange(key string, start, stop int64) ([]string, error)
@@ -52,6 +57,17 @@ type Store interface {
 	SetNX(key string, value interface{}, expiration time.Duration) (bool, error)
 	HSetNX(key, field string, value interface{}) (bool, error)
 	SScan(key string, cursor uint64, match string, count int64) ([]string, uint64, error)
+	RunScript(src string, keys []string, args ...interface{}) (interface{}, error)
+
+	GetBit(key string, offset int64) (int64, error)
+	SetBit(key string, offset int64, value int) (int64, error)
+	BitCount(key string, bitCount *redis.BitCount) (int64, error)
+	BitOpAnd(destKey string, keys ...string) (int64, error)
+	BitOpOr(destKey string, keys ...string) (int64, error)
+	BitOpXor(destKey string, keys ...string) (int64, error)
+	BitOpNot(destKey string, key string) (int64, error)
+	BitPos(key string, bit int64, pos ...int64) (int64, error)
+	BitField(key string, args ...interface{}) ([]int64, error)
 
 	Del(keys ...string) (int64, error)
 	Delete(key string) error

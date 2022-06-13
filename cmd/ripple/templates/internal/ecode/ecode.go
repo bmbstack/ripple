@@ -33,18 +33,26 @@ func OK(ctx echo.Context, data interface{}) error {
 //                  Error
 //==============================================
 
-func Error(ctx echo.Context, ecode Ecode) error {
+func Error(ctx echo.Context, err error) error {
+	ec, ok := err.(Ecode)
+	if !ok {
+		ec = ServerError
+	}
 	return ctx.JSON(http.StatusOK, map[string]interface{}{
-		"code": ecode.Code,
-		"msg":  ecode.Msg,
+		"code": ec.Code,
+		"msg":  ec.Msg,
 		"data": []map[string]interface{}{},
 	})
 }
 
-func ErrorWithHttpCode(ctx echo.Context, httpCode int, ecode Ecode) error {
+func ErrorWithHttpCode(ctx echo.Context, httpCode int, err error) error {
+	ec, ok := err.(Ecode)
+	if !ok {
+		ec = ServerError
+	}
 	return ctx.JSON(httpCode, map[string]interface{}{
-		"code": ecode.Code,
-		"msg":  ecode.Msg,
+		"code": ec.Code,
+		"msg":  ec.Msg,
 		"data": []map[string]interface{}{},
 	})
 }
