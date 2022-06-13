@@ -201,7 +201,7 @@ func (r *ripple) generateService(file *generator.FileDescriptor, service *pb.Ser
 			}
 			return &%[1]sClient{xclient: xc}
 		}
-	`, serviceName, group, cluster))
+	`, serviceName, cluster, group))
 	for _, method := range service.Method {
 		r.generateClientCode(service, method)
 	}
