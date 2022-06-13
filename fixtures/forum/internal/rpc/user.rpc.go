@@ -15,6 +15,7 @@ type UserRpc struct {
 func (this *UserRpc) GetInfo(ctx context.Context, req *proto.GetInfoReq, reply *proto.GetInfoReply) (err error) {
 	// TODO: add some code
 	*reply = proto.GetInfoReply{}
+	reply.Name = "Tom123"
 	return nil
 }
 

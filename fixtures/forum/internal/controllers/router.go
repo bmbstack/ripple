@@ -14,11 +14,10 @@ import (
 func RouteAPI() {
 	echoMux := ripple.Default().GetEcho()
 	echoMux.GET("/", func(ctx echo.Context) error {
-		userClient := proto.NewUserClient()
-		req := &proto.GetInfoReq{
-			Id: 1,
-		}
-		reply, _ := userClient.GetInfo(context.Background(), req)
+		uc := proto.NewUserClient()
+		req := &proto.GetInfoReq{Id: 1}
+		reply, _ := uc.GetInfo(context.Background(), req)
+
 		result := map[string]interface{}{
 			"username": reply.Name,
 		}

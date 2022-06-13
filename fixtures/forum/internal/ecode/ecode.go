@@ -7,6 +7,7 @@ import (
 	"net/http"
 )
 
+
 //==============================================
 //                  code
 //==============================================
@@ -74,3 +75,4 @@ func value(code int64, msg string) Ecode {
 func (this Ecode) Error() string {
 	return this.Msg
 }
+		
