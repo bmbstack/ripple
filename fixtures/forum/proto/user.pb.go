@@ -449,7 +449,7 @@ func newXClientForUser() (client.XClient, error) {
 		Port:   config.Nacos.Port,
 	}}
 
-	d, err := client1.NewNacosDiscovery(ServiceNameOfUser, "DEFAULT_GROUP", "orderserver", clientConfig, serverConfig)
+	d, err := client1.NewNacosDiscovery(ServiceNameOfUser, "orderserver", "DEFAULT_GROUP", clientConfig, serverConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -472,7 +472,7 @@ type UserClient struct {
 func NewUserClient() *UserClient {
 	xc, err := newXClientForUser()
 	if err != nil {
-		fmt.Println(fmt.Sprintf("Create rpcx client err: DEFAULT_GROUP", err.Error()))
+		fmt.Println(fmt.Sprintf("Create rpcx client err: orderserver", err.Error()))
 		return &UserClient{}
 	}
 	return &UserClient{xclient: xc}
