@@ -48,7 +48,7 @@ func NewApplication(env, appName string) {
 	if strings.EqualFold(env, "dev") {
 		templateAppPath = path.Join(goPath, "src", PackageTemplatesDev)
 	}
-	err = copyApplication(templateAppPath, appPath)
+	err = copyApplication(appName, templateAppPath, appPath)
 	if err != nil {
 		logger.Logger.Error(fmt.Sprintf("Error copying project %s, srcPath: %s", err, templateAppPath))
 		return
@@ -74,7 +74,7 @@ func getAppPath(appName string) (string, error) {
 	return path, nil
 }
 
-func copyApplication(templateAppPath, appPath string) error {
+func copyApplication(appName, templateAppPath, appPath string) error {
 
 	// Check that the folders up to the path exist, if not create them
 	// Make directory
@@ -113,7 +113,7 @@ func copyApplication(templateAppPath, appPath string) error {
 	logCreateAppFiles(appPath)
 
 	// Now reifyApplication
-	return reifyApplication(templateAppPath, appPath)
+	return reifyApplication(appName, templateAppPath, appPath)
 }
 
 // fileExists returns true if this file exists
@@ -164,8 +164,8 @@ func logCreateAppFiles(appPath string) {
 }
 
 // reifyApplication changes import refs within go files to the correct format
-func reifyApplication(templateAppPath, appPath string) error {
-	err := replaceExpressionInTemplates(templateAppPath, appPath, []string{".go", ".example"})
+func reifyApplication(appName, templateAppPath, appPath string) error {
+	err := replaceExpressionInTemplates(appName, templateAppPath, appPath, []string{".go", ".example"})
 	if err != nil {
 		return err
 	}
@@ -180,7 +180,7 @@ func reifyApplication(templateAppPath, appPath string) error {
 }
 
 // replaceExpressionInTemplates replace expression in the template
-func replaceExpressionInTemplates(templateAppPath, appPath string, extentions []string) error {
+func replaceExpressionInTemplates(appName, templateAppPath, appPath string, extentions []string) error {
 	files, err := util.CollectFiles(appPath, extentions)
 	if err != nil {
 		return err
@@ -204,8 +204,8 @@ func replaceExpressionInTemplates(templateAppPath, appPath string, extentions []
 		}
 
 		if strings.Contains(fileString, ExpressionAppName) || strings.Contains(fileString, ExpressionTemplatePkg) {
-			appName := util.Substring(appPath, strings.LastIndex(appPath, "/")+1, len(appPath))
-			fileString = strings.Replace(fileString, ExpressionAppName, appName, -1)
+			simpleName := util.Substring(appPath, strings.LastIndex(appPath, "/")+1, len(appPath))
+			fileString = strings.Replace(fileString, ExpressionAppName, simpleName, -1)
 			fileString = strings.Replace(fileString, ExpressionTemplatePkg, appName, -1)
 		}
 

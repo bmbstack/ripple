@@ -8,13 +8,15 @@ import (
 	"strings"
 )
 
-// Commands
 func Commands() []*cli.Command {
 	return []*cli.Command{
 		//New application
 		{
-			Name:  "new",
-			Usage: "Create a Ripple application",
+			Name: "new",
+			Usage: "Create a Ripple application" +
+				"\n\tdesc: ripple new appName, however this appName can be empty, will be generated in the current directory" +
+				"\n\tripple new" +
+				"\n\tripple new app",
 			Action: func(c *cli.Context) error {
 				if c.Args().Len() == 0 {
 					msg := "please input the application name[ripple new appName]"
@@ -45,7 +47,18 @@ func Commands() []*cli.Command {
 		{
 			Name:    "gen",
 			Aliases: []string{"g"},
-			Usage:   "Auto generate code, *.proto => *.pb.go *.rpc.go; *.dto.go => *.controller.go && *.service.go, eg: ripple g path component name (path: dir/file; component: ''/proto/controller/service, name: component name)",
+			Usage: "Auto generate code, *.proto => *.pb.go *.rpc.go; *.dto.go => *.controller.go && *.service.go" +
+				"\n\tdesc: ripple g path component name (path: dir/file; component: ''/proto/controller/service, name: component name)" +
+				"\n\tripple g" +
+				"\n\tripple g packages/app" +
+				"\n\tripple g packages/app proto" +
+				"\n\tripple g packages/app controller" +
+				"\n\tripple g packages/app service" +
+				"\n\tripple g packages/app service product" +
+				"\n\tripple g packages/app ecode" +
+				"\n\tripple g packages/app/proto/user.proto" +
+				"\n\tripple g packages/app/internal/dto/user.dto.go" +
+				"",
 			Action: func(c *cli.Context) error {
 				args := c.Args()
 				path := "."
