@@ -3,11 +3,13 @@ package ripple
 import (
 	"fmt"
 	. "github.com/bmbstack/ripple/helper"
+	"github.com/bmbstack/ripple/util"
 	"github.com/labstack/gommon/color"
 	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
 	nserverplugin "github.com/rpcxio/rpcx-nacos/serverplugin"
 	"github.com/smallnest/rpcx/server"
 	"log"
+	"strings"
 )
 
 // NewRpcServerNacos create rpc server
@@ -34,8 +36,10 @@ func NewRpcServerNacos(nacos Nacos) *server.Server {
 		Port:   nacos.Port,
 	}}
 
+	arr := strings.Split(nacos.Server, ":")
+	address := fmt.Sprintf("%s:%s", util.InternalIP(), arr[len(arr)-1:][0])
 	plugin := &nserverplugin.NacosRegisterPlugin{
-		ServiceAddress: fmt.Sprintf("tcp@%s", nacos.Server),
+		ServiceAddress: fmt.Sprintf("tcp@%s", address),
 		ClientConfig:   clientConfig,
 		ServerConfig:   serverConfig,
 		Cluster:        nacos.Cluster,

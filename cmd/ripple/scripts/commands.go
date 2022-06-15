@@ -47,8 +47,8 @@ func Commands() []*cli.Command {
 		{
 			Name:    "gen",
 			Aliases: []string{"g"},
-			Usage: "Auto generate code, *.proto => *.pb.go *.rpc.go; *.dto.go => *.controller.go && *.service.go" +
-				"\n\tdesc: ripple g path component name (path: dir/file; component: ''/proto/controller/service, name: component name)" +
+			Usage: "Auto generate code, *.proto => *.pb.go *.rpc.go rpc.client.go; *.dto.go => *.controller.go && *.service.go" +
+				"\n\tdesc: ripple g path component name/pbPath (path: dir/file; component: ''/proto/controller/service, name: component name, pbPath: *.pb.go path)" +
 				"\n\tripple g" +
 				"\n\tripple g packages/app" +
 				"\n\tripple g packages/app proto" +
@@ -58,6 +58,7 @@ func Commands() []*cli.Command {
 				"\n\tripple g packages/app ecode" +
 				"\n\tripple g packages/app/proto/user.proto" +
 				"\n\tripple g packages/app/internal/dto/user.dto.go" +
+				"\n\tripple g packages/app2 rpc.client packages/app1/proto/user.pb.go" +
 				"",
 			Action: func(c *cli.Context) error {
 				args := c.Args()

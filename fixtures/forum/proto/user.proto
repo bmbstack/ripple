@@ -14,6 +14,11 @@ service User {
   rpc SayHello (SayHelloReq) returns (SayHelloReply) {}
 }
 
+service Order {
+  rpc GetInfo (GetInfoReq) returns (GetInfoReply) {}
+  rpc SayHello (SayHelloReq) returns (SayHelloReply) {}
+}
+
 message GetInfoReq {
   uint64 id = 1;
 }

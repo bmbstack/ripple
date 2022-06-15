@@ -15,7 +15,7 @@ type UserController struct {
 }
 
 func (this UserController) Setup() {
-	this.Group.GET("/user/info", this.ActionUserInfo)
+	this.Group.GET("/user/info999999", this.ActionUserInfo)
 	this.Group.GET("/user/extra", this.ActionUserExtra)
 }
 

@@ -6,6 +6,7 @@ import (
 	. "github.com/bmbstack/ripple/helper"
 	"github.com/bmbstack/ripple/middleware/binding"
 	"github.com/bmbstack/ripple/middleware/logger"
+	"github.com/bmbstack/ripple/util"
 	"github.com/labstack/echo/v4"
 	mw "github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/color"
@@ -23,7 +24,7 @@ var line1 = "=============================="
 var line2 = "================================"
 
 // VersionName 0.8.2以后使用yaml配置文件, 1.0.1升级了脚手架(protoc, ast gen)
-const VersionName = "1.1.2"
+const VersionName = "1.1.3"
 
 func Version() string {
 	return VersionName
@@ -181,12 +182,19 @@ func (this *Ripple) RunRpc() {
 	if this.RpcServer != nil {
 		conf := GetBaseConfig()
 		if IsNotEmpty(conf.Nacos) {
+			if !strings.Contains(conf.Nacos.Server, ":") {
+				this.Logger.Error("Rpc run error: nacos server address format is wrong, must contains `:`")
+				return
+			}
+			arr := strings.Split(conf.Nacos.Server, ":")
+			address := fmt.Sprintf("%s:%s", util.InternalIP(), arr[len(arr)-1:][0])
+			this.Logger.Notice(fmt.Sprintf("Rpc run, address: %s", address))
 			go func() {
-				err := this.RpcServer.Serve("tcp", conf.Nacos.Server)
+				err := this.RpcServer.Serve("tcp", address)
 				if err != nil {
 					this.Logger.Error(fmt.Sprintf("Rpc run error: %s", err.Error()))
 				} else {
-					this.Logger.Notice("Rpc run success")
+					this.Logger.Notice(fmt.Sprintf("Rpc run success, address: %s", address))
 				}
 			}()
 		}

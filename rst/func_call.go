@@ -49,8 +49,8 @@ func HasArgInCallExpr(df *dst.File, scope Scope, funcName string, arg dst.Expr) 
 	return
 }
 
-// ReplaceArgWithIndexInCallExpr replace arguments of the function call has given sign arg, then replace arg
-func ReplaceArgWithIndexInCallExpr(df *dst.File, scope Scope, funcName string, sign dst.Expr, pos int, arg dst.Expr) (ret bool) {
+// ReplaceFuncNameAndArgWithIndexInCallExpr replace arguments of the function call has given sign arg, then replace arg
+func ReplaceFuncNameAndArgWithIndexInCallExpr(df *dst.File, scope Scope, funcName string, sign dst.Expr, newFuncName string, pos int, arg dst.Expr) (ret bool) {
 	pre := func(c *dstutil.Cursor) bool {
 		node := c.Node()
 
@@ -64,10 +64,12 @@ func ReplaceArgWithIndexInCallExpr(df *dst.File, scope Scope, funcName string, s
 			nn := node.(*dst.CallExpr)
 			if ie, ok := nn.Fun.(*dst.Ident); ok && ie.Name == funcName {
 				found = true
+				nn.Fun.(*dst.Ident).Name = newFuncName
 			}
 
 			if se, ok := nn.Fun.(*dst.SelectorExpr); ok && se.Sel.Name == funcName {
 				found = true
+				nn.Fun.(*dst.SelectorExpr).Sel.Name = newFuncName
 			}
 
 			if found {
