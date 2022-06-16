@@ -1,3 +1,6 @@
+[![GoDoc](https://pkg.go.dev/badge/github.com/bmbstack/ripple?status.svg)](https://pkg.go.dev/github.com/bmbstack/ripple?tab=doc)
+[![Release](https://img.shields.io/github/release/bmbstack/ripple.svg?style=flat-square)](https://github.com/bmbstack/ripple/releases)
+
 # Ripple
 
 a lightweight web framework for Go(base on [Echo](https://github.com/labstack/echo))
@@ -45,15 +48,29 @@ USAGE:
    ripple [global options] command [command options] [arguments...]
 
 VERSION:
-   1.1.0
+   1.1.3
 
 AUTHOR:
    wangmingjob <wangmingjob@icloud.com>
 
 COMMANDS:
    new      Create a Ripple application
+            desc: ripple new appName, however this appName can be empty, will be generated in the current directory
+            ripple new
+            ripple new app
    run, r   Run the Ripple application
-   gen, g   Auto generate code, *.proto => *.pb.go *.rpc.go; *.dto.go => *.controller.go && *.service.go, eg: ripple g path component name (path: dir/file; component: ''/proto/controller/service, name: component name)
+   gen, g   Auto generate code, *.proto => *.pb.go *.rpc.go rpc.client.go; *.dto.go => *.controller.go && *.service.go
+            desc: ripple g path component name/pbPath (path: dir/file; component: ''/proto/controller/service, name: component name, pbPath: *.pb.go path)
+            ripple g
+            ripple g packages/app
+            ripple g packages/app proto
+            ripple g packages/app controller
+            ripple g packages/app service
+            ripple g packages/app service product
+            ripple g packages/app ecode
+            ripple g packages/app/proto/user.proto
+            ripple g packages/app/internal/dto/user.dto.go
+            ripple g packages/app2 rpc.client packages/app1/proto/user.pb.go
    help, h  Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
@@ -158,7 +175,10 @@ req := &proto.GetInfoReq{
 }
 reply, _ := userClient.GetInfo(context.Background(), req)
 ```
-
+or 
+```
+reply, _ := services.GetUserClient().GetInfo(context.Background(), &proto.GetInfoReq{Id: 1})
+```
 ## Rpc server register, eg (fixture/form):
 
 ```

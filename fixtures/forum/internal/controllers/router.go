@@ -5,6 +5,7 @@ import (
 	"github.com/bmbstack/ripple"
 	"github.com/bmbstack/ripple/fixtures/forum/internal/controllers/v1"
 	. "github.com/bmbstack/ripple/fixtures/forum/internal/helper"
+	"github.com/bmbstack/ripple/fixtures/forum/internal/services"
 	"github.com/bmbstack/ripple/fixtures/forum/proto"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -14,10 +15,7 @@ import (
 func RouteAPI() {
 	echoMux := ripple.Default().GetEcho()
 	echoMux.GET("/", func(ctx echo.Context) error {
-		uc := proto.NewUserClient()
-		req := &proto.GetInfoReq{Id: 1}
-		reply, _ := uc.GetInfo(context.Background(), req)
-
+		reply, _ := services.GetUserClient().GetInfo(context.Background(), &proto.GetInfoReq{Id: 1})
 		result := map[string]interface{}{
 			"username": reply.Name,
 		}
