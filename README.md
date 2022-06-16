@@ -48,7 +48,7 @@ USAGE:
    ripple [global options] command [command options] [arguments...]
 
 VERSION:
-   1.1.3
+   1.1.4
 
 AUTHOR:
    wangmingjob <wangmingjob@icloud.com>
@@ -259,6 +259,7 @@ domain: "127.0.0.1:8090"
 static: "frontend/static"
 templates: "frontend/templates"
 autoMigrate: false
+bindAllTag: false
 databases: [
   {
     "alias": "one",
@@ -307,30 +308,6 @@ nacos:
   logDir: "./log"
   server: "127.0.0.1:18090"
 ```
-
-You can override the values from the config file by setting environment variables. The names of the environment variables are shown below (with their details)
-
-setting               | details
-----------------------|----------------
-domain                | the vps ip address or domain
-static                | Static serves static files from the directory
-templates             | directory to look for templates
-databases             | the database list
-alias                 | the database alias
-dialect               | the database dialect
-host                  | the database Host
-port                  | the database port
-name                  | the database name
-user                  | the database user
-password              | the database password
-caches                | the cache list
-alias                 | the cache alias
-section               | the cache section
-adapter               | the cache adapter
-host                  | the cache host
-port                  | the cache port
-password              | the cache password
-nacos              | the aliyun nacos config
 
 ## Models
 

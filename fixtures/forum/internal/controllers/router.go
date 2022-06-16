@@ -35,13 +35,13 @@ func RouteAPI() {
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAuthorization},
 		AllowMethods: []string{echo.GET, echo.HEAD, echo.PUT, echo.PATCH, echo.POST, echo.DELETE, echo.OPTIONS},
 	}))
-	echoMux.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
-		TokenLength:  32,
-		TokenLookup:  "header:X-CSRF-TOKEN",
-		ContextKey:   "csrf",
-		CookieName:   "_csrf",
-		CookieMaxAge: 86400,
-	}))
+	//echoMux.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
+	//	TokenLength:  32,
+	//	TokenLookup:  "header:X-CSRF-TOKEN",
+	//	ContextKey:   "csrf",
+	//	CookieName:   "_csrf",
+	//	CookieMaxAge: 86400,
+	//}))
 
 	//===========================================================
 	//                      v1

@@ -2,6 +2,7 @@ domain: "127.0.0.1:8090"
 static: "frontend/static"
 templates: "frontend/templates"
 autoMigrate: false
+bindAllTag: false
 databases: [
   {
     "alias": "one",

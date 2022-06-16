@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/bmbstack/ripple/cache"
 	. "github.com/bmbstack/ripple/helper"
+	"github.com/bmbstack/ripple/middleware/bind"
 	"github.com/bmbstack/ripple/middleware/binding"
 	"github.com/bmbstack/ripple/middleware/logger"
 	"github.com/bmbstack/ripple/util"
@@ -24,7 +25,7 @@ var line1 = "=============================="
 var line2 = "================================"
 
 // VersionName 0.8.2以后使用yaml配置文件, 1.0.1升级了脚手架(protoc, ast gen)
-const VersionName = "1.1.3"
+const VersionName = "1.1.4"
 
 func Version() string {
 	return VersionName
@@ -70,6 +71,9 @@ func NewRipple() *Ripple {
 	r.Echo.Use(mw.Logger())
 
 	r.Echo.Binder = binding.Binder{}
+	if config.BindAllTag {
+		r.Echo.Binder = &bind.DefaultBinder{}
+	}
 	r.Echo.Renderer = NewRenderer(config)
 	r.Echo.Static("/static", config.Static)
 
