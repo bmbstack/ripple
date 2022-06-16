@@ -414,6 +414,7 @@ func Error(ctx echo.Context, err error) error {
 	ec, ok := err.(Ecode)
 	if !ok {
 		ec = ServerError
+		ec.Msg = err.Error()
 	}
 	return ctx.JSON(http.StatusOK, map[string]interface{}{
 		"code": ec.Code,
@@ -426,6 +427,7 @@ func ErrorWithHttpCode(ctx echo.Context, httpCode int, err error) error {
 	ec, ok := err.(Ecode)
 	if !ok {
 		ec = ServerError
+		ec.Msg = err.Error()
 	}
 	return ctx.JSON(httpCode, map[string]interface{}{
 		"code": ec.Code,
