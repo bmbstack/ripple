@@ -2,23 +2,27 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"github.com/bmbstack/ripple"
 	"github.com/bmbstack/ripple/fixtures/forum/internal/controllers/v1"
 	. "github.com/bmbstack/ripple/fixtures/forum/internal/helper"
-	"github.com/bmbstack/ripple/fixtures/forum/internal/services"
 	"github.com/bmbstack/ripple/fixtures/forum/proto"
+	"github.com/bmbstack/ripple/logger"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"net/http"
+	"time"
 )
 
 func RouteAPI() {
 	echoMux := ripple.Default().GetEcho()
 	echoMux.GET("/", func(ctx echo.Context) error {
-		reply, _ := services.GetUserClient().GetInfo(context.Background(), &proto.GetInfoReq{Id: 1})
+		uc := proto.NewUserClient()
+		reply, _ := uc.GetInfo(context.Background(), &proto.GetInfoReq{Id: 1})
 		result := map[string]interface{}{
 			"username": reply.Name,
 		}
+		logger.With(nil).Info(fmt.Sprintf("time: %d, name333: %s", time.Now().Unix(), reply.Name))
 		return ctx.JSON(http.StatusOK, SuccessJSON(result))
 	})
 

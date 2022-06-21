@@ -48,7 +48,7 @@ USAGE:
    ripple [global options] command [command options] [arguments...]
 
 VERSION:
-   1.1.4
+   1.1.5
 
 AUTHOR:
    wangmingjob <wangmingjob@icloud.com>
@@ -70,7 +70,6 @@ COMMANDS:
             ripple g packages/app ecode
             ripple g packages/app/proto/user.proto
             ripple g packages/app/internal/dto/user.dto.go
-            ripple g packages/app2 rpc.client packages/app1/proto/user.pb.go
    help, h  Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
@@ -175,10 +174,6 @@ req := &proto.GetInfoReq{
 }
 reply, _ := userClient.GetInfo(context.Background(), req)
 ```
-or 
-```
-reply, _ := services.GetUserClient().GetInfo(context.Background(), &proto.GetInfoReq{Id: 1})
-```
 ## Rpc server register, eg (fixture/form):
 
 ```
@@ -210,6 +205,14 @@ client := cache.Client().(*redis.Client)
 result, err := client.HGetAll(context.Background(), "key").Result()
 ```
 
+## Logger (SLS, CLS)
+```go
+ripple.Default().SetLogType(ripple.LogTypeSls)
+```
+or
+```go
+ripple.Default().SetLogType(ripple.LogTypeCls)
+```
 
 ## Which features to include in a framework
 

@@ -56,3 +56,20 @@ nacos:
   cacheDir: "./cache"
   logDir: "./log"
   server: "127.0.0.1:18090"
+sls:
+  accessKeyId: "xxxxxxx"
+  accessKeySecret: "xxxxxxx"
+  endpoint: "cn-beijing-intranet.log.aliyuncs.com"
+  allowLogLevel: "info"  # debug,info,warn,error
+  closeStdout: false
+  project: "xxxxxxx"
+  Logstore: "xxxxxxx"
+  topic: "topic"
+  source: "source"
+cls:
+  accessKeyId: "xxxxxxx"
+  accessKeySecret: "xxxxxxx"
+  endpoint: "ap-beijing.cls.tencentcs.com"
+  allowLogLevel: "info"  # debug,info,warn,error
+  closeStdout: false
+  topic: "b246af67-dab3-408b-b802-ba150488ffbf"

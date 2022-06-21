@@ -14,7 +14,9 @@ type BaseConfig struct {
 	Templates   string           `mapstructure:"templates,omitempty"`   // templates=frontend/templates
 	Databases   []DatabaseConfig `mapstructure:"databases,omitempty"`   // databases
 	Caches      []CacheConfig    `mapstructure:"caches,omitempty"`      // caches
-	Nacos       Nacos            `mapstructure:"nacos,omitempty"`       // nacos
+	Nacos       NacosConfig      `mapstructure:"nacos,omitempty"`       // nacos
+	SLS         SlsConfig        `mapstructure:"sls,omitempty"`         // sls
+	CLS         ClsConfig        `mapstructure:"cls,omitempty"`         // cls
 }
 
 type DatabaseConfig struct {
@@ -39,7 +41,7 @@ type CacheConfig struct {
 	DB       int    `mapstructure:"db"`       // db, select db
 }
 
-type Nacos struct {
+type NacosConfig struct {
 	Host        string `mapstructure:"host"`
 	Port        uint64 `mapstructure:"port"`
 	NamespaceId string `mapstructure:"namespaceId"`
@@ -48,6 +50,29 @@ type Nacos struct {
 	CacheDir    string `mapstructure:"cacheDir"`
 	LogDir      string `mapstructure:"logDir"`
 	Server      string `mapstructure:"server"`
+}
+
+type SlsConfig struct {
+	AccessKeyId     string `mapstructure:"accessKeyId"`
+	AccessKeySecret string `mapstructure:"accessKeySecret"`
+	Endpoint        string `mapstructure:"endpoint"`
+	AllowLogLevel   string `mapstructure:"allowLogLevel"`
+	CloseStdout     bool   `mapstructure:"closeStdout"`
+
+	Project  string `mapstructure:"project"`
+	Logstore string `mapstructure:"logstore"`
+	Topic    string `mapstructure:"topic"`
+	Source   string `mapstructure:"source"`
+}
+
+type ClsConfig struct {
+	AccessKeyId     string `mapstructure:"accessKeyId"`
+	AccessKeySecret string `mapstructure:"accessKeySecret"`
+	Endpoint        string `mapstructure:"endpoint"`
+	AllowLogLevel   string `mapstructure:"allowLogLevel"`
+	CloseStdout     bool   `mapstructure:"closeStdout"`
+
+	Topic string `mapstructure:"topic"`
 }
 
 var (

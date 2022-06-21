@@ -58,7 +58,6 @@ func Commands() []*cli.Command {
 				"\n\tripple g packages/app ecode" +
 				"\n\tripple g packages/app/proto/user.proto" +
 				"\n\tripple g packages/app/internal/dto/user.dto.go" +
-				"\n\tripple g packages/app2 rpc.client packages/app1/proto/user.pb.go" +
 				"",
 			Action: func(c *cli.Context) error {
 				args := c.Args()

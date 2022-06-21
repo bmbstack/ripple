@@ -13,7 +13,7 @@ import (
 )
 
 // NewRpcServerNacos create rpc server
-func NewRpcServerNacos(nacos Nacos) *server.Server {
+func NewRpcServerNacos(nacos NacosConfig) *server.Server {
 	if IsEmpty(nacos.Server) {
 		fmt.Println(color.Green("RPC: Just RPC service caller, not RPC service provider"))
 		return nil

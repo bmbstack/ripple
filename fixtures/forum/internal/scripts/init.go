@@ -8,5 +8,6 @@ import (
 
 func Init(c *cli.Context) {
 	ripple.InitConfigWithPath(c.String("env"), c.String("conf"))
+	ripple.Default().SetLogType(ripple.LogTypeSLS)
 	initial.InitLogger()
 }

@@ -1,9 +1,12 @@
 package ripple
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/bmbstack/ripple/cache"
 	. "github.com/bmbstack/ripple/helper"
+	"github.com/bmbstack/ripple/logger/cls"
+	"github.com/bmbstack/ripple/logger/sls"
 	"github.com/bmbstack/ripple/middleware/bind"
 	"github.com/bmbstack/ripple/middleware/binding"
 	"github.com/bmbstack/ripple/middleware/logger"
@@ -11,6 +14,7 @@ import (
 	"github.com/labstack/echo/v4"
 	mw "github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/color"
+	"github.com/sirupsen/logrus"
 	"github.com/smallnest/rpcx/server"
 	"io"
 	"os"
@@ -24,8 +28,15 @@ var firstRegModel = true
 var line1 = "=============================="
 var line2 = "================================"
 
+type LogType string
+
+const (
+	LogTypeSLS = "sls"
+	LogTypeCLS = "cls"
+)
+
 // VersionName 0.8.2以后使用yaml配置文件, 1.0.1升级了脚手架(protoc, ast gen)
-const VersionName = "1.1.4"
+const VersionName = "1.1.5"
 
 func Version() string {
 	return VersionName
@@ -110,6 +121,52 @@ func NewRipple() *Ripple {
 		r.RpcServer = NewRpcServerNacos(config.Nacos)
 	}
 	return r
+}
+
+// SetLogType  set log type (ripple.LogTypeSLS, ripple.LogTypeCLS)
+func (this *Ripple) SetLogType(value LogType) {
+	fmt.Println(color.Green(fmt.Sprintf("Logger: Use LogType %s", value)))
+	conf := GetBaseConfig()
+	if LogTypeSLS == value && IsNotEmpty(conf.SLS) {
+		h := sls.NewSLSHook(
+			conf.SLS.AccessKeyId,
+			conf.SLS.AccessKeySecret,
+			conf.SLS.Endpoint,
+			conf.SLS.AllowLogLevel,
+			sls.SetProject(conf.SLS.Project),
+			sls.SetLogstore(conf.SLS.Logstore),
+			sls.SetTopic(conf.SLS.Topic),
+			sls.SetSource(conf.SLS.Source),
+		)
+		if conf.SLS.CloseStdout {
+			f, err := os.OpenFile(os.DevNull, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+			if err != nil {
+				fmt.Println("SLS.CloseStdout Open file err: ", err)
+			}
+			logrus.SetOutput(bufio.NewWriter(f))
+		}
+		logrus.SetFormatter(&logrus.JSONFormatter{})
+		logrus.AddHook(h)
+	} else if LogTypeCLS == value && IsNotEmpty(conf.CLS) {
+		h := cls.NewCLSHook(
+			conf.CLS.AccessKeyId,
+			conf.CLS.AccessKeySecret,
+			conf.CLS.Endpoint,
+			conf.CLS.AllowLogLevel,
+			cls.SetTopic(conf.CLS.Topic),
+		)
+		if conf.CLS.CloseStdout {
+			f, err := os.OpenFile(os.DevNull, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+			if err != nil {
+				fmt.Println("CLS.CloseStdout Open file err: ", err)
+			}
+			logrus.SetOutput(bufio.NewWriter(f))
+		}
+		logrus.SetFormatter(&logrus.JSONFormatter{})
+		logrus.AddHook(h)
+	} else {
+		// do nothing
+	}
 }
 
 // GetEcho  return echo

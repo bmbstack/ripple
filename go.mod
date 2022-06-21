@@ -3,6 +3,7 @@ module github.com/bmbstack/ripple
 go 1.16
 
 require (
+	github.com/aliyun/aliyun-log-go-sdk v0.1.36
 	github.com/dave/dst v0.26.2
 	github.com/flosch/pongo2/v4 v4.0.1
 	github.com/go-playground/validator/v10 v10.4.1
@@ -13,9 +14,12 @@ require (
 	github.com/labstack/gommon v0.3.0
 	github.com/nacos-group/nacos-sdk-go/v2 v2.0.1
 	github.com/rpcxio/rpcx-nacos v0.0.0-20220327105555-9ed88c3146d4
+	github.com/sirupsen/logrus v1.6.0
 	github.com/smallnest/rpcx v1.7.3
 	github.com/spf13/viper v1.11.0
+	github.com/tencentcloud/tencentcloud-cls-sdk-go v1.0.2
 	github.com/urfave/cli/v2 v2.3.0
+	go.uber.org/zap v1.17.0 // indirect
 	golang.org/x/mod v0.5.1
 	gorm.io/driver/mysql v1.2.0
 	gorm.io/driver/postgres v1.2.2
