@@ -207,11 +207,11 @@ result, err := client.HGetAll(context.Background(), "key").Result()
 
 ## Logger (SLS, CLS)
 ```go
-ripple.Default().SetLogType(ripple.LogTypeSls)
+ripple.Default().SetLogType(ripple.LogTypeSLS)
 ```
 or
 ```go
-ripple.Default().SetLogType(ripple.LogTypeCls)
+ripple.Default().SetLogType(ripple.LogTypeCLS)
 ```
 
 ## Which features to include in a framework
