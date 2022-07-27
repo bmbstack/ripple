@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/bmbstack/ripple/fixtures/forum/internal/scripts"
+	"github.com/bmbstack/ripple/fixtures/forum/internal/services"
 	. "github.com/bmbstack/ripple/helper"
 	"github.com/labstack/gommon/color"
 	"github.com/urfave/cli/v2"
@@ -20,6 +21,7 @@ func Commands() []*cli.Command {
 			Action: func(c *cli.Context) error {
 				OnStop(func() {
 					fmt.Println("OnStop, clean server...")
+					services.CloseRpcClients()
 				})
 				scripts.Init(c)
 				scripts.RunRpc()
