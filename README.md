@@ -125,11 +125,11 @@ message LearnReply {
 // @Uri /student/learn
 // @Method POST
 type ReqStudentLearn struct {
-ID uint64 `form:"id" json:"id" binding:"required"`
+    ID uint64 `form:"id" json:"id" binding:"required"`
 }
 
 type RespStudentLearn struct {
-Name string `json:"name"`
+    Name string `json:"name"`
 }
 
 ```
