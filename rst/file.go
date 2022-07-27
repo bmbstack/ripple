@@ -143,6 +143,26 @@ func AddVarIntoBlockGenDecl(df *dst.File, varIndex int64, spec *dst.ValueSpec) (
 	return
 }
 
+// DeleteFuncFromFile deletes any func, inside the body of file,
+// that is DeleteFuncFromFile.
+func DeleteFuncFromFile(df *dst.File, funcName string) (modified bool) {
+	pre := func(c *dstutil.Cursor) bool {
+		node := c.Node()
+		switch node.(type) {
+		case *dst.FuncDecl:
+			if nn := node.(*dst.FuncDecl); nn.Name.Name == funcName {
+				c.Delete()
+				modified = true
+				return false
+			}
+		}
+		return true
+	}
+
+	dstutil.Apply(df, pre, nil)
+	return
+}
+
 func isInStructTypeArray(structName string, list []dst.Spec) (ret bool) {
 	for _, item := range list {
 		ts, ok := item.(*dst.TypeSpec)

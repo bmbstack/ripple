@@ -48,10 +48,10 @@ caches: [
   }
 ]
 nacos:
-  host: "mse-e75317c2-nacos-ans.mse.aliyuncs.com"
+  host: "mse-7b574dc2-nacos-ans.mse.aliyuncs.com"
   port: 8848
   namespaceId: "public"
-  cluster: "orderserver"
+  cluster: "ripple"
   group: "DEFAULT_GROUP"
   cacheDir: "./cache"
   logDir: "./log"

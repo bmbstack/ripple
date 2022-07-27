@@ -36,7 +36,7 @@ const (
 )
 
 // VersionName 0.8.2以后使用yaml配置文件, 1.0.1升级了脚手架(protoc, ast gen)
-const VersionName = "1.1.5"
+const VersionName = "1.1.6"
 
 func Version() string {
 	return VersionName
@@ -123,9 +123,9 @@ func NewRipple() *Ripple {
 	return r
 }
 
-// SetLogType  set log type (ripple.LogTypeSLS, ripple.LogTypeCLS)
-func (this *Ripple) SetLogType(value LogType) {
-	fmt.Println(color.Green(fmt.Sprintf("Logger: Use LogType %s", value)))
+// AddLogType  add log type (ripple.LogTypeSLS, ripple.LogTypeCLS)
+func (this *Ripple) AddLogType(value LogType) {
+	fmt.Println(color.Green(fmt.Sprintf("Logger: Add LogType %s", value)))
 	conf := GetBaseConfig()
 	if LogTypeSLS == value && IsNotEmpty(conf.SLS) {
 		h := sls.NewSLSHook(

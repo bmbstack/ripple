@@ -18,6 +18,7 @@ func RunServer() {
 
 func RunRpc() {
 	Logger.Info("Run rpc server ....")
-	ripple.Default().RegisterRpc(proto.ServiceNameOfUser, &rpc.UserRpc{}, "")
+	ripple.Default().RegisterRpc(proto.ServiceNameOfStudent, &rpc.StudentRpc{}, "")
+	ripple.Default().RegisterRpc(proto.ServiceNameOfTeacher, &rpc.TeacherRpc{}, "")
 	ripple.Default().RunRpc()
 }

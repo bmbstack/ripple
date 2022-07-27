@@ -5,6 +5,26 @@ import (
 	"github.com/dave/dst/dstutil"
 )
 
+// AddEmptyLineIntoFuncBody add an empty line, inside the body of function,
+func AddEmptyLineIntoFuncBody(df *dst.File, funcName string) (modified bool) {
+	pre := func(c *dstutil.Cursor) bool {
+		node := c.Node()
+
+		switch node.(type) {
+		case *dst.FuncDecl:
+			if nn := node.(*dst.FuncDecl); nn.Name.Name == funcName {
+				nn.Body.Decs = dst.BlockStmtDecorations{Lbrace: dst.Decorations{"\n"}}
+				modified = true
+				return false
+			}
+		}
+		return true
+	}
+
+	dstutil.Apply(df, pre, nil)
+	return
+}
+
 // HasStmtInsideFuncBodyWithRecv checks if the body of function has given statement
 func HasStmtInsideFuncBodyWithRecv(df *dst.File, recvName, funcName string, stmt dst.Stmt) (ret bool) {
 	var inside bool
@@ -132,6 +152,27 @@ func DeleteStmtFromFuncBody(df *dst.File, funcName string, stmt dst.Stmt) (modif
 	}
 
 	dstutil.Apply(df, pre, post)
+	return
+}
+
+// DeleteAllStmtFromFuncBody deletes any statement, inside the body of function,
+// that is semantically equal to the given statement.
+func DeleteAllStmtFromFuncBody(df *dst.File, funcName string) (modified bool) {
+	pre := func(c *dstutil.Cursor) bool {
+		node := c.Node()
+
+		switch node.(type) {
+		case *dst.FuncDecl:
+			if nn := node.(*dst.FuncDecl); nn.Name.Name == funcName {
+				nn.Body.List = []dst.Stmt{}
+				modified = true
+				return false
+			}
+		}
+		return true
+	}
+
+	dstutil.Apply(df, pre, nil)
 	return
 }
 

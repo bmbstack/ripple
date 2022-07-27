@@ -15,30 +15,30 @@ type StudentController struct {
 }
 
 func (this StudentController) Setup() {
-	this.Group.POST("/student/say", this.ActionStudentSay)
-	this.Group.POST("/student/hello", this.ActionHello)
+	this.Group.POST("/student/learn", this.ActionStudentLearn)
+	this.Group.POST("/student/hello", this.ActionStudentHello)
 }
 
-func (this StudentController) ActionStudentSay(ctx echo.Context) error {
-	params := &dto.ReqStudentSay{}
+func (this StudentController) ActionStudentLearn(ctx echo.Context) error {
+	params := &dto.ReqStudentLearn{}
 	err := ctx.Bind(params)
 	if err != nil {
 		return ecode.Error(ctx, ecode.ParamError)
 	}
 
 	// TODO: add some code
-	result := &dto.RespStudentSay{}
+	result := &dto.RespStudentLearn{}
 	return ecode.OK(ctx, result)
 }
 
-func (this StudentController) ActionHello(ctx echo.Context) error {
-	params := &dto.ReqHello{}
+func (this StudentController) ActionStudentHello(ctx echo.Context) error {
+	params := &dto.ReqStudentHello{}
 	err := ctx.Bind(params)
 	if err != nil {
 		return ecode.Error(ctx, ecode.ParamError)
 	}
 
 	// TODO: add some code
-	result := &dto.RespHello{}
+	result := &dto.RespStudentHello{}
 	return ecode.OK(ctx, result)
 }

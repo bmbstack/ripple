@@ -6,6 +6,7 @@ import (
 	"github.com/bmbstack/ripple"
 	"github.com/bmbstack/ripple/fixtures/forum/internal/controllers/v1"
 	. "github.com/bmbstack/ripple/fixtures/forum/internal/helper"
+	"github.com/bmbstack/ripple/fixtures/forum/internal/services"
 	"github.com/bmbstack/ripple/fixtures/forum/proto"
 	"github.com/bmbstack/ripple/logger"
 	"github.com/labstack/echo/v4"
@@ -17,12 +18,23 @@ import (
 func RouteAPI() {
 	echoMux := ripple.Default().GetEcho()
 	echoMux.GET("/", func(ctx echo.Context) error {
-		uc := proto.NewUserClient()
-		reply, _ := uc.GetInfo(context.Background(), &proto.GetInfoReq{Id: 1})
-		result := map[string]interface{}{
-			"username": reply.Name,
+		for i := 0; i < 50; i++ {
+			pc := services.GetPlayerClient()
+			reply, _ := pc.GetPlayerInfo(context.Background(), &proto.GetPlayerInfoReq{PlayerId: 1377693})
+			fmt.Println(reply.Nickname)
 		}
-		logger.With(nil).Info(fmt.Sprintf("time: %d, name333: %s", time.Now().Unix(), reply.Name))
+
+		pc := services.GetPlayerClient()
+		reply, _ := pc.GetPlayerInfo(context.Background(), &proto.GetPlayerInfoReq{PlayerId: 1377693})
+		fmt.Println("services.GetPlayerClient().GetPlayerInfo.Nickname=====>", reply.Nickname)
+
+		sc := services.GetStudentClient()
+		reply2, _ := sc.Learn(context.Background(), &proto.LearnReq{Id: 1})
+		result := map[string]interface{}{
+			"remoteName": reply.Nickname,
+			"localName":  reply2.Name,
+		}
+		logger.With(nil).Info(fmt.Sprintf("time: %d, name333: %s", time.Now().Unix(), reply.Nickname))
 		return ctx.JSON(http.StatusOK, SuccessJSON(result))
 	})
 
@@ -58,6 +70,9 @@ func RouteAPI() {
 	citys := v1.CityController{Group: v1Group}
 	citys.Setup()
 
-	users := v1.UserController{Group: v1Group}
-	users.Setup()
+	students := v1.StudentController{Group: v1Group}
+	students.Setup()
+
+	teachers := v1.TeacherController{Group: v1Group}
+	teachers.Setup()
 }

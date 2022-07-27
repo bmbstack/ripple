@@ -11,9 +11,10 @@ import (
 type StudentRpc struct {
 }
 
-// Hello is server rpc method as defined
-func (this *StudentRpc) Hello(ctx context.Context, req *proto.HelloReq, reply *proto.HelloReply) (err error) {
+// Learn is server rpc method as defined
+func (this *StudentRpc) Learn(ctx context.Context, req *proto.LearnReq, reply *proto.LearnReply) (err error) {
 	// TODO: add some code
-	*reply = proto.HelloReply{}
+	*reply = proto.LearnReply{}
+	reply.Name = "student learn function"
 	return nil
 }

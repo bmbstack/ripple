@@ -56,4 +56,45 @@ func (this *UserRpc) GetInfo(ctx context.Context, req *proto.GetInfoReq, reply *
 	}
 
 	dst.Print(df)
+
+	code3 := `package services
+
+import (
+	"github.com/bmbstack/ripple/sync"
+
+	"github.com/bmbstack/ripple/fixtures/forum/proto"
+)
+
+var (
+	playerClient     *proto.PlayerClient
+	playerClientOnce sync.Once
+)
+
+func GetPlayerClient() *proto.PlayerClient {
+	playerClientOnce.Do(func() {
+		closePlayerClient()
+		playerClient = proto.NewPlayerClient(func() {
+			playerClientOnce.Reset()
+		})
+	})
+	return playerClient
+}
+
+func closePlayerClient() {
+	if playerClient != nil {
+		playerClient.Discovery.Close()
+		playerClient.XClient.Close()
+	}
+}
+
+func CloseRpcClients() {
+	closePlayerClient()
+}`
+
+	df2, err := decorator.Parse(code3)
+	if err != nil {
+		panic(err)
+	}
+
+	dst.Print(df2)
 }

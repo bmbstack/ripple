@@ -1,27 +1,26 @@
 package dto
 
-// ReqStudentSay
+// ReqStudentLearn
 // @RippleApi
-// @Uri /student/say
+// @Uri /student/learn
 // @Method POST
-type ReqStudentSay struct {
+type ReqStudentLearn struct {
 	ID uint64 `form:"id" json:"id" binding:"required"`
 }
 
-type RespStudentSay struct {
-	ID    uint64 `json:"id"`
-	Extra string `json:"extra"`
+type RespStudentLearn struct {
+	Name string `json:"name"`
 }
 
-// ReqHello
+// ReqStudentHello
 // @RippleApi
 // @Uri /student/hello
 // @Method POST
-type ReqHello struct {
+type ReqStudentHello struct {
 	ID uint64 `form:"id" json:"id" binding:"required"`
 }
 
-type RespHello struct {
+type RespStudentHello struct {
 	ID    uint64 `json:"id"`
 	Extra string `json:"extra"`
 }

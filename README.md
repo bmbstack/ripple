@@ -48,7 +48,7 @@ USAGE:
    ripple [global options] command [command options] [arguments...]
 
 VERSION:
-   1.1.5
+   1.1.6
 
 AUTHOR:
    wangmingjob <wangmingjob@icloud.com>
@@ -70,6 +70,7 @@ COMMANDS:
             ripple g packages/app ecode
             ripple g packages/app/proto/user.proto
             ripple g packages/app/internal/dto/user.dto.go
+            ripple g packages/app2 rpc.client packages/app1/proto/user.pb.go
    help, h  Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
@@ -98,19 +99,19 @@ syntax = "proto3";
 
 // @RippleRpc
 // @NacosGroup DEFAULT_GROUP
-// @NacosCluster orderserver
+// @NacosCluster ripple
 package proto;
 
-// The User service definition.
-service User {
-  rpc GetInfo (GetInfoReq) returns (GetInfoReply) {}
+// The Student service definition.
+service Student {
+  rpc Learn (LearnReq) returns (LearnReply) {}
 }
 
-message GetInfoReq {
+message LearnReq {
   uint64 id = 1;
 }
 
-message GetInfoReply {
+message LearnReply {
   string name = 1;
 }
 
@@ -119,17 +120,16 @@ message GetInfoReply {
 
 `*.dto.go` example:
 ```go
-// ReqUserInfo
+// ReqStudentLearn
 // @RippleApi
-// @Uri /v1/user/info
-// @Method GET
-type ReqUserInfo struct {
-	ID uint64 `form:"id" json:"id" binding:"required"`
+// @Uri /student/learn
+// @Method POST
+type ReqStudentLearn struct {
+ID uint64 `form:"id" json:"id" binding:"required"`
 }
 
-type RespUserInfo struct {
-	ID   uint64 `json:"id"`
-	Name string `json:"name"`
+type RespStudentLearn struct {
+Name string `json:"name"`
 }
 
 ```
@@ -168,27 +168,24 @@ This is the structure of the `rippleApp` list application that will showcase how
 ## Rpc client call, eg (fixture/form):
 
 ```
-userClient := proto.NewUserClient()
-req := &proto.GetInfoReq{
-	Id: 1,
-}
-reply, _ := userClient.GetInfo(context.Background(), req)
+sc := services.GetStudentClient()
+reply, _ := sc.Learn(context.Background(), &proto.LearnReq{Id: 1})
 ```
 ## Rpc server register, eg (fixture/form):
 
 ```
-ripple.Default().RegisterRpc(proto.ServiceNameOfUser, &UserRpc{}, "")
+ripple.Default().RegisterRpc(proto.ServiceNameOfStudent, &rpc.StudentRpc{}, "")
 ripple.Default().RunRpc()
 
 // service impl
-type UserRpc struct {
+type StudentRpc struct {
 }
 
-// GetInfo is server rpc method as defined
-func (s *UserRpc) GetInfo(ctx context.Context, req *proto.GetInfoReq, reply *proto.GetInfoReply) (err error) {
-	// TODO: add business logics
-	*reply = proto.GetInfoReply{}
-	reply.Name = "tomcat"
+// Learn is server rpc method as defined
+func (this *StudentRpc) Learn(ctx context.Context, req *proto.LearnReq, reply *proto.LearnReply) (err error) {
+	// TODO: add some code
+	*reply = proto.LearnReply{}
+	reply.Name = "student learn function"
 	return nil
 }
 ```

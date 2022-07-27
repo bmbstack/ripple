@@ -3,10 +3,10 @@ package ripple
 import (
 	"fmt"
 	. "github.com/bmbstack/ripple/helper"
+	constant2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
+	"github.com/bmbstack/ripple/nacos/rpcxnacos/serverplugin"
 	"github.com/bmbstack/ripple/util"
 	"github.com/labstack/gommon/color"
-	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
-	nserverplugin "github.com/rpcxio/rpcx-nacos/serverplugin"
 	"github.com/smallnest/rpcx/server"
 	"log"
 	"strings"
@@ -20,7 +20,7 @@ func NewRpcServerNacos(nacos NacosConfig) *server.Server {
 	}
 	s := server.NewServer()
 	fmt.Println(color.Green("RPC: RPC service provider"))
-	clientConfig := constant.ClientConfig{
+	clientConfig := constant2.ClientConfig{
 		TimeoutMs:            10 * 1000,
 		BeatInterval:         5 * 1000,
 		NamespaceId:          nacos.NamespaceId,
@@ -31,14 +31,14 @@ func NewRpcServerNacos(nacos NacosConfig) *server.Server {
 		UpdateCacheWhenEmpty: true,
 	}
 
-	serverConfig := []constant.ServerConfig{{
+	serverConfig := []constant2.ServerConfig{{
 		IpAddr: nacos.Host,
 		Port:   nacos.Port,
 	}}
 
 	arr := strings.Split(nacos.Server, ":")
 	address := fmt.Sprintf("%s:%s", util.InternalIP(), arr[len(arr)-1:][0])
-	plugin := &nserverplugin.NacosRegisterPlugin{
+	plugin := &serverplugin.NacosRegisterPlugin{
 		ServiceAddress: fmt.Sprintf("tcp@%s", address),
 		ClientConfig:   clientConfig,
 		ServerConfig:   serverConfig,
