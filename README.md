@@ -157,6 +157,7 @@ This is the structure of the `rippleApp` list application that will showcase how
 │   ├── helper
 │   ├── initial
 │   ├── rpc                          // `ripple gen`固定输出目录
+│   ├── rpcclient                    // `ripple gen`固定输出目录
 │   ├── scripts
 │   └── services                     // `ripple gen`固定输出目录
 └── proto                            // `ripple gen`固定输入源 *.proto
