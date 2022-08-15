@@ -29,6 +29,20 @@ func Commands() []*cli.Command {
 				return nil
 			},
 		},
+		{
+			Name:        "cron",
+			Aliases:     []string{"c"},
+			Usage:       "Run cron",
+			Description: "Run cron server",
+			Action: func(c *cli.Context) error {
+				OnStop(func() {
+					fmt.Println("OnStop, clean cron server...")
+				})
+				scripts.Init(c)
+				scripts.RunCron()
+				return nil
+			},
+		},
 	}
 }
 
