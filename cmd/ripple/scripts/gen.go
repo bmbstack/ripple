@@ -465,9 +465,9 @@ func (this Ecode) Error() string {
 }
 
 func generateRpcClient(currentPath, name string) {
-	logger.Logger.Info("auto generate internal/service/rpc.client.go")
+	logger.Logger.Info("auto generate internal/rpcclient/rpc.client.go")
 
-	pkg := "services"
+	pkg := "rpcclient"
 	dir := path.Join(currentPath, "internal", pkg)
 	err := os.MkdirAll(dir, Permissions)
 	if err != nil {
@@ -487,9 +487,9 @@ func generateRpcClient(currentPath, name string) {
 		return
 	}
 
-	funcList := rst.GetFuncDeclListWithPrefixSuffixInFile(dfs, "New", "Client")
+	funcList := rst.GetFuncDeclListWithPrefixSuffixInFile(dfs, "New", "ClientMax")
 	if util.IsEmpty(funcList) {
-		logger.Logger.Notice("*.pb.go doesn't have NewClient func")
+		logger.Logger.Notice("*.pb.go doesn't have NewClientMax func")
 		return
 	}
 
@@ -518,6 +518,7 @@ func generateRpcClient(currentPath, name string) {
 		var closeFuncCall string
 		for key, item := range funcList {
 			itemValue := strings.ReplaceAll(item, "New", "")
+			itemValue = strings.ReplaceAll(itemValue, "Max", "")
 			stmtVar += fmt.Sprintf(`    %s     *%s.%s
 `, util.StartToLower(itemValue), proto, itemValue)
 			if key < (len(funcList) - 1) {
@@ -532,7 +533,7 @@ func generateRpcClient(currentPath, name string) {
 func Get%[1]s() *proto.%[1]s {
 	%[2]sOnce.Do(func() {
 		close%[1]s()
-		%[2]s = proto.New%[1]s(func() {
+		%[2]s = proto.New%[1]sMax(func() {
 			%[2]sOnce.Reset()
 		})
 	})
@@ -558,7 +559,7 @@ func close%[1]s() {
 		}
 
 		codeFunc += fmt.Sprintf(`
-func CloseRpcClients() {
+func CloseAll() {
 %s
 }
 `, closeFuncCall)
@@ -598,6 +599,7 @@ import (
 
 	for _, item := range funcList {
 		itemValue := strings.ReplaceAll(item, "New", "")
+		itemValue = strings.ReplaceAll(itemValue, "Max", "")
 
 		spec1 := &dst.ValueSpec{
 			Decs:  dst.ValueSpecDecorations{NodeDecs: dst.NodeDecs{Before: dst.EmptyLine}},
@@ -631,14 +633,14 @@ import (
 		}
 	}
 
-	rst.DeleteFuncFromFile(df, "CloseRpcClients")
+	rst.DeleteFuncFromFile(df, "CloseAll")
 	fd := createCloseAllRpcClientFunc()
 	df.Decls = append(df.Decls, fd)
 
 	closeFuncList := rst.GetFuncDeclListWithPrefixSuffixInFile(df, "close", "Client")
 	for _, item := range closeFuncList {
 		closeOneCallStmt := &dst.ExprStmt{X: &dst.CallExpr{Fun: &dst.Ident{Name: fmt.Sprintf("%s", item)}}}
-		rst.AddStmtToFuncBodyEnd(df, "CloseRpcClients", closeOneCallStmt)
+		rst.AddStmtToFuncBodyEnd(df, "CloseAll", closeOneCallStmt)
 	}
 
 	buf := rst.PrintToBuf(df, guess.New(), []rst.PkgAlias{})
@@ -900,7 +902,7 @@ func createGetRpcClientFunc(upper, lower, pbPkg string) *dst.FuncDecl {
 										Lhs: []dst.Expr{dst.NewIdent(lower)},
 										Tok: token.ASSIGN,
 										Rhs: []dst.Expr{&dst.CallExpr{
-											Fun: &dst.Ident{Name: fmt.Sprintf("New%s", upper), Path: pbPkg},
+											Fun: &dst.Ident{Name: fmt.Sprintf("New%sMax", upper), Path: pbPkg},
 											Args: []dst.Expr{
 												&dst.FuncLit{
 													Type: &dst.FuncType{Func: true},
@@ -968,7 +970,7 @@ func createCloseOneRpcClientFunc(upper, lower, pbPkg string) *dst.FuncDecl {
 
 func createCloseAllRpcClientFunc() *dst.FuncDecl {
 	return &dst.FuncDecl{
-		Name: dst.NewIdent("CloseRpcClients"),
+		Name: dst.NewIdent("CloseAll"),
 		Type: &dst.FuncType{},
 		Body: &dst.BlockStmt{
 			Decs: dst.BlockStmtDecorations{Lbrace: dst.Decorations{"\n"}},

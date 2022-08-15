@@ -42,6 +42,7 @@ type CacheConfig struct {
 }
 
 type NacosConfig struct {
+	// common
 	Host        string `mapstructure:"host"`
 	Port        uint64 `mapstructure:"port"`
 	NamespaceId string `mapstructure:"namespaceId"`
@@ -49,7 +50,13 @@ type NacosConfig struct {
 	Group       string `mapstructure:"group"`
 	CacheDir    string `mapstructure:"cacheDir"`
 	LogDir      string `mapstructure:"logDir"`
-	Server      string `mapstructure:"server"`
+
+	// server
+	Server string `mapstructure:"server"`
+
+	// client
+	FailMode   string `mapstructure:"failMode"`
+	SelectMode string `mapstructure:"selectMode"`
 }
 
 type SlsConfig struct {

@@ -181,7 +181,36 @@ func (r *ripple) generateService(file *generator.FileDescriptor, service *pb.Ser
 			opt := client.DefaultOption
 			opt.SerializeType = protocol.ProtoBuffer
 
-			xclient := client.NewXClient(ServiceNameOf%[1]s, client.Failtry, client.RoundRobin, d, opt)
+			var failMode client.FailMode
+			switch config.Nacos.FailMode {
+			case "failover":
+				failMode = client.Failover
+			case "failfast":
+				failMode = client.Failfast
+			case "failbackup":
+				failMode = client.Failbackup
+			default:
+				failMode = client.Failtry
+			}
+
+			var selectMode client.SelectMode
+			switch config.Nacos.SelectMode {
+			case "randomSelect":
+				selectMode = client.RandomSelect
+			case "weightedRoundRobin":
+				selectMode = client.WeightedRoundRobin
+			case "weightedICMP":
+				selectMode = client.WeightedICMP
+			case "consistentHash":
+				selectMode = client.ConsistentHash
+			case "closest":
+				selectMode = client.Closest
+			case "selectByUser":
+				selectMode = client.SelectByUser
+			default:
+				selectMode = client.RoundRobin
+			}
+			xclient := client.NewXClient(ServiceNameOf%[1]s, failMode, selectMode, d, opt)
 
 			return xclient, d, nil
 		}
@@ -194,13 +223,22 @@ func (r *ripple) generateService(file *generator.FileDescriptor, service *pb.Ser
 
 		// New%[1]sClient wraps a XClient as %[1]sClient.
 		// You can pass a shared XClient object created by NewXClientFor%[1]s.
-		func New%[1]sClient(onServiceChange func()) *%[1]sClient {
+		func New%[1]sClientMax(onServiceChange func()) *%[1]sClient {
 			xc, d, err := newXClientFor%[1]s(onServiceChange)
 			if err != nil {
 				fmt.Println(fmt.Sprintf("Create rpcx client err: %s", err.Error()))
 				return &%[1]sClient{}
 			}
 			return &%[1]sClient{XClient: xc, Discovery: d}
+		}
+
+		// New%[1]sClient wraps a XClient as %[1]sClient.
+		// You can pass a shared XClient object created by NewXClientFor%[1]s.
+		func New%[1]sClient() *%[1]sClient {
+			onServiceChange := func() {
+				fmt.Println("XClient host is changed")
+			}
+			return New%[1]sClientMax(onServiceChange)
 		}
 	`, serviceName, cluster, group))
 	for _, method := range service.Method {

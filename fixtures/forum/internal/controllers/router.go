@@ -6,7 +6,7 @@ import (
 	"github.com/bmbstack/ripple"
 	"github.com/bmbstack/ripple/fixtures/forum/internal/controllers/v1"
 	. "github.com/bmbstack/ripple/fixtures/forum/internal/helper"
-	"github.com/bmbstack/ripple/fixtures/forum/internal/services"
+	"github.com/bmbstack/ripple/fixtures/forum/internal/rpcclient"
 	"github.com/bmbstack/ripple/fixtures/forum/proto"
 	"github.com/bmbstack/ripple/logger"
 	"github.com/labstack/echo/v4"
@@ -18,23 +18,17 @@ import (
 func RouteAPI() {
 	echoMux := ripple.Default().GetEcho()
 	echoMux.GET("/", func(ctx echo.Context) error {
-		for i := 0; i < 50; i++ {
-			pc := services.GetPlayerClient()
-			reply, _ := pc.GetPlayerInfo(context.Background(), &proto.GetPlayerInfoReq{PlayerId: 1377693})
-			fmt.Println(reply.Nickname)
-		}
-
-		pc := services.GetPlayerClient()
-		reply, _ := pc.GetPlayerInfo(context.Background(), &proto.GetPlayerInfoReq{PlayerId: 1377693})
-		fmt.Println("services.GetPlayerClient().GetPlayerInfo.Nickname=====>", reply.Nickname)
-
-		sc := services.GetStudentClient()
-		reply2, _ := sc.Learn(context.Background(), &proto.LearnReq{Id: 1})
+		reply1, _ := rpcclient.GetPlayerClient().GetPlayerInfo(context.Background(), &proto.GetPlayerInfoReq{PlayerId: 1377693})
+		reply2, _ := rpcclient.GetStudentClient().Learn(context.Background(), &proto.LearnReq{Id: 1})
+		reply3, _ := rpcclient.GetTeacherClient().Teach(context.Background(), &proto.TeachReq{Id: 1})
 		result := map[string]interface{}{
-			"remoteName": reply.Nickname,
-			"localName":  reply2.Name,
+			"remoteName":        reply1.Nickname,
+			"localName.student": reply2.Name,
+			"localName.teacher": reply3.Name,
 		}
-		logger.With(nil).Info(fmt.Sprintf("time: %d, name333: %s", time.Now().Unix(), reply.Nickname))
+		logger.With(nil).Info(fmt.Sprintf("time: %d, value1: %s", time.Now().Unix(), reply1.Nickname))
+		logger.With(nil).Info(fmt.Sprintf("time: %d, value2: %s", time.Now().Unix(), reply2.Name))
+		logger.With(nil).Info(fmt.Sprintf("time: %d, value3: %s", time.Now().Unix(), reply3.Name))
 		return ctx.JSON(http.StatusOK, SuccessJSON(result))
 	})
 

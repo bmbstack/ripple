@@ -362,7 +362,36 @@ func newXClientForPlayer(onServiceChange func()) (client.XClient, client.Service
 	opt := client.DefaultOption
 	opt.SerializeType = protocol.ProtoBuffer
 
-	xclient := client.NewXClient(ServiceNameOfPlayer, client.Failtry, client.RoundRobin, d, opt)
+	var failMode client.FailMode
+	switch config.Nacos.FailMode {
+	case "failover":
+		failMode = client.Failover
+	case "failfast":
+		failMode = client.Failfast
+	case "failbackup":
+		failMode = client.Failbackup
+	default:
+		failMode = client.Failtry
+	}
+
+	var selectMode client.SelectMode
+	switch config.Nacos.SelectMode {
+	case "randomSelect":
+		selectMode = client.RandomSelect
+	case "weightedRoundRobin":
+		selectMode = client.WeightedRoundRobin
+	case "weightedICMP":
+		selectMode = client.WeightedICMP
+	case "consistentHash":
+		selectMode = client.ConsistentHash
+	case "closest":
+		selectMode = client.Closest
+	case "selectByUser":
+		selectMode = client.SelectByUser
+	default:
+		selectMode = client.RoundRobin
+	}
+	xclient := client.NewXClient(ServiceNameOfPlayer, failMode, selectMode, d, opt)
 
 	return xclient, d, nil
 }
@@ -375,13 +404,22 @@ type PlayerClient struct {
 
 // NewPlayerClient wraps a XClient as PlayerClient.
 // You can pass a shared XClient object created by NewXClientForPlayer.
-func NewPlayerClient(onServiceChange func()) *PlayerClient {
+func NewPlayerClientMax(onServiceChange func()) *PlayerClient {
 	xc, d, err := newXClientForPlayer(onServiceChange)
 	if err != nil {
 		fmt.Println(fmt.Sprintf("Create rpcx client err: playerserver", err.Error()))
 		return &PlayerClient{}
 	}
 	return &PlayerClient{XClient: xc, Discovery: d}
+}
+
+// NewPlayerClient wraps a XClient as PlayerClient.
+// You can pass a shared XClient object created by NewXClientForPlayer.
+func NewPlayerClient() *PlayerClient {
+	onServiceChange := func() {
+		fmt.Println("XClient host is changed")
+	}
+	return NewPlayerClientMax(onServiceChange)
 }
 
 // GetPlayerInfo is client rpc method as defined

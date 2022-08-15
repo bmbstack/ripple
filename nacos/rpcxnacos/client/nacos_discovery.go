@@ -178,7 +178,9 @@ func (d *NacosDiscovery) watch(onServiceChange func()) {
 				}()
 			}
 			d.mu.Unlock()
-			onServiceChange()
+			if onServiceChange != nil {
+				onServiceChange()
+			}
 		},
 	}
 

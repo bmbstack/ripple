@@ -286,7 +286,36 @@ func newXClientForTeacher(onServiceChange func()) (client.XClient, client.Servic
 	opt := client.DefaultOption
 	opt.SerializeType = protocol.ProtoBuffer
 
-	xclient := client.NewXClient(ServiceNameOfTeacher, client.Failtry, client.RoundRobin, d, opt)
+	var failMode client.FailMode
+	switch config.Nacos.FailMode {
+	case "failover":
+		failMode = client.Failover
+	case "failfast":
+		failMode = client.Failfast
+	case "failbackup":
+		failMode = client.Failbackup
+	default:
+		failMode = client.Failtry
+	}
+
+	var selectMode client.SelectMode
+	switch config.Nacos.SelectMode {
+	case "randomSelect":
+		selectMode = client.RandomSelect
+	case "weightedRoundRobin":
+		selectMode = client.WeightedRoundRobin
+	case "weightedICMP":
+		selectMode = client.WeightedICMP
+	case "consistentHash":
+		selectMode = client.ConsistentHash
+	case "closest":
+		selectMode = client.Closest
+	case "selectByUser":
+		selectMode = client.SelectByUser
+	default:
+		selectMode = client.RoundRobin
+	}
+	xclient := client.NewXClient(ServiceNameOfTeacher, failMode, selectMode, d, opt)
 
 	return xclient, d, nil
 }
@@ -299,13 +328,22 @@ type TeacherClient struct {
 
 // NewTeacherClient wraps a XClient as TeacherClient.
 // You can pass a shared XClient object created by NewXClientForTeacher.
-func NewTeacherClient(onServiceChange func()) *TeacherClient {
+func NewTeacherClientMax(onServiceChange func()) *TeacherClient {
 	xc, d, err := newXClientForTeacher(onServiceChange)
 	if err != nil {
 		fmt.Println(fmt.Sprintf("Create rpcx client err: ripple", err.Error()))
 		return &TeacherClient{}
 	}
 	return &TeacherClient{XClient: xc, Discovery: d}
+}
+
+// NewTeacherClient wraps a XClient as TeacherClient.
+// You can pass a shared XClient object created by NewXClientForTeacher.
+func NewTeacherClient() *TeacherClient {
+	onServiceChange := func() {
+		fmt.Println("XClient host is changed")
+	}
+	return NewTeacherClientMax(onServiceChange)
 }
 
 // Teach is client rpc method as defined

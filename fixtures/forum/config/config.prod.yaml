@@ -50,9 +50,11 @@ caches: [
 nacos:
   host: "mse-7b574dc2-nacos-ans.mse.aliyuncs.com"
   port: 8848
-  namespaceId: "public"
+  namespaceId: "de27072b-2b00-45de-a2b2-b454da630590"
   cluster: "ripple"
   group: "DEFAULT_GROUP"
+  failMode: "failtry"
+  selectMode: "roundRobin"
   cacheDir: "./cache"
   logDir: "./log"
   server: "127.0.0.1:18090"
