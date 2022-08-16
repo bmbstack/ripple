@@ -150,11 +150,11 @@ func (r *ripple) generateService(file *generator.FileDescriptor, service *pb.Ser
 	r.P()
 	r.P("//================== client stub ===================")
 	r.P(fmt.Sprintf(`// newXClientFor%[1]s creates a XClient.
-		// You can configure this client with more options such as etcd registry, serialize type, select algorithm and fail mode.
-		func newXClientFor%[1]s(onServiceChange func()) (client.XClient, client.ServiceDiscovery, error) {
+		// You can configure this client pool with more options such as etcd registry, serialize type, select algorithm and fail mode.
+		func newXClientPoolFor%[1]s() (*client.XClientPool, error) {
 			config := ripple.GetBaseConfig()
 			if helper.IsEmpty(config.Nacos) {
-				return nil, nil, errors.New("yaml nacos config is null")
+				return nil, errors.New("yaml nacos config is null")
 			}
 			clientConfig := constant.ClientConfig{
 				TimeoutMs:            10 * 1000,
@@ -173,9 +173,9 @@ func (r *ripple) generateService(file *generator.FileDescriptor, service *pb.Ser
 				Port:   config.Nacos.Port,
 			}}
 		
-			d, err := client1.NewNacosDiscovery(ServiceNameOf%[1]s, "%[2]s", "%[3]s", clientConfig, serverConfig, onServiceChange)
+			d, err := client1.NewNacosDiscovery(ServiceNameOf%[1]s, "%[2]s", "%[3]s", clientConfig, serverConfig)
 			if err != nil {
-				return nil, nil, err
+				return nil, err
 			}
 			
 			opt := client.DefaultOption
@@ -210,35 +210,29 @@ func (r *ripple) generateService(file *generator.FileDescriptor, service *pb.Ser
 			default:
 				selectMode = client.RoundRobin
 			}
-			xclient := client.NewXClient(ServiceNameOf%[1]s, failMode, selectMode, d, opt)
+			poolSize := config.Nacos.ClientPoolSize
+			if poolSize == 0 {
+				poolSize = 10
+			}
+			pool := client.NewXClientPool(poolSize, ServiceNameOf%[1]s, failMode, selectMode, d, opt)
 
-			return xclient, d, nil
+			return pool, nil
 		}
 
 		// %[1]s is a client wrapped XClient.
 		type %[1]sClient struct{
-			XClient   client.XClient
-			Discovery client.ServiceDiscovery
-		}
-
-		// New%[1]sClient wraps a XClient as %[1]sClient.
-		// You can pass a shared XClient object created by NewXClientFor%[1]s.
-		func New%[1]sClientMax(onServiceChange func()) *%[1]sClient {
-			xc, d, err := newXClientFor%[1]s(onServiceChange)
-			if err != nil {
-				fmt.Println(fmt.Sprintf("Create rpcx client err: %s", err.Error()))
-				return &%[1]sClient{}
-			}
-			return &%[1]sClient{XClient: xc, Discovery: d}
+			XClientPool   *client.XClientPool
 		}
 
 		// New%[1]sClient wraps a XClient as %[1]sClient.
 		// You can pass a shared XClient object created by NewXClientFor%[1]s.
 		func New%[1]sClient() *%[1]sClient {
-			onServiceChange := func() {
-				fmt.Println("XClient host is changed")
+			pool, err := newXClientPoolFor%[1]s()
+			if err != nil {
+				fmt.Println(fmt.Sprintf("Create rpcx client err: %s", err.Error()))
+				return &%[1]sClient{}
 			}
-			return New%[1]sClientMax(onServiceChange)
+			return &%[1]sClient{XClientPool: pool}
 		}
 	`, serviceName, cluster, group))
 	for _, method := range service.Method {
@@ -278,7 +272,7 @@ func (r *ripple) generateClientCode(service *pb.ServiceDescriptorProto, method *
 	r.P(fmt.Sprintf(`// %s is client rpc method as defined
 		func (c *%sClient) %s(ctx context.Context, req *%s)(reply *%s, err error){
 			reply = &%s{}
-			err = c.XClient.Call(ctx,"%s",req, reply)
+			err = c.XClientPool.Get().Call(ctx,"%s",req, reply)
 			return reply, err
 		}
 	`, methodName, serviceName, methodName, inType, outType, outType, method.GetName()))

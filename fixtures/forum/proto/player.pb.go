@@ -331,11 +331,11 @@ func (this *PlayerRpcDemo) GetPlayerInfo(ctx context.Context, req *GetPlayerInfo
 
 //================== client stub ===================
 // newXClientForPlayer creates a XClient.
-// You can configure this client with more options such as etcd registry, serialize type, select algorithm and fail mode.
-func newXClientForPlayer(onServiceChange func()) (client.XClient, client.ServiceDiscovery, error) {
+// You can configure this client pool with more options such as etcd registry, serialize type, select algorithm and fail mode.
+func newXClientPoolForPlayer() (*client.XClientPool, error) {
 	config := ripple.GetBaseConfig()
 	if helper.IsEmpty(config.Nacos) {
-		return nil, nil, errors.New("yaml nacos config is null")
+		return nil, errors.New("yaml nacos config is null")
 	}
 	clientConfig := constant.ClientConfig{
 		TimeoutMs:            10 * 1000,
@@ -354,9 +354,9 @@ func newXClientForPlayer(onServiceChange func()) (client.XClient, client.Service
 		Port:   config.Nacos.Port,
 	}}
 
-	d, err := client1.NewNacosDiscovery(ServiceNameOfPlayer, "playerserver", "DEFAULT_GROUP", clientConfig, serverConfig, onServiceChange)
+	d, err := client1.NewNacosDiscovery(ServiceNameOfPlayer, "playerserver", "DEFAULT_GROUP", clientConfig, serverConfig)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	opt := client.DefaultOption
@@ -391,41 +391,35 @@ func newXClientForPlayer(onServiceChange func()) (client.XClient, client.Service
 	default:
 		selectMode = client.RoundRobin
 	}
-	xclient := client.NewXClient(ServiceNameOfPlayer, failMode, selectMode, d, opt)
+	poolSize := config.Nacos.ClientPoolSize
+	if poolSize == 0 {
+		poolSize = 10
+	}
+	pool := client.NewXClientPool(poolSize, ServiceNameOfPlayer, failMode, selectMode, d, opt)
 
-	return xclient, d, nil
+	return pool, nil
 }
 
 // Player is a client wrapped XClient.
 type PlayerClient struct {
-	XClient   client.XClient
-	Discovery client.ServiceDiscovery
-}
-
-// NewPlayerClient wraps a XClient as PlayerClient.
-// You can pass a shared XClient object created by NewXClientForPlayer.
-func NewPlayerClientMax(onServiceChange func()) *PlayerClient {
-	xc, d, err := newXClientForPlayer(onServiceChange)
-	if err != nil {
-		fmt.Println(fmt.Sprintf("Create rpcx client err: playerserver", err.Error()))
-		return &PlayerClient{}
-	}
-	return &PlayerClient{XClient: xc, Discovery: d}
+	XClientPool *client.XClientPool
 }
 
 // NewPlayerClient wraps a XClient as PlayerClient.
 // You can pass a shared XClient object created by NewXClientForPlayer.
 func NewPlayerClient() *PlayerClient {
-	onServiceChange := func() {
-		fmt.Println("XClient host is changed")
+	pool, err := newXClientPoolForPlayer()
+	if err != nil {
+		fmt.Println(fmt.Sprintf("Create rpcx client err: playerserver", err.Error()))
+		return &PlayerClient{}
 	}
-	return NewPlayerClientMax(onServiceChange)
+	return &PlayerClient{XClientPool: pool}
 }
 
 // GetPlayerInfo is client rpc method as defined
 func (c *PlayerClient) GetPlayerInfo(ctx context.Context, req *GetPlayerInfoReq) (reply *GetPlayerInfoResponse, err error) {
 	reply = &GetPlayerInfoResponse{}
-	err = c.XClient.Call(ctx, "GetPlayerInfo", req, reply)
+	err = c.XClientPool.Get().Call(ctx, "GetPlayerInfo", req, reply)
 	return reply, err
 }
 

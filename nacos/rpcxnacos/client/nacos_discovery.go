@@ -40,7 +40,7 @@ type NacosDiscovery struct {
 }
 
 // NewNacosDiscovery returns a new NacosDiscovery.
-func NewNacosDiscovery(servicePath, cluster, group string, clientConfig constant2.ClientConfig, serverConfig []constant2.ServerConfig, onServiceChange func()) (client.ServiceDiscovery, error) {
+func NewNacosDiscovery(servicePath, cluster, group string, clientConfig constant2.ClientConfig, serverConfig []constant2.ServerConfig) (client.ServiceDiscovery, error) {
 	d := &NacosDiscovery{
 		servicePath:  servicePath,
 		Cluster:      cluster,
@@ -62,7 +62,7 @@ func NewNacosDiscovery(servicePath, cluster, group string, clientConfig constant
 	d.namingClient = namingClient
 
 	d.fetch()
-	go d.watch(onServiceChange)
+	go d.watch()
 	return d, nil
 }
 
@@ -96,10 +96,7 @@ func (d *NacosDiscovery) fetch() {
 
 // Clone clones this ServiceDiscovery with new servicePath.
 func (d *NacosDiscovery) Clone(servicePath string) (client.ServiceDiscovery, error) {
-	onServiceChange := func() {
-		// do nothing
-	}
-	return NewNacosDiscovery(servicePath, d.Cluster, d.Group, d.ClientConfig, d.ServerConfig, onServiceChange)
+	return NewNacosDiscovery(servicePath, d.Cluster, d.Group, d.ClientConfig, d.ServerConfig)
 }
 
 // SetFilter sets the filer.
@@ -141,7 +138,7 @@ func (d *NacosDiscovery) RemoveWatcher(ch chan []*client.KVPair) {
 	d.chans = chans
 }
 
-func (d *NacosDiscovery) watch(onServiceChange func()) {
+func (d *NacosDiscovery) watch() {
 	param := &vo2.SubscribeParam{
 		ServiceName: d.servicePath,
 		Clusters:    []string{d.Cluster},
@@ -178,9 +175,6 @@ func (d *NacosDiscovery) watch(onServiceChange func()) {
 				}()
 			}
 			d.mu.Unlock()
-			if onServiceChange != nil {
-				onServiceChange()
-			}
 		},
 	}
 

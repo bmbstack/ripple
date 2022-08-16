@@ -55,8 +55,9 @@ type NacosConfig struct {
 	Server string `mapstructure:"server"`
 
 	// client
-	FailMode   string `mapstructure:"failMode"`
-	SelectMode string `mapstructure:"selectMode"`
+	FailMode       string `mapstructure:"failMode"`
+	SelectMode     string `mapstructure:"selectMode"`
+	ClientPoolSize int    `mapstructure:"clientPoolSize"`
 }
 
 type SlsConfig struct {

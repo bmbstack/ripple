@@ -22,51 +22,42 @@ var (
 func GetStudentClient() *proto.StudentClient {
 	studentClientOnce.Do(func() {
 		closeStudentClient()
-		studentClient = proto.NewStudentClientMax(func() {
-			studentClientOnce.Reset()
-		})
+		studentClient = proto.NewStudentClient()
 	})
 	return studentClient
 }
 
 func closeStudentClient() {
 	if studentClient != nil {
-		studentClient.Discovery.Close()
-		studentClient.XClient.Close()
+		studentClient.XClientPool.Close()
 	}
 }
 
 func GetTeacherClient() *proto.TeacherClient {
 	teacherClientOnce.Do(func() {
 		closeTeacherClient()
-		teacherClient = proto.NewTeacherClientMax(func() {
-			teacherClientOnce.Reset()
-		})
+		teacherClient = proto.NewTeacherClient()
 	})
 	return teacherClient
 }
 
 func closeTeacherClient() {
 	if teacherClient != nil {
-		teacherClient.Discovery.Close()
-		teacherClient.XClient.Close()
+		teacherClient.XClientPool.Close()
 	}
 }
 
 func GetPlayerClient() *proto.PlayerClient {
 	playerClientOnce.Do(func() {
 		closePlayerClient()
-		playerClient = proto.NewPlayerClientMax(func() {
-			playerClientOnce.Reset()
-		})
+		playerClient = proto.NewPlayerClient()
 	})
 	return playerClient
 }
 
 func closePlayerClient() {
 	if playerClient != nil {
-		playerClient.Discovery.Close()
-		playerClient.XClient.Close()
+		playerClient.XClientPool.Close()
 	}
 }
 

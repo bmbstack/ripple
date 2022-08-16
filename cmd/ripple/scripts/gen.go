@@ -487,9 +487,9 @@ func generateRpcClient(currentPath, name string) {
 		return
 	}
 
-	funcList := rst.GetFuncDeclListWithPrefixSuffixInFile(dfs, "New", "ClientMax")
+	funcList := rst.GetFuncDeclListWithPrefixSuffixInFile(dfs, "New", "Client")
 	if util.IsEmpty(funcList) {
-		logger.Logger.Notice("*.pb.go doesn't have NewClientMax func")
+		logger.Logger.Notice("*.pb.go doesn't have NewClient func")
 		return
 	}
 
@@ -518,7 +518,6 @@ func generateRpcClient(currentPath, name string) {
 		var closeFuncCall string
 		for key, item := range funcList {
 			itemValue := strings.ReplaceAll(item, "New", "")
-			itemValue = strings.ReplaceAll(itemValue, "Max", "")
 			stmtVar += fmt.Sprintf(`    %s     *%s.%s
 `, util.StartToLower(itemValue), proto, itemValue)
 			if key < (len(funcList) - 1) {
@@ -533,9 +532,7 @@ func generateRpcClient(currentPath, name string) {
 func Get%[1]s() *proto.%[1]s {
 	%[2]sOnce.Do(func() {
 		close%[1]s()
-		%[2]s = proto.New%[1]sMax(func() {
-			%[2]sOnce.Reset()
-		})
+		%[2]s = proto.New%[1]s()
 	})
 	return %[2]s
 }
@@ -544,8 +541,7 @@ func Get%[1]s() *proto.%[1]s {
 			codeFunc += fmt.Sprintf(`
 func close%[1]s() {
 	if %[2]s != nil {
-		%[2]s.Discovery.Close()
-		%[2]s.XClient.Close()
+		%[2]s.XClientPool.Close()
 	}
 }
 `, itemValue, util.StartToLower(itemValue))
@@ -599,7 +595,6 @@ import (
 
 	for _, item := range funcList {
 		itemValue := strings.ReplaceAll(item, "New", "")
-		itemValue = strings.ReplaceAll(itemValue, "Max", "")
 
 		spec1 := &dst.ValueSpec{
 			Decs:  dst.ValueSpecDecorations{NodeDecs: dst.NodeDecs{Before: dst.EmptyLine}},
@@ -902,20 +897,7 @@ func createGetRpcClientFunc(upper, lower, pbPkg string) *dst.FuncDecl {
 										Lhs: []dst.Expr{dst.NewIdent(lower)},
 										Tok: token.ASSIGN,
 										Rhs: []dst.Expr{&dst.CallExpr{
-											Fun: &dst.Ident{Name: fmt.Sprintf("New%sMax", upper), Path: pbPkg},
-											Args: []dst.Expr{
-												&dst.FuncLit{
-													Type: &dst.FuncType{Func: true},
-													Body: &dst.BlockStmt{
-														Decs: dst.BlockStmtDecorations{Lbrace: dst.Decorations{"\n"}},
-														List: []dst.Stmt{
-															&dst.ExprStmt{
-																X: &dst.CallExpr{Fun: &dst.SelectorExpr{X: &dst.Ident{Name: fmt.Sprintf("%sOnce", lower)}, Sel: &dst.Ident{Name: "Reset"}}},
-															},
-														},
-													},
-												},
-											},
+											Fun: &dst.Ident{Name: fmt.Sprintf("New%s", upper), Path: pbPkg},
 										}},
 									},
 								},
@@ -946,15 +928,7 @@ func createCloseOneRpcClientFunc(upper, lower, pbPkg string) *dst.FuncDecl {
 							&dst.ExprStmt{
 								X: &dst.CallExpr{
 									Fun: &dst.SelectorExpr{
-										X:   &dst.SelectorExpr{X: &dst.Ident{Name: lower}, Sel: &dst.Ident{Name: "Discovery"}},
-										Sel: &dst.Ident{Name: "Close"},
-									},
-								},
-							},
-							&dst.ExprStmt{
-								X: &dst.CallExpr{
-									Fun: &dst.SelectorExpr{
-										X:   &dst.SelectorExpr{X: &dst.Ident{Name: lower}, Sel: &dst.Ident{Name: "XClient"}},
+										X:   &dst.SelectorExpr{X: &dst.Ident{Name: lower}, Sel: &dst.Ident{Name: "XClientPool"}},
 										Sel: &dst.Ident{Name: "Close"},
 									},
 								},

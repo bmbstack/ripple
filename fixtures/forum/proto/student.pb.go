@@ -255,11 +255,11 @@ func (this *StudentRpcDemo) Learn(ctx context.Context, req *LearnReq, reply *Lea
 
 //================== client stub ===================
 // newXClientForStudent creates a XClient.
-// You can configure this client with more options such as etcd registry, serialize type, select algorithm and fail mode.
-func newXClientForStudent(onServiceChange func()) (client.XClient, client.ServiceDiscovery, error) {
+// You can configure this client pool with more options such as etcd registry, serialize type, select algorithm and fail mode.
+func newXClientPoolForStudent() (*client.XClientPool, error) {
 	config := ripple.GetBaseConfig()
 	if helper.IsEmpty(config.Nacos) {
-		return nil, nil, errors.New("yaml nacos config is null")
+		return nil, errors.New("yaml nacos config is null")
 	}
 	clientConfig := constant.ClientConfig{
 		TimeoutMs:            10 * 1000,
@@ -278,9 +278,9 @@ func newXClientForStudent(onServiceChange func()) (client.XClient, client.Servic
 		Port:   config.Nacos.Port,
 	}}
 
-	d, err := client1.NewNacosDiscovery(ServiceNameOfStudent, "ripple", "DEFAULT_GROUP", clientConfig, serverConfig, onServiceChange)
+	d, err := client1.NewNacosDiscovery(ServiceNameOfStudent, "ripple", "DEFAULT_GROUP", clientConfig, serverConfig)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	opt := client.DefaultOption
@@ -315,41 +315,35 @@ func newXClientForStudent(onServiceChange func()) (client.XClient, client.Servic
 	default:
 		selectMode = client.RoundRobin
 	}
-	xclient := client.NewXClient(ServiceNameOfStudent, failMode, selectMode, d, opt)
+	poolSize := config.Nacos.ClientPoolSize
+	if poolSize == 0 {
+		poolSize = 10
+	}
+	pool := client.NewXClientPool(poolSize, ServiceNameOfStudent, failMode, selectMode, d, opt)
 
-	return xclient, d, nil
+	return pool, nil
 }
 
 // Student is a client wrapped XClient.
 type StudentClient struct {
-	XClient   client.XClient
-	Discovery client.ServiceDiscovery
-}
-
-// NewStudentClient wraps a XClient as StudentClient.
-// You can pass a shared XClient object created by NewXClientForStudent.
-func NewStudentClientMax(onServiceChange func()) *StudentClient {
-	xc, d, err := newXClientForStudent(onServiceChange)
-	if err != nil {
-		fmt.Println(fmt.Sprintf("Create rpcx client err: ripple", err.Error()))
-		return &StudentClient{}
-	}
-	return &StudentClient{XClient: xc, Discovery: d}
+	XClientPool *client.XClientPool
 }
 
 // NewStudentClient wraps a XClient as StudentClient.
 // You can pass a shared XClient object created by NewXClientForStudent.
 func NewStudentClient() *StudentClient {
-	onServiceChange := func() {
-		fmt.Println("XClient host is changed")
+	pool, err := newXClientPoolForStudent()
+	if err != nil {
+		fmt.Println(fmt.Sprintf("Create rpcx client err: ripple", err.Error()))
+		return &StudentClient{}
 	}
-	return NewStudentClientMax(onServiceChange)
+	return &StudentClient{XClientPool: pool}
 }
 
 // Learn is client rpc method as defined
 func (c *StudentClient) Learn(ctx context.Context, req *LearnReq) (reply *LearnReply, err error) {
 	reply = &LearnReply{}
-	err = c.XClient.Call(ctx, "Learn", req, reply)
+	err = c.XClientPool.Get().Call(ctx, "Learn", req, reply)
 	return reply, err
 }
 
