@@ -48,7 +48,7 @@ USAGE:
    ripple [global options] command [command options] [arguments...]
 
 VERSION:
-   1.1.7
+   1.1.8
 
 AUTHOR:
    wangmingjob <wangmingjob@icloud.com>
@@ -307,6 +307,7 @@ nacos:
   group: "DEFAULT_GROUP"
   failMode: "failtry"
   selectMode: "roundRobin"
+  clientPoolSize: 10
   cacheDir: "./cache"
   logDir: "./log"
   server: "127.0.0.1:18090"
