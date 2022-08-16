@@ -190,7 +190,7 @@ func (r *ripple) generateService(file *generator.FileDescriptor, service *pb.Ser
 			case "failbackup":
 				failMode = client.Failbackup
 			default:
-				failMode = client.Failtry
+				failMode = client.Failover
 			}
 
 			var selectMode client.SelectMode

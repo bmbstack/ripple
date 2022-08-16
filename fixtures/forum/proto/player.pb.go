@@ -371,7 +371,7 @@ func newXClientPoolForPlayer() (*client.XClientPool, error) {
 	case "failbackup":
 		failMode = client.Failbackup
 	default:
-		failMode = client.Failtry
+		failMode = client.Failover
 	}
 
 	var selectMode client.SelectMode

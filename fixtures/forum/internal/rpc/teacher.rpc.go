@@ -15,6 +15,6 @@ type TeacherRpc struct {
 func (this *TeacherRpc) Teach(ctx context.Context, req *proto.TeachReq, reply *proto.TeachReply) (err error) {
 	// TODO: add some code
 	*reply = proto.TeachReply{}
-	reply.Name = "teacher teach function"
+	reply.Name = "老师"
 	return nil
 }

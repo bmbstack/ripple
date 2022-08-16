@@ -15,6 +15,6 @@ type StudentRpc struct {
 func (this *StudentRpc) Learn(ctx context.Context, req *proto.LearnReq, reply *proto.LearnReply) (err error) {
 	// TODO: add some code
 	*reply = proto.LearnReply{}
-	reply.Name = "student learn function"
+	reply.Name = "学生"
 	return nil
 }
