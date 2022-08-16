@@ -36,7 +36,7 @@ const (
 )
 
 // VersionName 0.8.2以后使用yaml配置文件, 1.0.1升级了脚手架(protoc, ast gen)
-const VersionName = "1.1.9"
+const VersionName = "1.2.0"
 
 func Version() string {
 	return VersionName

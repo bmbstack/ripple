@@ -540,7 +540,7 @@ func Get%[1]s() *proto.%[1]s {
 
 			codeFunc += fmt.Sprintf(`
 func close%[1]s() {
-	if %[2]s != nil {
+	if %[2]s != nil && %[2]s.XClientPool != nil {
 		%[2]s.XClientPool.Close()
 	}
 }
@@ -569,7 +569,7 @@ var (
 package %s
 
 import (
-	"github.com/bmbstack/ripple/sync"
+	"sync"
 
 	"%s"
 )
@@ -608,7 +608,7 @@ import (
 
 		spec2 := &dst.ValueSpec{
 			Names: []*dst.Ident{dst.NewIdent(fmt.Sprintf("%sOnce", util.StartToLower(itemValue)))},
-			Type:  &dst.Ident{Name: "Once", Path: "github.com/bmbstack/ripple/sync"},
+			Type:  &dst.Ident{Name: "Once", Path: "sync"},
 		}
 		hasSpec2 := rst.HasVarInBlockGenDecl(df, 0, spec2)
 		if !hasSpec2 {
@@ -922,7 +922,11 @@ func createCloseOneRpcClientFunc(upper, lower, pbPkg string) *dst.FuncDecl {
 			Decs: dst.BlockStmtDecorations{Lbrace: dst.Decorations{"\n"}},
 			List: []dst.Stmt{
 				&dst.IfStmt{
-					Cond: &dst.BinaryExpr{X: &dst.Ident{Name: lower}, Op: token.NEQ, Y: &dst.Ident{Name: "nil"}},
+					Cond: &dst.BinaryExpr{
+						X:  &dst.BinaryExpr{X: &dst.Ident{Name: lower}, Op: token.NEQ, Y: &dst.Ident{Name: "nil"}},
+						Op: token.LAND,
+						Y:  &dst.BinaryExpr{X: &dst.Ident{Name: fmt.Sprintf("%s.XClientPool", lower)}, Op: token.NEQ, Y: &dst.Ident{Name: "nil"}},
+					},
 					Body: &dst.BlockStmt{
 						List: []dst.Stmt{
 							&dst.ExprStmt{

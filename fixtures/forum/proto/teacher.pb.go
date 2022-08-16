@@ -343,7 +343,9 @@ func NewTeacherClient() *TeacherClient {
 // Teach is client rpc method as defined
 func (c *TeacherClient) Teach(ctx context.Context, req *TeachReq) (reply *TeachReply, err error) {
 	reply = &TeachReply{}
-	err = c.XClientPool.Get().Call(ctx, "Teach", req, reply)
+	if c.XClientPool != nil {
+		err = c.XClientPool.Get().Call(ctx, "Teach", req, reply)
+	}
 	return reply, err
 }
 

@@ -48,7 +48,7 @@ USAGE:
    ripple [global options] command [command options] [arguments...]
 
 VERSION:
-   1.1.9
+   1.2.0
 
 AUTHOR:
    wangmingjob <wangmingjob@icloud.com>

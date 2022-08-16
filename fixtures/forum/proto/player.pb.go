@@ -419,7 +419,9 @@ func NewPlayerClient() *PlayerClient {
 // GetPlayerInfo is client rpc method as defined
 func (c *PlayerClient) GetPlayerInfo(ctx context.Context, req *GetPlayerInfoReq) (reply *GetPlayerInfoResponse, err error) {
 	reply = &GetPlayerInfoResponse{}
-	err = c.XClientPool.Get().Call(ctx, "GetPlayerInfo", req, reply)
+	if c.XClientPool != nil {
+		err = c.XClientPool.Get().Call(ctx, "GetPlayerInfo", req, reply)
+	}
 	return reply, err
 }
 

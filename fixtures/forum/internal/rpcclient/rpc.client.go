@@ -3,7 +3,7 @@
 package rpcclient
 
 import (
-	"github.com/bmbstack/ripple/sync"
+	"sync"
 
 	"github.com/bmbstack/ripple/fixtures/forum/proto"
 )
@@ -28,7 +28,7 @@ func GetStudentClient() *proto.StudentClient {
 }
 
 func closeStudentClient() {
-	if studentClient != nil {
+	if studentClient != nil && studentClient.XClientPool != nil {
 		studentClient.XClientPool.Close()
 	}
 }
@@ -42,7 +42,7 @@ func GetTeacherClient() *proto.TeacherClient {
 }
 
 func closeTeacherClient() {
-	if teacherClient != nil {
+	if teacherClient != nil && teacherClient.XClientPool != nil {
 		teacherClient.XClientPool.Close()
 	}
 }
@@ -56,7 +56,7 @@ func GetPlayerClient() *proto.PlayerClient {
 }
 
 func closePlayerClient() {
-	if playerClient != nil {
+	if playerClient != nil && playerClient.XClientPool != nil {
 		playerClient.XClientPool.Close()
 	}
 }

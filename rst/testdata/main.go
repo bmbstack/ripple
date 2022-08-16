@@ -70,26 +70,13 @@ var (
 	playerClientOnce sync.Once
 )
 
-func GetPlayerClient() *proto.PlayerClient {
-	playerClientOnce.Do(func() {
-		closePlayerClient()
-		playerClient = proto.NewPlayerClient(func() {
-			playerClientOnce.Reset()
-		})
-	})
-	return playerClient
-}
-
 func closePlayerClient() {
-	if playerClient != nil {
+	if playerClient != nil && playerClient.XClientPool != nil {
 		playerClient.Discovery.Close()
 		playerClient.XClient.Close()
 	}
 }
-
-func CloseRpcClients() {
-	closePlayerClient()
-}`
+`
 
 	df2, err := decorator.Parse(code3)
 	if err != nil {

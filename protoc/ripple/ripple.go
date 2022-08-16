@@ -272,7 +272,9 @@ func (r *ripple) generateClientCode(service *pb.ServiceDescriptorProto, method *
 	r.P(fmt.Sprintf(`// %s is client rpc method as defined
 		func (c *%sClient) %s(ctx context.Context, req *%s)(reply *%s, err error){
 			reply = &%s{}
-			err = c.XClientPool.Get().Call(ctx,"%s",req, reply)
+			if c.XClientPool != nil {
+				err = c.XClientPool.Get().Call(ctx,"%s",req, reply)
+			}
 			return reply, err
 		}
 	`, methodName, serviceName, methodName, inType, outType, outType, method.GetName()))

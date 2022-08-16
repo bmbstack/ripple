@@ -343,7 +343,9 @@ func NewStudentClient() *StudentClient {
 // Learn is client rpc method as defined
 func (c *StudentClient) Learn(ctx context.Context, req *LearnReq) (reply *LearnReply, err error) {
 	reply = &LearnReply{}
-	err = c.XClientPool.Get().Call(ctx, "Learn", req, reply)
+	if c.XClientPool != nil {
+		err = c.XClientPool.Get().Call(ctx, "Learn", req, reply)
+	}
 	return reply, err
 }
 
