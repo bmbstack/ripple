@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/bmbstack/ripple"
 	"github.com/bmbstack/ripple/fixtures/forum/internal/rpcclient"
 	"github.com/bmbstack/ripple/fixtures/forum/internal/scripts"
 	. "github.com/bmbstack/ripple/helper"
@@ -22,6 +23,7 @@ func Commands() []*cli.Command {
 				OnStop(func() {
 					fmt.Println("OnStop, clean server...")
 					rpcclient.CloseAll()
+					ripple.Default().StopRpc()
 				})
 				scripts.Init(c)
 				scripts.RunRpc()

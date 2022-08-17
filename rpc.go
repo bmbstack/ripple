@@ -15,11 +15,11 @@ import (
 // NewRpcServerNacos create rpc server
 func NewRpcServerNacos(nacos NacosConfig) (*server.Server, *serverplugin.NacosRegisterPlugin) {
 	if IsEmpty(nacos.Server) {
-		fmt.Println(color.Green("RPC: Just RPC service caller, not RPC service provider"))
+		fmt.Println(color.Green("Rpc: This is RPC service caller, is not Rpc service provider"))
 		return nil, nil
 	}
 	s := server.NewServer()
-	fmt.Println(color.Green("RPC: RPC service provider"))
+	fmt.Println(color.Green("Rpc: This is Rpc service provider"))
 	clientConfig := constant2.ClientConfig{
 		TimeoutMs:            10 * 1000,
 		BeatInterval:         5 * 1000,
@@ -49,6 +49,8 @@ func NewRpcServerNacos(nacos NacosConfig) (*server.Server, *serverplugin.NacosRe
 	err := plugin.Start()
 	if err != nil {
 		log.Fatal(err)
+	} else {
+		fmt.Println(color.Green("Rpc: NacosRegisterPlugin start success"))
 	}
 	s.Plugins.Add(plugin)
 	return s, plugin

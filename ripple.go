@@ -275,10 +275,14 @@ func (this *Ripple) StopRpc() {
 		err := this.NacosRegisterPlugin.Stop()
 		if err != nil {
 			this.Logger.Error(fmt.Sprintf("Rpc nacosRegisterPlugin stop error: %s", err.Error()))
+		} else {
+			this.Logger.Notice("Rpc nacosRegisterPlugin stop success")
 		}
 		err = this.RpcServer.Close()
 		if err != nil {
-			this.Logger.Error(fmt.Sprintf("Rpc close error: %s", err.Error()))
+			this.Logger.Error(fmt.Sprintf("Rpc server close error: %s", err.Error()))
+		} else {
+			this.Logger.Notice("Rpc server close success")
 		}
 	}
 }
