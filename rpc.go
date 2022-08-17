@@ -13,10 +13,10 @@ import (
 )
 
 // NewRpcServerNacos create rpc server
-func NewRpcServerNacos(nacos NacosConfig) *server.Server {
+func NewRpcServerNacos(nacos NacosConfig) (*server.Server, *serverplugin.NacosRegisterPlugin) {
 	if IsEmpty(nacos.Server) {
 		fmt.Println(color.Green("RPC: Just RPC service caller, not RPC service provider"))
-		return nil
+		return nil, nil
 	}
 	s := server.NewServer()
 	fmt.Println(color.Green("RPC: RPC service provider"))
@@ -51,5 +51,5 @@ func NewRpcServerNacos(nacos NacosConfig) *server.Server {
 		log.Fatal(err)
 	}
 	s.Plugins.Add(plugin)
-	return s
+	return s, plugin
 }

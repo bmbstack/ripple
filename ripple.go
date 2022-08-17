@@ -10,6 +10,7 @@ import (
 	"github.com/bmbstack/ripple/middleware/bind"
 	"github.com/bmbstack/ripple/middleware/binding"
 	"github.com/bmbstack/ripple/middleware/logger"
+	"github.com/bmbstack/ripple/nacos/rpcxnacos/serverplugin"
 	"github.com/bmbstack/ripple/util"
 	"github.com/labstack/echo/v4"
 	mw "github.com/labstack/echo/v4/middleware"
@@ -54,11 +55,12 @@ func Default() *Ripple {
 
 // Ripple ripple struct
 type Ripple struct {
-	Logger    *logger.Logger
-	Echo      *echo.Echo
-	Orms      map[string]*Orm
-	Caches    map[string]*cache.Cache
-	RpcServer *server.Server
+	Logger              *logger.Logger
+	Echo                *echo.Echo
+	Orms                map[string]*Orm
+	Caches              map[string]*cache.Cache
+	RpcServer           *server.Server
+	NacosRegisterPlugin *serverplugin.NacosRegisterPlugin
 }
 
 // NewLogger new a logger instance
@@ -115,11 +117,6 @@ func NewRipple() *Ripple {
 		}
 	}
 	r.Caches = caches
-
-	// rpc, rpcx, nacos
-	if IsNotEmpty(config.Nacos) {
-		r.RpcServer = NewRpcServerNacos(config.Nacos)
-	}
 	return r
 }
 
@@ -214,8 +211,17 @@ func (this *Ripple) RegisterModels(orm *Orm, modelItems ...interface{}) {
 	firstRegModel = false
 }
 
+// checkOrNewRpcServer check or new rpc server
+func (this *Ripple) checkOrNewRpcServer() {
+	config := GetBaseConfig()
+	if this.RpcServer == nil && IsNotEmpty(config.Nacos) {
+		this.RpcServer, this.NacosRegisterPlugin = NewRpcServerNacos(config.Nacos)
+	}
+}
+
 // RegisterRpc register rpc service
 func (this *Ripple) RegisterRpc(name string, rpc interface{}, metadata string) {
+	this.checkOrNewRpcServer()
 	if this.RpcServer != nil {
 		err := this.RpcServer.RegisterName(name, rpc, metadata)
 		if err != nil {
@@ -226,20 +232,9 @@ func (this *Ripple) RegisterRpc(name string, rpc interface{}, metadata string) {
 	}
 }
 
-// UnregisterRpc unregisters all rpc services.
-func (this *Ripple) UnregisterRpc() {
-	if this.RpcServer != nil {
-		err := this.RpcServer.UnregisterAll()
-		if err != nil {
-			this.Logger.Error(fmt.Sprintf("Rpc unregisters all services error: %s", err.Error()))
-		} else {
-			this.Logger.Notice("Rpc unregisters all service success")
-		}
-	}
-}
-
 // RunRpc run rpc server
 func (this *Ripple) RunRpc() {
+	this.checkOrNewRpcServer()
 	if this.RpcServer != nil {
 		conf := GetBaseConfig()
 		if IsNotEmpty(conf.Nacos) {
@@ -258,6 +253,32 @@ func (this *Ripple) RunRpc() {
 					this.Logger.Notice(fmt.Sprintf("Rpc run success, address: %s", address))
 				}
 			}()
+		}
+	}
+}
+
+// UnregisterRpc unregisters all rpc services.
+func (this *Ripple) UnregisterRpc() {
+	if this.RpcServer != nil {
+		err := this.RpcServer.UnregisterAll()
+		if err != nil {
+			this.Logger.Error(fmt.Sprintf("Rpc unregisters all services error: %s", err.Error()))
+		} else {
+			this.Logger.Notice("Rpc unregisters all service success")
+		}
+	}
+}
+
+// StopRpc stop rpc server, close all rpc connections
+func (this *Ripple) StopRpc() {
+	if this.RpcServer != nil {
+		err := this.NacosRegisterPlugin.Stop()
+		if err != nil {
+			this.Logger.Error(fmt.Sprintf("Rpc nacosRegisterPlugin stop error: %s", err.Error()))
+		}
+		err = this.RpcServer.Close()
+		if err != nil {
+			this.Logger.Error(fmt.Sprintf("Rpc close error: %s", err.Error()))
 		}
 	}
 }
