@@ -24,6 +24,8 @@ func Commands() []*cli.Command {
 					fmt.Println("OnStop, clean server...")
 					rpcclient.CloseAll()
 					ripple.Default().StopRpc()
+					ripple.Default().CloseOrm()
+					ripple.Default().CloseCache()
 				})
 				scripts.Init(c)
 				scripts.RunRpc()
