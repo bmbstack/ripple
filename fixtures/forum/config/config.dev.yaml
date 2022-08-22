@@ -65,7 +65,7 @@ sls:
   allowLogLevel: "info"  # debug,info,warn,error
   closeStdout: false
   project: "xxxxxxx"
-  Logstore: "xxxxxxx"
+  logstore: "xxxxxxx"
   topic: "topic"
   source: "source"
 cls:

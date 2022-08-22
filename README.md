@@ -79,12 +79,14 @@ GLOBAL OPTIONS:
    --version, -v  print the version (default: false)
 ```
 
-Note: `ripple g` or `ripple g path` or `ripple g path component` will generate some code, and the path must be the parent directory of go.mod, that is, the main directory of the project. 
-For example, the demo project `fixtures/form`, and you will execute command: 
+Note: `ripple g` or `ripple g path` or `ripple g path component` will generate some code, and the path must be the parent directory of go.mod, that is, the main directory of the project. For example, the demo project `fixtures/form`, and you will execute command:
+
 ```shell
 ripple g fixture/form
 ```
-or 
+
+or
+
 ```shell
 cd fixture/form
 ripple g
@@ -94,6 +96,7 @@ ripple g
 * *.dto.go => *.controller.go(internal/controllers/v1), *.service.go(internal/service)
 
 *.proto example
+
 ```protobuf
 syntax = "proto3";
 
@@ -116,26 +119,30 @@ message LearnReply {
 }
 
 ```
+
 `Note`: @RippleRpc, @NacosGroup, @NacosCluster
 
 `*.dto.go` example:
+
 ```go
 // ReqStudentLearn
 // @RippleApi
 // @Uri /student/learn
 // @Method POST
 type ReqStudentLearn struct {
-    ID uint64 `form:"id" json:"id" binding:"required"`
+ID uint64 `form:"id" json:"id" binding:"required"`
 }
 
 type RespStudentLearn struct {
-    Name string `json:"name"`
+Name string `json:"name"`
 }
 
 ```
+
 `Note`: @RippleApi, @Uri, @Method
 
 ## Command: ripple g
+
 ```shell
 # generate all files, contains *.pb.go, *.controller.go, *.service.go, *.rpc.go(source file: *.dto.go, *.proto)
 ripple g
@@ -158,6 +165,7 @@ ripple g packages/app/internal/dto/user.dto.go
 # just generate rpcclient/rpc.client.go in app2(souce file: app1's *.pb.go)
 ripple g packages/app2 rpc.client packages/app1/proto/user.pb.go
 ```
+
 This is the structure of the `rippleApp` list application that will showcase how you can build web apps with `ripple`:
 
 ```shell
@@ -195,6 +203,7 @@ This is the structure of the `rippleApp` list application that will showcase how
 sc := services.GetStudentClient()
 reply, _ := sc.Learn(context.Background(), &proto.LearnReq{Id: 1})
 ```
+
 ## Rpc server register, eg (fixture/form):
 
 ```
@@ -215,11 +224,14 @@ func (this *StudentRpc) Learn(ctx context.Context, req *proto.LearnReq, reply *p
 ```
 
 ## Cache (Redis)
+
 ```go
 cache := ripple.Default().GetCache("cacheAlias")
 result, err := cache.HGetAll(context.Background(), "key").Result()
 ```
-or 
+
+or
+
 ```go
 cache := ripple.Default().GetCache("cacheAlias")
 client := cache.Client().(*redis.Client)
@@ -227,10 +239,13 @@ result, err := client.HGetAll(context.Background(), "key").Result()
 ```
 
 ## Logger (SLS, CLS)
+
 ```go
 ripple.Default().AddLogType(ripple.LogTypeSLS)
 ```
+
 or
+
 ```go
 ripple.Default().AddLogType(ripple.LogTypeCLS)
 ```
@@ -243,6 +258,7 @@ ripple.Default().StopRpc()
 ripple.Default().CloseOrm()
 ripple.Default().CloseCache()
 ```
+
 ## Which features to include in a framework
 
 A framework has 3 parts. A router receiving a request and directing it to a handler, a middleware system to add reusable pieces of software before and after the handler, and the handler processing the request and writing the response.
@@ -349,7 +365,7 @@ sls:
   allowLogLevel: "info"  # debug,info,warn,error
   closeStdout: false
   project: "xxxxxxx"
-  Logstore: "xxxxxxx"
+  logstore: "xxxxxxx"
   topic: "topic"
   source: "source"
 cls:
