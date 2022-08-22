@@ -48,7 +48,7 @@ USAGE:
    ripple [global options] command [command options] [arguments...]
 
 VERSION:
-   1.2.0
+   1.2.1
 
 AUTHOR:
    wangmingjob <wangmingjob@icloud.com>
@@ -135,6 +135,7 @@ type RespStudentLearn struct {
 ```
 `Note`: @RippleApi, @Uri, @Method
 
+## Command: ripple g
 ```shell
 # generate all files, contains *.pb.go, *.controller.go, *.service.go, *.rpc.go(source file: *.dto.go, *.proto)
 ripple g
