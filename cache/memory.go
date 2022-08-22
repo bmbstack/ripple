@@ -24,6 +24,10 @@ type MemoryCache struct {
 	items map[string]*MemoryItem
 }
 
+func (c *MemoryCache) Close() error {
+	panic("implement me")
+}
+
 func (c *MemoryCache) Set(key, val string, expiration time.Duration) error {
 	//TODO implement me
 	panic("implement me")

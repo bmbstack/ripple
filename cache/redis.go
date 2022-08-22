@@ -49,6 +49,10 @@ func (r *RedisCache) Client() interface{} {
 	return r.client()
 }
 
+func (r *RedisCache) Close() error {
+	return r.client().Close()
+}
+
 func (r *RedisCache) Key(key string) string {
 	if r.hasPrefix {
 		return r.prefix + ":" + key

@@ -126,3 +126,11 @@ func (orm *Orm) AddModels(values ...interface{}) error {
 	}
 	return nil
 }
+
+func (orm *Orm) Close() error {
+	db, err := orm.DB.DB()
+	if err != nil {
+		return err
+	}
+	return db.Close()
+}

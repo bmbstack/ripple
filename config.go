@@ -103,12 +103,14 @@ func InitConfigWithPath(env string, configPath string) {
 	v.AddConfigPath(configPath)
 	if err := v.ReadInConfig(); err != nil {
 		fmt.Println(fmt.Sprintf("Viper ReadInConfig err:%s\n", err))
+		panic(err)
 	}
 
 	baseConfig := BaseConfig{}
 	err := v.Unmarshal(&baseConfig)
 	if err != nil {
 		fmt.Println("yaml parse err: ", err)
+		panic(err)
 	}
 	bc = &baseConfig
 }

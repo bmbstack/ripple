@@ -287,6 +287,32 @@ func (this *Ripple) StopRpc() {
 	}
 }
 
+func (this *Ripple) CloseOrm() {
+	if IsNotEmpty(this.Orms) {
+		for key, item := range this.Orms {
+			err := item.Close()
+			if err != nil {
+				this.Logger.Error(fmt.Sprintf("Close orm (alias: %s) error: %s", key, err.Error()))
+			} else {
+				this.Logger.Notice(fmt.Sprintf("Close orm (alias: %s) success", key))
+			}
+		}
+	}
+}
+
+func (this *Ripple) CloseCache() {
+	if IsNotEmpty(this.Caches) {
+		for key, item := range this.Caches {
+			err := item.Close()
+			if err != nil {
+				this.Logger.Error(fmt.Sprintf("Close cache (alias: %s) error: %s", key, err.Error()))
+			} else {
+				this.Logger.Notice(fmt.Sprintf("Close cache (alias: %s) success", key))
+			}
+		}
+	}
+}
+
 // Run run ripple application
 func (this *Ripple) Run() {
 	// autoMigrate all orms

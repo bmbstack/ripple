@@ -20,6 +20,7 @@ type Store interface {
 	connect(opt Options) error
 
 	Client() interface{}
+	Close() error
 
 	Key(key string) string
 
@@ -140,6 +141,10 @@ func NewCache(options Options) (*Cache, error) {
 
 func (this *Cache) Client() interface{} {
 	return this.store.Client()
+}
+
+func (this *Cache) Close() error {
+	return this.store.Close()
 }
 
 func (this *Cache) Key(key string) string {
