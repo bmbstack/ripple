@@ -135,6 +135,28 @@ type RespStudentLearn struct {
 ```
 `Note`: @RippleApi, @Uri, @Method
 
+```shell
+# generate all files, contains *.pb.go, *.controller.go, *.service.go, *.rpc.go(source file: *.dto.go, *.proto)
+ripple g
+# generate all files in this directory, contains *.pb.go, *.controller.go, *.service.go, *.rpc.go(source file: *.dto.go, *.proto)
+ripple g packages/app
+# just generate *.pb.go(source file: *.proto)
+ripple g packages/app proto
+# just generate *.controller.go(source file: *.dto.go)
+ripple g packages/app controller
+# just generate *.service.go(source file: *.dto.go)
+ripple g packages/app service
+# just generate *.service.go(source: serviceName, this product is a serviceName)
+ripple g packages/app service product
+# just generate *.ecode.go
+ripple g packages/app ecode
+# just generate *.pb.go(souce file: *.proto)
+ripple g packages/app/proto/user.proto
+# just generate *.controller.go, *.service.go(souce file: *.dto.go)
+ripple g packages/app/internal/dto/user.dto.go
+# just generate rpcclient/rpc.client.go in app2(souce file: app1's *.pb.go)
+ripple g packages/app2 rpc.client packages/app1/proto/user.pb.go
+```
 This is the structure of the `rippleApp` list application that will showcase how you can build web apps with `ripple`:
 
 ```shell
@@ -212,6 +234,14 @@ or
 ripple.Default().AddLogType(ripple.LogTypeCLS)
 ```
 
+## Please close Resource, when the program exits
+
+```shell
+rpcclient.CloseAll()
+ripple.Default().StopRpc()
+ripple.Default().CloseOrm()
+ripple.Default().CloseCache()
+```
 ## Which features to include in a framework
 
 A framework has 3 parts. A router receiving a request and directing it to a handler, a middleware system to add reusable pieces of software before and after the handler, and the handler processing the request and writing the response.
