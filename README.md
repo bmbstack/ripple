@@ -48,7 +48,7 @@ USAGE:
    ripple [global options] command [command options] [arguments...]
 
 VERSION:
-   1.2.1
+   1.2.2
 
 AUTHOR:
    wangmingjob <wangmingjob@icloud.com>
@@ -238,18 +238,29 @@ client := cache.Client().(*redis.Client)
 result, err := client.HGetAll(context.Background(), "key").Result()
 ```
 
-## Logger (SLS, CLS)
+## Logger
 
+### SLS(aliyun log)
 ```go
 ripple.Default().AddLogType(ripple.LogTypeSLS)
 ```
-
 or
-
+### CLS(tecent cloud log)
 ```go
 ripple.Default().AddLogType(ripple.LogTypeCLS)
 ```
 
+Use logger like this
+```golang
+import "github.com/bmbstack/ripple/logger"
+
+logger.With(map[string]interface{}{
+    "userId": 101,
+    "traceId": "lskajdfouiaadgvv",
+}).Info("hello, tom")
+
+logger.Info("hello, jack")
+```
 ## Please close Resource, when the program exits
 
 ```shell
@@ -317,6 +328,8 @@ databases: [
     "name": "one",
     "username": "root",
     "password": "123456"
+    "maxIdleConns": 200,
+    "maxOpenConns": 1000
   },
   {
     "alias": "two",
@@ -326,6 +339,8 @@ databases: [
     "name": "two",
     "username": "root",
     "password": "123456"
+    "maxIdleConns": 200,
+    "maxOpenConns": 1000
   }
 ]
 caches: [
@@ -352,7 +367,7 @@ nacos:
   namespaceId: "public"
   cluster: "ripple_user"
   group: "DEFAULT_GROUP"
-  failMode: "failtry"
+  failMode: "failover"
   selectMode: "roundRobin"
   clientPoolSize: 10
   cacheDir: "./cache"

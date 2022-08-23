@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/bmbstack/ripple/cache"
 	. "github.com/bmbstack/ripple/helper"
+	log "github.com/bmbstack/ripple/logger"
 	"github.com/bmbstack/ripple/logger/cls"
 	"github.com/bmbstack/ripple/logger/sls"
 	"github.com/bmbstack/ripple/middleware/bind"
@@ -37,7 +38,7 @@ const (
 )
 
 // VersionName 0.8.2以后使用yaml配置文件, 1.0.1升级了脚手架(protoc, ast gen)
-const VersionName = "1.2.1"
+const VersionName = "1.2.2"
 
 func Version() string {
 	return VersionName
@@ -56,6 +57,7 @@ func Default() *Ripple {
 // Ripple ripple struct
 type Ripple struct {
 	Logger              *logger.Logger
+	Logrus              *logrus.Logger
 	Echo                *echo.Echo
 	Orms                map[string]*Orm
 	Caches              map[string]*cache.Cache
@@ -78,6 +80,7 @@ func NewRipple() *Ripple {
 
 	r := &Ripple{}
 	r.Logger = NewLogger()
+	r.Logrus = log.StandardLogger()
 	r.Echo = echo.New()
 
 	r.Echo.Use(mw.Recover())
@@ -123,7 +126,11 @@ func NewRipple() *Ripple {
 // AddLogType  add log type (ripple.LogTypeSLS, ripple.LogTypeCLS)
 func (this *Ripple) AddLogType(value LogType) {
 	fmt.Println(color.Green(fmt.Sprintf("Logger: Add LogType %s", value)))
+
 	conf := GetBaseConfig()
+	formatter := &logrus.JSONFormatter{
+		DisableHTMLEscape: true,
+	}
 	if LogTypeSLS == value && IsNotEmpty(conf.SLS) {
 		h := sls.NewSLSHook(
 			conf.SLS.AccessKeyId,
@@ -140,10 +147,10 @@ func (this *Ripple) AddLogType(value LogType) {
 			if err != nil {
 				fmt.Println("SLS.CloseStdout Open file err: ", err)
 			}
-			logrus.SetOutput(bufio.NewWriter(f))
+			this.Logrus.SetOutput(bufio.NewWriter(f))
 		}
-		logrus.SetFormatter(&logrus.JSONFormatter{})
-		logrus.AddHook(h)
+		this.Logrus.SetFormatter(formatter)
+		this.Logrus.AddHook(h)
 	} else if LogTypeCLS == value && IsNotEmpty(conf.CLS) {
 		h := cls.NewCLSHook(
 			conf.CLS.AccessKeyId,
@@ -157,10 +164,10 @@ func (this *Ripple) AddLogType(value LogType) {
 			if err != nil {
 				fmt.Println("CLS.CloseStdout Open file err: ", err)
 			}
-			logrus.SetOutput(bufio.NewWriter(f))
+			this.Logrus.SetOutput(bufio.NewWriter(f))
 		}
-		logrus.SetFormatter(&logrus.JSONFormatter{})
-		logrus.AddHook(h)
+		this.Logrus.SetFormatter(formatter)
+		this.Logrus.AddHook(h)
 	} else {
 		// do nothing
 	}
