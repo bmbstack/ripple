@@ -199,14 +199,14 @@ This is the structure of the `rippleApp` list application that will showcase how
 
 ## Rpc client call, eg (fixture/form):
 
-```
+```go
 sc := services.GetStudentClient()
 reply, _ := sc.Learn(context.Background(), &proto.LearnReq{Id: 1})
 ```
 
 ## Rpc server register, eg (fixture/form):
 
-```
+```go
 ripple.Default().RegisterRpc(proto.ServiceNameOfStudent, &rpc.StudentRpc{}, "")
 ripple.Default().RunRpc()
 
@@ -251,7 +251,7 @@ ripple.Default().AddLogType(ripple.LogTypeCLS)
 ```
 
 Use logger like this
-```golang
+```go
 import "github.com/bmbstack/ripple/logger"
 
 logger.With(map[string]interface{}{
@@ -263,7 +263,7 @@ logger.Info("hello, jack")
 ```
 ## Please close Resource, when the program exits
 
-```shell
+```go
 rpcclient.CloseAll()
 ripple.Default().StopRpc()
 ripple.Default().CloseOrm()
