@@ -18,7 +18,7 @@ require (
 	github.com/labstack/echo/v4 v4.6.1
 	github.com/labstack/gommon v0.3.0
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.11.0
+	github.com/prometheus/client_golang v1.11.1
 	github.com/sirupsen/logrus v1.6.0
 	github.com/smallnest/rpcx v1.7.3
 	github.com/spf13/viper v1.11.0
