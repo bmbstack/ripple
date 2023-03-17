@@ -9,6 +9,7 @@ import (
 type BaseConfig struct {
 	AutoMigrate bool             `mapstructure:"autoMigrate,omitempty"` // autoMigrate
 	BindAllTag  bool             `mapstructure:"bindAllTag,omitempty"`  // false=binding
+	Debug       bool             `mapstructure:"debug,omitempty"`       // debug, default false
 	Domain      string           `mapstructure:"domain,omitempty"`      // domain=127.0.0.1:8090
 	Static      string           `mapstructure:"static,omitempty"`      // static=frontend/static
 	Templates   string           `mapstructure:"templates,omitempty"`   // templates=frontend/templates

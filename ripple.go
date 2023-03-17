@@ -38,7 +38,7 @@ const (
 )
 
 // VersionName 0.8.2以后使用yaml配置文件, 1.0.1升级了脚手架(protoc, ast gen)
-const VersionName = "1.2.2"
+const VersionName = "1.2.3"
 
 func Version() string {
 	return VersionName
@@ -97,7 +97,7 @@ func NewRipple() *Ripple {
 	orms := make(map[string]*Orm)
 	if IsNotEmpty(config.Databases) {
 		for _, item := range config.Databases {
-			orms[item.Alias] = NewOrm(item, !strings.EqualFold("prod", GetEnv()))
+			orms[item.Alias] = NewOrm(item, GetBaseConfig().Debug)
 		}
 	}
 	r.Orms = orms
@@ -322,6 +322,11 @@ func (this *Ripple) CloseCache() {
 
 // Run run ripple application
 func (this *Ripple) Run() {
+	this.RunWith(GetBaseConfig().Domain)
+}
+
+// RunWith run ripple application
+func (this *Ripple) RunWith(domain string) {
 	// autoMigrate all orms
 	if GetBaseConfig().AutoMigrate {
 		for alias := range this.Orms {
@@ -329,9 +334,9 @@ func (this *Ripple) Run() {
 		}
 	}
 
-	this.Logger.Info(fmt.Sprintf("Ripple ListenAndServe: %s", color.Green(GetBaseConfig().Domain)))
-	this.Echo.Debug = !strings.EqualFold("prod", GetEnv())
-	err := this.Echo.Start(GetBaseConfig().Domain)
+	this.Logger.Info(fmt.Sprintf("Ripple ListenAndServe: %s", color.Green(domain)))
+	this.Echo.Debug = GetBaseConfig().Debug
+	err := this.Echo.Start(domain)
 	if err != nil {
 		this.Logger.Error(fmt.Sprintf("Ripple Start error: %s", color.Red(err)))
 	}
