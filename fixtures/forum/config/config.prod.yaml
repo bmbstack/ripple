@@ -1,0 +1,77 @@
+domain: "127.0.0.1:8090"
+static: "frontend/static"
+templates: "frontend/templates"
+autoMigrate: false
+bindAllTag: false
+databases: [
+  {
+    "alias": "one",
+    "dialect": "mysql",
+    "host": "127.0.0.1",
+    "port": 3306,
+    "name": "one",
+    "username": "root",
+    "password": "123456",
+    "maxIdleConns": 200,
+    "maxOpenConns": 1000
+  },
+  {
+    "alias": "two",
+    "dialect": "mysql",
+    "host": "127.0.0.1",
+    "port": 3306,
+    "name": "two",
+    "username": "root",
+    "password": "123456",
+    "maxIdleConns": 200,
+    "maxOpenConns": 1000
+  }
+]
+caches: [
+  {
+    "alias": "one",
+    "section": "one",
+    "adapter": "redis",
+    "host": "127.0.0.1",
+    "port": 6379,
+    "password": "123456",
+    "db": 1
+  },
+  {
+    "alias": "two",
+    "section": "two",
+    "adapter": "redis",
+    "host": "127.0.0.1",
+    "port": 6379,
+    "password": "123456",
+    "db": 1
+  }
+]
+nacos:
+  host: "mse-7b574dc2-nacos-ans.mse.aliyuncs.com"
+  port: 8848
+  namespaceId: "de27072b-2b00-45de-a2b2-b454da630590"
+  cluster: "ripple"
+  group: "DEFAULT_GROUP"
+  failMode: "failtry"
+  selectMode: "roundRobin"
+  cacheDir: "./cache"
+  logDir: "./log"
+  server: "127.0.0.1:18090"
+sls:
+  accessKeyId: "xxxxxxx"
+  accessKeySecret: "xxxxxxx"
+  endpoint: "cn-beijing-intranet.log.aliyuncs.com"
+  allowLogLevel: "info"  # debug,info,warn,error
+  closeStdout: false
+  project: "xxxxxxx"
+  logstore: "xxxxxxx"
+  topic: "topic"
+  source: "source"
+cls:
+  accessKeyId: "xxxxxxx"
+  accessKeySecret: "xxxxxxx"
+  endpoint: "ap-beijing.cls.tencentcs.com"
+  allowLogLevel: "info"  # debug,info,warn,error
+  closeStdout: false
+  topic: "b246af67-dab3-408b-b802-ba150488ffbf"
