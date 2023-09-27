@@ -5,6 +5,7 @@ go 1.16
 require (
 	github.com/aliyun/alibaba-cloud-sdk-go v1.61.1691
 	github.com/aliyun/aliyun-log-go-sdk v0.1.36
+	github.com/bmbstack/g v1.0.0
 	github.com/buger/jsonparser v1.1.1
 	github.com/dave/dst v0.26.2
 	github.com/flosch/pongo2/v4 v4.0.1

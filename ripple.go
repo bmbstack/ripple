@@ -3,6 +3,9 @@ package ripple
 import (
 	"bufio"
 	"fmt"
+	"github.com/bmbstack/g"
+	"runtime"
+
 	"github.com/bmbstack/ripple/cache"
 	. "github.com/bmbstack/ripple/helper"
 	log "github.com/bmbstack/ripple/logger"
@@ -11,6 +14,7 @@ import (
 	"github.com/bmbstack/ripple/middleware/bind"
 	"github.com/bmbstack/ripple/middleware/binding"
 	"github.com/bmbstack/ripple/middleware/logger"
+	"github.com/bmbstack/ripple/middleware/recover"
 	"github.com/bmbstack/ripple/nacos/rpcxnacos/serverplugin"
 	"github.com/bmbstack/ripple/util"
 	"github.com/labstack/echo/v4"
@@ -78,12 +82,22 @@ func NewLogger() *logger.Logger {
 func NewRipple() *Ripple {
 	config := GetBaseConfig()
 
+	g.SetDefaultRecoverFunc(func(v interface{}, done chan<- error) {
+		// 上报panic日志到阿里云......
+		stackArr := make([]byte, 2048)
+		length := runtime.Stack(stackArr, true)
+		stack := string(stackArr[:length])
+		msg := fmt.Sprintf("[PANIC RECOVER] %v %s\n", v, stack)
+		log.With(nil).Error(msg)
+		done <- fmt.Errorf("panic in goroutine successfully recovered")
+	})
+
 	r := &Ripple{}
 	r.Logger = NewLogger()
 	r.Logrus = log.StandardLogger()
-	r.Echo = echo.New()
 
-	r.Echo.Use(mw.Recover())
+	r.Echo = echo.New()
+	r.Echo.Use(recover.Recover())
 	r.Echo.Use(mw.Logger())
 
 	r.Echo.Binder = binding.Binder{}

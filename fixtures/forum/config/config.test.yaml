@@ -59,15 +59,25 @@ nacos:
   logDir: "./log"
   server: "127.0.0.1:18090"
 sls:
-  accessKeyId: "xxxxxxx"
-  accessKeySecret: "xxxxxxx"
+  accessKeyId: "LTAI5tKKJEdjoSeEkt8d9Mor"
+  accessKeySecret: "i8WKVYGbNxBqRKuBLY9G4TpEa5rMZw"
   endpoint: "cn-beijing-intranet.log.aliyuncs.com"
   allowLogLevel: "info"  # debug,info,warn,error
   closeStdout: false
-  project: "xxxxxxx"
-  logstore: "xxxxxxx"
-  topic: "topic"
+  project: "boxlite"
+  logstore: "stage-boxlite-boxserver-service"
+  topic: "*package"
   source: "source"
+#sls:
+#  accessKeyId: "xxxxxxx"
+#  accessKeySecret: "xxxxxxx"
+#  endpoint: "cn-beijing-intranet.log.aliyuncs.com"
+#  allowLogLevel: "info"  # debug,info,warn,error
+#  closeStdout: false
+#  project: "xxxxxxx"
+#  logstore: "xxxxxxx"
+#  topic: "topic"
+#  source: "source"
 cls:
   accessKeyId: "xxxxxxx"
   accessKeySecret: "xxxxxxx"
