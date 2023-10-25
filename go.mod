@@ -15,7 +15,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/mock v1.6.0
-	github.com/golang/protobuf v1.5.2
+	github.com/golang/protobuf v1.5.3
 	github.com/labstack/echo/v4 v4.6.1
 	github.com/labstack/gommon v0.3.0
 	github.com/pkg/errors v0.9.1
@@ -23,14 +23,14 @@ require (
 	github.com/sirupsen/logrus v1.6.0
 	github.com/smallnest/rpcx v1.7.3
 	github.com/spf13/viper v1.11.0
-	github.com/stretchr/testify v1.8.0
+	github.com/stretchr/testify v1.8.3
 	github.com/tencentcloud/tencentcloud-cls-sdk-go v1.0.2
 	github.com/urfave/cli/v2 v2.3.0
 	go.uber.org/zap v1.17.0
-	golang.org/x/mod v0.5.1
-	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	google.golang.org/grpc v1.45.0
-	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b
+	golang.org/x/mod v0.9.0
+	golang.org/x/sync v0.1.0
+	google.golang.org/grpc v1.56.3
+	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gorm.io/driver/mysql v1.2.0
 	gorm.io/driver/postgres v1.2.2
