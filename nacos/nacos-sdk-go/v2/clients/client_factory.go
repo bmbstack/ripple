@@ -17,33 +17,35 @@
 package clients
 
 import (
-	"errors"
-	config_client2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/config_client"
-	nacos_client2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/nacos_client"
-	naming_client2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/naming_client"
-	constant2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
-	http_agent2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/http_agent"
-	vo2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/vo"
+	"github.com/pkg/errors"
+
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/naming_client"
+
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/config_client"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/nacos_client"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/http_agent"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/vo"
 )
 
 // CreateConfigClient use to create config client
-func CreateConfigClient(properties map[string]interface{}) (iClient config_client2.IConfigClient, err error) {
+func CreateConfigClient(properties map[string]interface{}) (iClient config_client.IConfigClient, err error) {
 	param := getConfigParam(properties)
 	return NewConfigClient(param)
 }
 
-//CreateNamingClient use to create a nacos naming client
-func CreateNamingClient(properties map[string]interface{}) (iClient naming_client2.INamingClient, err error) {
+// CreateNamingClient use to create a nacos naming client
+func CreateNamingClient(properties map[string]interface{}) (iClient naming_client.INamingClient, err error) {
 	param := getConfigParam(properties)
 	return NewNamingClient(param)
 }
 
-func NewConfigClient(param vo2.NacosClientParam) (iClient config_client2.IConfigClient, err error) {
+func NewConfigClient(param vo.NacosClientParam) (iClient config_client.IConfigClient, err error) {
 	nacosClient, err := setConfig(param)
 	if err != nil {
 		return
 	}
-	config, err := config_client2.NewConfigClient(nacosClient)
+	config, err := config_client.NewConfigClient(nacosClient)
 	if err != nil {
 		return
 	}
@@ -51,12 +53,12 @@ func NewConfigClient(param vo2.NacosClientParam) (iClient config_client2.IConfig
 	return
 }
 
-func NewNamingClient(param vo2.NacosClientParam) (iClient naming_client2.INamingClient, err error) {
+func NewNamingClient(param vo.NacosClientParam) (iClient naming_client.INamingClient, err error) {
 	nacosClient, err := setConfig(param)
 	if err != nil {
 		return
 	}
-	naming, err := naming_client2.NewNamingClient(nacosClient)
+	naming, err := naming_client.NewNamingClient(nacosClient)
 	if err != nil {
 		return
 	}
@@ -64,26 +66,26 @@ func NewNamingClient(param vo2.NacosClientParam) (iClient naming_client2.INaming
 	return
 }
 
-func getConfigParam(properties map[string]interface{}) (param vo2.NacosClientParam) {
+func getConfigParam(properties map[string]interface{}) (param vo.NacosClientParam) {
 
-	if clientConfigTmp, exist := properties[constant2.KEY_CLIENT_CONFIG]; exist {
-		if clientConfig, ok := clientConfigTmp.(constant2.ClientConfig); ok {
+	if clientConfigTmp, exist := properties[constant.KEY_CLIENT_CONFIG]; exist {
+		if clientConfig, ok := clientConfigTmp.(constant.ClientConfig); ok {
 			param.ClientConfig = &clientConfig
 		}
 	}
-	if serverConfigTmp, exist := properties[constant2.KEY_SERVER_CONFIGS]; exist {
-		if serverConfigs, ok := serverConfigTmp.([]constant2.ServerConfig); ok {
+	if serverConfigTmp, exist := properties[constant.KEY_SERVER_CONFIGS]; exist {
+		if serverConfigs, ok := serverConfigTmp.([]constant.ServerConfig); ok {
 			param.ServerConfigs = serverConfigs
 		}
 	}
 	return
 }
 
-func setConfig(param vo2.NacosClientParam) (iClient nacos_client2.INacosClient, err error) {
-	client := &nacos_client2.NacosClient{}
+func setConfig(param vo.NacosClientParam) (iClient nacos_client.INacosClient, err error) {
+	client := &nacos_client.NacosClient{}
 	if param.ClientConfig == nil {
 		// default clientConfig
-		_ = client.SetClientConfig(constant2.ClientConfig{
+		_ = client.SetClientConfig(constant.ClientConfig{
 			TimeoutMs:    10 * 1000,
 			BeatInterval: 5 * 1000,
 		})
@@ -102,6 +104,14 @@ func setConfig(param vo2.NacosClientParam) (iClient nacos_client2.INacosClient, 
 		}
 		_ = client.SetServerConfig(nil)
 	} else {
+		for i := range param.ServerConfigs {
+			if param.ServerConfigs[i].Port == 0 {
+				param.ServerConfigs[i].Port = 8848
+			}
+			if param.ServerConfigs[i].GrpcPort == 0 {
+				param.ServerConfigs[i].GrpcPort = param.ServerConfigs[i].Port + constant.RpcPortOffset
+			}
+		}
 		err = client.SetServerConfig(param.ServerConfigs)
 		if err != nil {
 			return nil, err
@@ -110,7 +120,7 @@ func setConfig(param vo2.NacosClientParam) (iClient nacos_client2.INacosClient, 
 
 	if _, _err := client.GetHttpAgent(); _err != nil {
 		if clientCfg, err := client.GetClientConfig(); err == nil {
-			_ = client.SetHttpAgent(&http_agent2.HttpAgent{TlsConfig: clientCfg.TLSCfg})
+			_ = client.SetHttpAgent(&http_agent.HttpAgent{TlsConfig: clientCfg.TLSCfg})
 		}
 	}
 	iClient = client

@@ -17,13 +17,13 @@
 package rpc
 
 import (
-	rpc_request2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/remote/rpc/rpc_request"
-	rpc_response2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/remote/rpc/rpc_response"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/remote/rpc/rpc_request"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/remote/rpc/rpc_response"
 	"google.golang.org/grpc"
 )
 
 type IConnection interface {
-	request(request rpc_request2.IRequest, timeoutMills int64, client *RpcClient) (rpc_response2.IResponse, error)
+	request(request rpc_request.IRequest, timeoutMills int64, client *RpcClient) (rpc_response.IResponse, error)
 	close()
 	getConnectionId() string
 	getServerInfo() ServerInfo
@@ -55,5 +55,5 @@ func (c *Connection) getAbandon() bool {
 }
 
 func (c *Connection) close() {
-	c.conn.Close()
+	_ = c.conn.Close()
 }

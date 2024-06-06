@@ -17,24 +17,28 @@
 package naming_client
 
 import (
-	naming_cache2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/naming_client/naming_cache"
-	naming_proxy2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/naming_client/naming_proxy"
-	logger2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
-	model2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
-	util2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
+	"context"
 	"time"
+
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/naming_client/naming_cache"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/naming_client/naming_proxy"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
 )
 
 type ServiceInfoUpdater struct {
-	serviceInfoHolder *naming_cache2.ServiceInfoHolder
+	ctx               context.Context
+	serviceInfoHolder *naming_cache.ServiceInfoHolder
 	updateThreadNum   int
-	namingProxy       naming_proxy2.INamingProxy
+	namingProxy       naming_proxy.INamingProxy
 }
 
-func NewServiceInfoUpdater(serviceInfoHolder *naming_cache2.ServiceInfoHolder, updateThreadNum int,
-	namingProxy naming_proxy2.INamingProxy) *ServiceInfoUpdater {
+func NewServiceInfoUpdater(ctx context.Context, serviceInfoHolder *naming_cache.ServiceInfoHolder, updateThreadNum int,
+	namingProxy naming_proxy.INamingProxy) *ServiceInfoUpdater {
 
 	return &ServiceInfoUpdater{
+		ctx:               ctx,
 		serviceInfoHolder: serviceInfoHolder,
 		updateThreadNum:   updateThreadNum,
 		namingProxy:       namingProxy,
@@ -42,34 +46,39 @@ func NewServiceInfoUpdater(serviceInfoHolder *naming_cache2.ServiceInfoHolder, u
 }
 
 func (s *ServiceInfoUpdater) asyncUpdateService() {
-	sema := util2.NewSemaphore(s.updateThreadNum)
+	sema := util.NewSemaphore(s.updateThreadNum)
 	for {
-		for _, v := range s.serviceInfoHolder.ServiceInfoMap.Items() {
-			service := v.(model2.Service)
-			lastRefTime, ok := s.serviceInfoHolder.UpdateTimeMap.Get(util2.GetServiceCacheKey(util2.GetGroupName(service.Name, service.GroupName),
-				service.Clusters))
-			if !ok {
-				lastRefTime = uint64(0)
-			}
-			if uint64(util2.CurrentMillis())-lastRefTime.(uint64) > service.CacheMillis {
-				sema.Acquire()
-				go func() {
-					s.updateServiceNow(service.Name, service.GroupName, service.Clusters)
-					sema.Release()
-				}()
-			}
+		select {
+		case <-s.ctx.Done():
+			return
+		default:
+			s.serviceInfoHolder.ServiceInfoMap.Range(func(key, value interface{}) bool {
+				service := value.(model.Service)
+				lastRefTime, ok := s.serviceInfoHolder.UpdateTimeMap.Load(util.GetServiceCacheKey(util.GetGroupName(service.Name, service.GroupName),
+					service.Clusters))
+				if !ok {
+					lastRefTime = uint64(0)
+				}
+				if uint64(util.CurrentMillis())-lastRefTime.(uint64) > service.CacheMillis {
+					sema.Acquire()
+					go func() {
+						defer sema.Release()
+						s.updateServiceNow(service.Name, service.GroupName, service.Clusters)
+					}()
+				}
+				return true
+			})
+			time.Sleep(1 * time.Second)
 		}
-		time.Sleep(1 * time.Second)
 	}
 }
 
 func (s *ServiceInfoUpdater) updateServiceNow(serviceName, groupName, clusters string) {
 	result, err := s.namingProxy.QueryInstancesOfService(serviceName, groupName, clusters, 0, false)
+
 	if err != nil {
-		logger2.Errorf("QueryList return error!serviceName:%s cluster:%s err:%+v", serviceName, clusters, err)
+		logger.Errorf("QueryInstances error, serviceName:%s, cluster:%s, err:%v", serviceName, clusters, err)
 		return
 	}
-	// TODO modify
-	result.Clusters = clusters
 	s.serviceInfoHolder.ProcessService(result)
 }

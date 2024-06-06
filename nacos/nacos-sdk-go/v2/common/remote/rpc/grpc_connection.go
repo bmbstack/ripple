@@ -18,27 +18,27 @@ package rpc
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
-	"fmt"
-	grpc2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/api/grpc"
-	rpc_request2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/remote/rpc/rpc_request"
-	rpc_response2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/remote/rpc/rpc_response"
-	util2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
 	"time"
 
+	nacos_grpc_service "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/api/grpc"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/remote/rpc/rpc_request"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/remote/rpc/rpc_response"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
 	"github.com/golang/protobuf/ptypes/any"
+	"github.com/pkg/errors"
+
 	"google.golang.org/grpc"
 )
 
 type GrpcConnection struct {
 	*Connection
-	client         grpc2.RequestClient
-	biStreamClient grpc2.BiRequestStream_RequestBiStreamClient
+	client         nacos_grpc_service.RequestClient
+	biStreamClient nacos_grpc_service.BiRequestStream_RequestBiStreamClient
 }
 
 func NewGrpcConnection(serverInfo ServerInfo, connectionId string, conn *grpc.ClientConn,
-	client grpc2.RequestClient, biStreamClient grpc2.BiRequestStream_RequestBiStreamClient) *GrpcConnection {
+	client nacos_grpc_service.RequestClient, biStreamClient nacos_grpc_service.BiRequestStream_RequestBiStreamClient) *GrpcConnection {
 	return &GrpcConnection{
 		Connection: &Connection{
 			serverInfo:   serverInfo,
@@ -50,52 +50,52 @@ func NewGrpcConnection(serverInfo ServerInfo, connectionId string, conn *grpc.Cl
 		biStreamClient: biStreamClient,
 	}
 }
-func (g *GrpcConnection) request(request rpc_request2.IRequest, timeoutMills int64, client *RpcClient) (rpc_response2.IResponse, error) {
+func (g *GrpcConnection) request(request rpc_request.IRequest, timeoutMills int64, client *RpcClient) (rpc_response.IResponse, error) {
 	p := convertRequest(request)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeoutMills)*time.Millisecond)
 	defer cancel()
 	responsePayload, err := g.client.Request(ctx, p)
 	if err != nil {
+		logger.Debugf("%s grpc request nacos server failed, request=%+v, err=%v ", g.getConnectionId(), p, err)
 		return nil, err
 	}
 
-	responseFunc, ok := rpc_response2.ClientResponseMapping[responsePayload.Metadata.GetType()]
-
+	responseFunc, ok := rpc_response.ClientResponseMapping[responsePayload.Metadata.GetType()]
 	if !ok {
-		return nil, errors.New(fmt.Sprintf("request:%s,unsupported response type:%s", request.GetRequestType(),
-			responsePayload.Metadata.GetType()))
+		return nil, errors.Errorf("request:%s,unsupported response type:%s", request.GetRequestType(),
+			responsePayload.Metadata.GetType())
 	}
-	response := responseFunc()
-	err = json.Unmarshal(responsePayload.GetBody().Value, response)
-	return response, err
+
+	logger.Debugf("%s grpc request nacos server success, request=%+v, response=%s", g.getConnectionId(), p, string(responsePayload.GetBody().Value))
+	return rpc_response.InnerResponseJsonUnmarshal(responsePayload.GetBody().Value, responseFunc)
 }
 
 func (g *GrpcConnection) close() {
 	g.Connection.close()
 }
 
-func (g *GrpcConnection) biStreamSend(payload *grpc2.Payload) error {
+func (g *GrpcConnection) biStreamSend(payload *nacos_grpc_service.Payload) error {
 	return g.biStreamClient.Send(payload)
 }
 
-func convertRequest(r rpc_request2.IRequest) *grpc2.Payload {
-	Metadata := grpc2.Metadata{
+func convertRequest(r rpc_request.IRequest) *nacos_grpc_service.Payload {
+	Metadata := nacos_grpc_service.Metadata{
 		Type:     r.GetRequestType(),
 		Headers:  r.GetHeaders(),
-		ClientIp: util2.LocalIP(),
+		ClientIp: util.LocalIP(),
 	}
-	return &grpc2.Payload{
+	return &nacos_grpc_service.Payload{
 		Metadata: &Metadata,
 		Body:     &any.Any{Value: []byte(r.GetBody(r))},
 	}
 }
 
-func convertResponse(r rpc_response2.IResponse) *grpc2.Payload {
-	Metadata := grpc2.Metadata{
+func convertResponse(r rpc_response.IResponse) *nacos_grpc_service.Payload {
+	Metadata := nacos_grpc_service.Metadata{
 		Type:     r.GetResponseType(),
-		ClientIp: util2.LocalIP(),
+		ClientIp: util.LocalIP(),
 	}
-	return &grpc2.Payload{
+	return &nacos_grpc_service.Payload{
 		Metadata: &Metadata,
 		Body:     &any.Any{Value: []byte(r.GetBody())},
 	}

@@ -18,6 +18,14 @@ package constant
 
 import "time"
 
+type KMSVersion string
+
+const (
+	KMSv1               KMSVersion = "KMSv1"
+	KMSv3               KMSVersion = "KMSv3"
+	DEFAULT_KMS_VERSION KMSVersion = "" //to fit original version
+	UNKNOWN_KMS_VERSION KMSVersion = "UNKNOWN_KMS_VERSION"
+)
 const (
 	KEY_USERNAME                = "username"
 	KEY_PASSWORD                = "password"
@@ -68,7 +76,7 @@ const (
 	KEY_BEAT                    = "beat"
 	KEY_DOM                     = "dom"
 	DEFAULT_CONTEXT_PATH        = "/nacos"
-	CLIENT_VERSION              = "Nacos-Go-Client:v2.0.0"
+	CLIENT_VERSION              = "Nacos-Go-Client:v2.2.6"
 	REQUEST_DOMAIN_RETRY_TIME   = 3
 	SERVICE_INFO_SPLITER        = "@@"
 	CONFIG_INFO_SPLITER         = "@@"
@@ -89,6 +97,7 @@ const (
 	DEFAULT_TIMEOUT_MILLS       = 3000
 	ALL_SYNC_INTERNAL           = 5 * time.Minute
 	CLIENT_APPNAME_HEADER       = "Client-AppName"
+	APPNAME_HEADER              = "AppName"
 	CLIENT_REQUEST_TS_HEADER    = "Client-RequestTS"
 	CLIENT_REQUEST_TOKEN_HEADER = "Client-RequestToken"
 	EX_CONFIG_INFO              = "exConfigInfo"
@@ -96,4 +105,6 @@ const (
 	LOG_FILE_NAME               = "nacos-sdk.log"
 	HTTPS_SERVER_PORT           = 443
 	GRPC                        = "grpc"
+	RpcPortOffset               = 1000
+	MSE_KMSv1_DEFAULT_KEY_ID    = "alias/acs/mse"
 )

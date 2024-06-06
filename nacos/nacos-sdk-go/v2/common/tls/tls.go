@@ -20,12 +20,13 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	constant2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
-	"io/ioutil"
+	"os"
+
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
 )
 
 // NewTLS returns a config structure is used to configure a TLS client
-func NewTLS(c constant2.TLSConfig) (tc *tls.Config, err error) {
+func NewTLS(c constant.TLSConfig) (tc *tls.Config, err error) {
 	tc = &tls.Config{}
 	if len(c.CertFile) > 0 && len(c.KeyFile) > 0 {
 		cert, err := certificate(c.CertFile, c.KeyFile)
@@ -47,7 +48,7 @@ func NewTLS(c constant2.TLSConfig) (tc *tls.Config, err error) {
 }
 
 func rootCert(caFile string) (*x509.CertPool, error) {
-	b, err := ioutil.ReadFile(caFile)
+	b, err := os.ReadFile(caFile)
 	if err != nil {
 		return nil, err
 	}

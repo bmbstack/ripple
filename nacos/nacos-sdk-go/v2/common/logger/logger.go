@@ -17,11 +17,11 @@
 package logger
 
 import (
-	constant2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
 	"os"
 	"sync"
 	"time"
 
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -42,6 +42,7 @@ var levelMap = map[string]zapcore.Level{
 type Config struct {
 	Level            string
 	Sampling         *SamplingConfig
+	AppendToStdout   bool
 	LogRollingConfig *lumberjack.Logger
 }
 
@@ -87,9 +88,10 @@ func init() {
 	SetLogger(&NacosLogger{zapLogger.Sugar()})
 }
 
-func BuildLoggerConfig(clientConfig constant2.ClientConfig) Config {
+func BuildLoggerConfig(clientConfig constant.ClientConfig) Config {
 	loggerConfig := Config{
-		Level: clientConfig.LogLevel,
+		Level:          clientConfig.LogLevel,
+		AppendToStdout: clientConfig.AppendToStdout,
 	}
 	if clientConfig.LogSampling != nil {
 		loggerConfig.Sampling = &SamplingConfig{
@@ -99,7 +101,7 @@ func BuildLoggerConfig(clientConfig constant2.ClientConfig) Config {
 		}
 	}
 	loggerConfig.LogRollingConfig = &lumberjack.Logger{
-		Filename: clientConfig.LogDir + string(os.PathSeparator) + constant2.LOG_FILE_NAME,
+		Filename: clientConfig.LogDir + string(os.PathSeparator) + constant.LOG_FILE_NAME,
 	}
 	logRollingConfig := clientConfig.LogRollingConfig
 	if logRollingConfig != nil {
@@ -116,6 +118,9 @@ func BuildLoggerConfig(clientConfig constant2.ClientConfig) Config {
 func InitLogger(config Config) (err error) {
 	logLock.Lock()
 	defer logLock.Unlock()
+	if logger != nil {
+		return
+	}
 	logger, err = InitNacosLogger(config)
 	return
 }
@@ -125,8 +130,10 @@ func InitNacosLogger(config Config) (Logger, error) {
 	logLevel := getLogLevel(config.Level)
 	encoder := getEncoder()
 	writer := config.getLogWriter()
-	core := zapcore.NewCore(zapcore.NewConsoleEncoder(encoder),
-		zapcore.NewMultiWriteSyncer(writer, zapcore.AddSync(os.Stdout)), logLevel)
+	if config.AppendToStdout {
+		writer = zapcore.NewMultiWriteSyncer(writer, zapcore.AddSync(os.Stdout))
+	}
+	core := zapcore.NewCore(zapcore.NewConsoleEncoder(encoder), writer, logLevel)
 	zaplogger := zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
 	return &NacosLogger{zaplogger.Sugar()}, nil
 }
@@ -153,7 +160,7 @@ func getEncoder() zapcore.EncoderConfig {
 	}
 }
 
-//SetLogger sets logger for sdk
+// SetLogger sets logger for sdk
 func SetLogger(log Logger) {
 	logLock.Lock()
 	defer logLock.Unlock()

@@ -17,18 +17,19 @@
 package naming_client
 
 import (
-	model2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
 	"math/rand"
 	"sort"
+
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
 )
 
 type Chooser struct {
-	data   []model2.Instance
+	data   []model.Instance
 	totals []int
 	max    int
 }
 
-type instance []model2.Instance
+type instance []model.Instance
 
 func (a instance) Len() int {
 	return len(a)
@@ -43,7 +44,7 @@ func (a instance) Less(i, j int) bool {
 }
 
 // NewChooser initializes a new Chooser for picking from the provided Choices.
-func newChooser(instances []model2.Instance) Chooser {
+func newChooser(instances []model.Instance) Chooser {
 	sort.Sort(instance(instances))
 	totals := make([]int, len(instances))
 	runningTotal := 0
@@ -54,7 +55,7 @@ func newChooser(instances []model2.Instance) Chooser {
 	return Chooser{data: instances, totals: totals, max: runningTotal}
 }
 
-func (chs Chooser) pick() model2.Instance {
+func (chs Chooser) pick() model.Instance {
 	r := rand.Intn(chs.max) + 1
 	i := sort.SearchInts(chs.totals, r)
 	return chs.data[i]

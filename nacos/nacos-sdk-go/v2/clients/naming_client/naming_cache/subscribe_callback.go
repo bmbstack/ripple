@@ -17,49 +17,49 @@
 package naming_cache
 
 import (
-	"errors"
-	cache2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/cache"
-	logger2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
-	model2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
-	util2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
 	"sync"
+
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/cache"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
 )
 
 type SubscribeCallback struct {
-	callbackFuncMap cache2.ConcurrentMap
+	callbackFuncMap cache.ConcurrentMap
 	mux             *sync.Mutex
 }
 
 func NewSubscribeCallback() *SubscribeCallback {
-	return &SubscribeCallback{callbackFuncMap: cache2.NewConcurrentMap(), mux: new(sync.Mutex)}
+	return &SubscribeCallback{callbackFuncMap: cache.NewConcurrentMap(), mux: new(sync.Mutex)}
 }
 
 func (ed *SubscribeCallback) IsSubscribed(serviceName, clusters string) bool {
-	key := util2.GetServiceCacheKey(serviceName, clusters)
+	key := util.GetServiceCacheKey(serviceName, clusters)
 	_, ok := ed.callbackFuncMap.Get(key)
 	return ok
 }
 
-func (ed *SubscribeCallback) AddCallbackFunc(serviceName string, clusters string, callbackFunc *func(services []model2.Instance, err error)) {
-	key := util2.GetServiceCacheKey(serviceName, clusters)
-	defer ed.mux.Unlock()
+func (ed *SubscribeCallback) AddCallbackFunc(serviceName string, clusters string, callbackFunc *func(services []model.Instance, err error)) {
+	key := util.GetServiceCacheKey(serviceName, clusters)
 	ed.mux.Lock()
-	var funcSlice []*func(services []model2.Instance, err error)
+	defer ed.mux.Unlock()
+	var funcSlice []*func(services []model.Instance, err error)
 	old, ok := ed.callbackFuncMap.Get(key)
 	if ok {
-		funcSlice = append(funcSlice, old.([]*func(services []model2.Instance, err error))...)
+		funcSlice = append(funcSlice, old.([]*func(services []model.Instance, err error))...)
 	}
 	funcSlice = append(funcSlice, callbackFunc)
 	ed.callbackFuncMap.Set(key, funcSlice)
 }
 
-func (ed *SubscribeCallback) RemoveCallbackFunc(serviceName string, clusters string, callbackFunc *func(services []model2.Instance, err error)) {
-	logger2.Info("removing " + serviceName + " with " + clusters + " to listener map")
-	key := util2.GetServiceCacheKey(serviceName, clusters)
+func (ed *SubscribeCallback) RemoveCallbackFunc(serviceName string, clusters string, callbackFunc *func(services []model.Instance, err error)) {
+	logger.Info("removing " + serviceName + " with " + clusters + " to listener map")
+	key := util.GetServiceCacheKey(serviceName, clusters)
 	funcs, ok := ed.callbackFuncMap.Get(key)
 	if ok && funcs != nil {
-		var newFuncs []*func(services []model2.Instance, err error)
-		for _, funcItem := range funcs.([]*func(services []model2.Instance, err error)) {
+		var newFuncs []*func(services []model.Instance, err error)
+		for _, funcItem := range funcs.([]*func(services []model.Instance, err error)) {
 			if funcItem != callbackFunc {
 				newFuncs = append(newFuncs, funcItem)
 			}
@@ -69,14 +69,10 @@ func (ed *SubscribeCallback) RemoveCallbackFunc(serviceName string, clusters str
 
 }
 
-func (ed *SubscribeCallback) ServiceChanged(cacheKey string, service *model2.Service) {
+func (ed *SubscribeCallback) ServiceChanged(cacheKey string, service *model.Service) {
 	funcs, ok := ed.callbackFuncMap.Get(cacheKey)
 	if ok {
-		for _, funcItem := range funcs.([]*func(services []model2.Instance, err error)) {
-			if len(service.Hosts) == 0 {
-				(*funcItem)(service.Hosts, errors.New("[client.Subscribe] subscribe failed,hosts is empty"))
-				continue
-			}
+		for _, funcItem := range funcs.([]*func(services []model.Instance, err error)) {
 			(*funcItem)(service.Hosts, nil)
 		}
 	}

@@ -17,12 +17,12 @@ package naming_cache
 
 import (
 	"fmt"
-	logger2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
-	model2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
 	"math/rand"
 	"testing"
 	"time"
 
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -30,9 +30,9 @@ func TestServiceInfoHolder_isServiceInstanceChanged(t *testing.T) {
 	rand.Seed(time.Now().Unix())
 	defaultIp := createRandomIp()
 	defaultPort := creatRandomPort()
-	serviceA := &model2.Service{
+	serviceA := model.Service{
 		LastRefTime: 1000,
-		Hosts: []model2.Instance{
+		Hosts: []model.Instance{
 			{
 				Ip:   defaultIp,
 				Port: defaultPort,
@@ -47,9 +47,9 @@ func TestServiceInfoHolder_isServiceInstanceChanged(t *testing.T) {
 			},
 		},
 	}
-	serviceB := &model2.Service{
+	serviceB := model.Service{
 		LastRefTime: 1001,
-		Hosts: []model2.Instance{
+		Hosts: []model.Instance{
 			{
 				Ip:   defaultIp,
 				Port: defaultPort,
@@ -65,9 +65,9 @@ func TestServiceInfoHolder_isServiceInstanceChanged(t *testing.T) {
 		},
 	}
 	ip := createRandomIp()
-	serviceC := &model2.Service{
+	serviceC := model.Service{
 		LastRefTime: 1001,
-		Hosts: []model2.Instance{
+		Hosts: []model.Instance{
 			{
 				Ip:   ip,
 				Port: defaultPort,
@@ -101,9 +101,9 @@ func TestServiceInfoHolder_isServiceInstanceChanged(t *testing.T) {
 
 func TestHostReactor_isServiceInstanceChangedWithUnOrdered(t *testing.T) {
 	rand.Seed(time.Now().Unix())
-	serviceA := &model2.Service{
+	serviceA := model.Service{
 		LastRefTime: 1001,
-		Hosts: []model2.Instance{
+		Hosts: []model.Instance{
 			{
 				Ip:   createRandomIp(),
 				Port: creatRandomPort(),
@@ -119,9 +119,9 @@ func TestHostReactor_isServiceInstanceChangedWithUnOrdered(t *testing.T) {
 		},
 	}
 
-	serviceB := &model2.Service{
+	serviceB := model.Service{
 		LastRefTime: 1001,
-		Hosts: []model2.Instance{
+		Hosts: []model.Instance{
 			{
 				Ip:   createRandomIp(),
 				Port: creatRandomPort(),
@@ -136,7 +136,7 @@ func TestHostReactor_isServiceInstanceChangedWithUnOrdered(t *testing.T) {
 			},
 		},
 	}
-	logger2.Info("serviceA:%s and serviceB:%s are comparing", serviceA.Hosts, serviceB.Hosts)
+	logger.Info("serviceA:%s and serviceB:%s are comparing", serviceA.Hosts, serviceB.Hosts)
 	changed := isServiceInstanceChanged(serviceA, serviceB)
 	assert.True(t, changed)
 }

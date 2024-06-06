@@ -18,92 +18,96 @@ package naming_http
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	cache2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/cache"
-	constant2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
-	logger2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
-	monitor2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/monitor"
-	nacos_server2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/nacos_server"
-	model2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
-	util2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
 	"net/http"
 	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/pkg/errors"
+
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/monitor"
+
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/cache"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/nacos_server"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
 	"github.com/buger/jsonparser"
 	"golang.org/x/sync/semaphore"
 )
 
 type BeatReactor struct {
-	beatMap             cache2.ConcurrentMap
-	nacosServer         *nacos_server2.NacosServer
+	ctx                 context.Context
+	beatMap             cache.ConcurrentMap
+	nacosServer         *nacos_server.NacosServer
 	beatThreadCount     int
 	beatThreadSemaphore *semaphore.Weighted
-	beatRecordMap       cache2.ConcurrentMap
-	clientCfg           constant2.ClientConfig
+	beatRecordMap       cache.ConcurrentMap
+	clientCfg           constant.ClientConfig
 	mux                 *sync.Mutex
 }
 
 const DefaultBeatThreadNum = 20
 
-var ctx = context.Background()
-
-func NewBeatReactor(clientCfg constant2.ClientConfig, nacosServer *nacos_server2.NacosServer) BeatReactor {
+func NewBeatReactor(ctx context.Context, clientCfg constant.ClientConfig, nacosServer *nacos_server.NacosServer) BeatReactor {
 	br := BeatReactor{}
-	br.beatMap = cache2.NewConcurrentMap()
+	br.ctx = ctx
+	br.beatMap = cache.NewConcurrentMap()
 	br.nacosServer = nacosServer
 	br.clientCfg = clientCfg
 	br.beatThreadCount = DefaultBeatThreadNum
-	br.beatRecordMap = cache2.NewConcurrentMap()
+	br.beatRecordMap = cache.NewConcurrentMap()
 	br.beatThreadSemaphore = semaphore.NewWeighted(int64(br.beatThreadCount))
 	br.mux = new(sync.Mutex)
 	return br
 }
 
 func buildKey(serviceName string, ip string, port uint64) string {
-	return serviceName + constant2.NAMING_INSTANCE_ID_SPLITTER + ip + constant2.NAMING_INSTANCE_ID_SPLITTER + strconv.Itoa(int(port))
+	return serviceName + constant.NAMING_INSTANCE_ID_SPLITTER + ip + constant.NAMING_INSTANCE_ID_SPLITTER + strconv.Itoa(int(port))
 }
 
-func (br *BeatReactor) AddBeatInfo(serviceName string, beatInfo *model2.BeatInfo) {
-	logger2.Infof("adding beat: <%s> to beat map", util2.ToJsonString(beatInfo))
+func (br *BeatReactor) AddBeatInfo(serviceName string, beatInfo *model.BeatInfo) {
+	logger.Infof("adding beat: <%s> to beat map", util.ToJsonString(beatInfo))
 	k := buildKey(serviceName, beatInfo.Ip, beatInfo.Port)
 	defer br.mux.Unlock()
 	br.mux.Lock()
 	if data, ok := br.beatMap.Get(k); ok {
-		beatInfo = data.(*model2.BeatInfo)
-		atomic.StoreInt32(&beatInfo.State, int32(model2.StateShutdown))
+		beatInfo = data.(*model.BeatInfo)
+		atomic.StoreInt32(&beatInfo.State, int32(model.StateShutdown))
 		br.beatMap.Remove(k)
 	}
 	br.beatMap.Set(k, beatInfo)
-	beatInfo.Metadata = util2.DeepCopyMap(beatInfo.Metadata)
-	monitor2.GetDom2BeatSizeMonitor().Set(float64(br.beatMap.Count()))
+	beatInfo.Metadata = util.DeepCopyMap(beatInfo.Metadata)
+	monitor.GetDom2BeatSizeMonitor().Set(float64(br.beatMap.Count()))
 	go br.sendInstanceBeat(k, beatInfo)
 }
 
 func (br *BeatReactor) RemoveBeatInfo(serviceName string, ip string, port uint64) {
-	logger2.Infof("remove beat: %s@%s:%d from beat map", serviceName, ip, port)
+	logger.Infof("remove beat: %s@%s:%d from beat map", serviceName, ip, port)
 	k := buildKey(serviceName, ip, port)
 	defer br.mux.Unlock()
 	br.mux.Lock()
 	data, exist := br.beatMap.Get(k)
 	if exist {
-		beatInfo := data.(*model2.BeatInfo)
-		atomic.StoreInt32(&beatInfo.State, int32(model2.StateShutdown))
+		beatInfo := data.(*model.BeatInfo)
+		atomic.StoreInt32(&beatInfo.State, int32(model.StateShutdown))
 	}
-	monitor2.GetDom2BeatSizeMonitor().Set(float64(br.beatMap.Count()))
+	monitor.GetDom2BeatSizeMonitor().Set(float64(br.beatMap.Count()))
 	br.beatMap.Remove(k)
 
 }
 
-func (br *BeatReactor) sendInstanceBeat(k string, beatInfo *model2.BeatInfo) {
+func (br *BeatReactor) sendInstanceBeat(k string, beatInfo *model.BeatInfo) {
+	t := time.NewTimer(beatInfo.Period)
+	defer t.Stop()
 	for {
-		br.beatThreadSemaphore.Acquire(ctx, 1)
+		br.beatThreadSemaphore.Acquire(br.ctx, 1)
 		//如果当前实例注销，则进行停止心跳
-		if atomic.LoadInt32(&beatInfo.State) == int32(model2.StateShutdown) {
-			logger2.Infof("instance[%s] stop heartBeating", k)
+		if atomic.LoadInt32(&beatInfo.State) == int32(model.StateShutdown) {
+			logger.Infof("instance[%s] stop heartBeating", k)
 			br.beatThreadSemaphore.Release(1)
 			return
 		}
@@ -111,7 +115,7 @@ func (br *BeatReactor) sendInstanceBeat(k string, beatInfo *model2.BeatInfo) {
 		//进行心跳通信
 		beatInterval, err := br.SendBeat(beatInfo)
 		if err != nil {
-			logger2.Errorf("beat to server return error:%+v", err)
+			logger.Errorf("beat to server return error:%+v", err)
 			br.beatThreadSemaphore.Release(1)
 			t := time.NewTimer(beatInfo.Period)
 			<-t.C
@@ -121,30 +125,33 @@ func (br *BeatReactor) sendInstanceBeat(k string, beatInfo *model2.BeatInfo) {
 			beatInfo.Period = time.Duration(time.Millisecond.Nanoseconds() * beatInterval)
 		}
 
-		br.beatRecordMap.Set(k, util2.CurrentMillis())
+		br.beatRecordMap.Set(k, util.CurrentMillis())
 		br.beatThreadSemaphore.Release(1)
-
-		t := time.NewTimer(beatInfo.Period)
-		<-t.C
+		t.Reset(beatInfo.Period)
+		select {
+		case <-t.C:
+		case <-br.ctx.Done():
+			return
+		}
 	}
 }
 
-func (br *BeatReactor) SendBeat(info *model2.BeatInfo) (int64, error) {
-	logger2.Infof("namespaceId:<%s> sending beat to server:<%s>",
-		br.clientCfg.NamespaceId, util2.ToJsonString(info))
+func (br *BeatReactor) SendBeat(info *model.BeatInfo) (int64, error) {
+	logger.Infof("namespaceId:<%s> sending beat to server:<%s>",
+		br.clientCfg.NamespaceId, util.ToJsonString(info))
 	params := map[string]string{}
 	params["namespaceId"] = br.clientCfg.NamespaceId
 	params["serviceName"] = info.ServiceName
-	params["beat"] = util2.ToJsonString(info)
-	api := constant2.SERVICE_BASE_PATH + "/instance/beat"
-	result, err := br.nacosServer.ReqApi(api, params, http.MethodPut)
+	params["beat"] = util.ToJsonString(info)
+	api := constant.SERVICE_BASE_PATH + "/instance/beat"
+	result, err := br.nacosServer.ReqApi(api, params, http.MethodPut, br.clientCfg)
 	if err != nil {
 		return 0, err
 	}
 	if result != "" {
 		interVal, err := jsonparser.GetInt([]byte(result), "clientBeatInterval")
 		if err != nil {
-			return 0, errors.New(fmt.Sprintf("namespaceId:<%s> sending beat to server:<%s> get 'clientBeatInterval' from <%s> error:<%+v>", br.clientCfg.NamespaceId, util2.ToJsonString(info), result, err))
+			return 0, errors.New(fmt.Sprintf("namespaceId:<%s> sending beat to server:<%s> get 'clientBeatInterval' from <%s> error:<%+v>", br.clientCfg.NamespaceId, util.ToJsonString(info), result, err))
 		} else {
 			return interVal, nil
 		}

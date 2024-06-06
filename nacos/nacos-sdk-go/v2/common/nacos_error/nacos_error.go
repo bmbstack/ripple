@@ -18,7 +18,8 @@ package nacos_error
 
 import (
 	"fmt"
-	constant2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
+
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
 )
 
 type NacosError struct {
@@ -46,7 +47,7 @@ func (err *NacosError) Error() (str string) {
 
 func (err *NacosError) ErrorCode() string {
 	if err.errorCode == "" {
-		return constant2.DefaultClientErrorCode
+		return constant.DefaultClientErrorCode
 	} else {
 		return err.errorCode
 	}

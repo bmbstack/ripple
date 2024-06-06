@@ -17,25 +17,26 @@
 package nacos_client
 
 import (
-	"errors"
-	constant2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
-	file2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/file"
-	http_agent2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/http_agent"
-	"log"
 	"os"
 	"strconv"
+
+	"github.com/pkg/errors"
+
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/file"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/http_agent"
 )
 
 type NacosClient struct {
 	clientConfigValid  bool
 	serverConfigsValid bool
-	agent              http_agent2.IHttpAgent
-	clientConfig       constant2.ClientConfig
-	serverConfigs      []constant2.ServerConfig
+	agent              http_agent.IHttpAgent
+	clientConfig       constant.ClientConfig
+	serverConfigs      []constant.ServerConfig
 }
 
-//SetClientConfig is use to set nacos client Config
-func (client *NacosClient) SetClientConfig(config constant2.ClientConfig) (err error) {
+// SetClientConfig is use to set nacos client Config
+func (client *NacosClient) SetClientConfig(config constant.ClientConfig) (err error) {
 	if config.TimeoutMs <= 0 {
 		config.TimeoutMs = 10 * 1000
 	}
@@ -53,21 +54,21 @@ func (client *NacosClient) SetClientConfig(config constant2.ClientConfig) (err e
 	}
 
 	if config.CacheDir == "" {
-		config.CacheDir = file2.GetCurrentPath() + string(os.PathSeparator) + "cache"
+		config.CacheDir = file.GetCurrentPath() + string(os.PathSeparator) + "cache"
 	}
 
 	if config.LogDir == "" {
-		config.LogDir = file2.GetCurrentPath() + string(os.PathSeparator) + "log"
+		config.LogDir = file.GetCurrentPath() + string(os.PathSeparator) + "log"
 	}
-	log.Printf("[INFO] logDir:<%s>   cacheDir:<%s>", config.LogDir, config.CacheDir)
+
 	client.clientConfig = config
 	client.clientConfigValid = true
 
 	return
 }
 
-//SetServerConfig is use to set nacos server config
-func (client *NacosClient) SetServerConfig(configs []constant2.ServerConfig) (err error) {
+// SetServerConfig is use to set nacos server config
+func (client *NacosClient) SetServerConfig(configs []constant.ServerConfig) (err error) {
 	if len(configs) <= 0 {
 		//it's may be use endpoint to get nacos server address
 		client.serverConfigsValid = true
@@ -80,10 +81,10 @@ func (client *NacosClient) SetServerConfig(configs []constant2.ServerConfig) (er
 			return
 		}
 		if len(configs[i].ContextPath) <= 0 {
-			configs[i].ContextPath = constant2.DEFAULT_CONTEXT_PATH
+			configs[i].ContextPath = constant.DEFAULT_CONTEXT_PATH
 		}
 		if len(configs[i].Scheme) <= 0 {
-			configs[i].Scheme = constant2.DEFAULT_SERVER_SCHEME
+			configs[i].Scheme = constant.DEFAULT_SERVER_SCHEME
 		}
 	}
 	client.serverConfigs = configs
@@ -91,8 +92,8 @@ func (client *NacosClient) SetServerConfig(configs []constant2.ServerConfig) (er
 	return
 }
 
-//GetClientConfig use to get client config
-func (client *NacosClient) GetClientConfig() (config constant2.ClientConfig, err error) {
+// GetClientConfig use to get client config
+func (client *NacosClient) GetClientConfig() (config constant.ClientConfig, err error) {
 	config = client.clientConfig
 	if !client.clientConfigValid {
 		err = errors.New("[client.GetClientConfig] invalid client config")
@@ -100,8 +101,8 @@ func (client *NacosClient) GetClientConfig() (config constant2.ClientConfig, err
 	return
 }
 
-//GetServerConfig use to get server config
-func (client *NacosClient) GetServerConfig() (configs []constant2.ServerConfig, err error) {
+// GetServerConfig use to get server config
+func (client *NacosClient) GetServerConfig() (configs []constant.ServerConfig, err error) {
 	configs = client.serverConfigs
 	if !client.serverConfigsValid {
 		err = errors.New("[client.GetServerConfig] invalid server configs")
@@ -109,8 +110,8 @@ func (client *NacosClient) GetServerConfig() (configs []constant2.ServerConfig, 
 	return
 }
 
-//SetHttpAgent use to set http agent
-func (client *NacosClient) SetHttpAgent(agent http_agent2.IHttpAgent) (err error) {
+// SetHttpAgent use to set http agent
+func (client *NacosClient) SetHttpAgent(agent http_agent.IHttpAgent) (err error) {
 	if agent == nil {
 		err = errors.New("[client.SetHttpAgent] http agent can not be nil")
 	} else {
@@ -119,8 +120,8 @@ func (client *NacosClient) SetHttpAgent(agent http_agent2.IHttpAgent) (err error
 	return
 }
 
-//GetHttpAgent use to get http agent
-func (client *NacosClient) GetHttpAgent() (agent http_agent2.IHttpAgent, err error) {
+// GetHttpAgent use to get http agent
+func (client *NacosClient) GetHttpAgent() (agent http_agent.IHttpAgent, err error) {
 	if client.agent == nil {
 		err = errors.New("[client.GetHttpAgent] invalid http agent")
 	} else {

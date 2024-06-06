@@ -18,66 +18,123 @@ package main
 
 import (
 	"fmt"
-	clients2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients"
-	constant2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
-	vo2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/vo"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/config_client"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/nacos_client"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/http_agent"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/vo"
+	"time"
 )
 
+var localServerConfigWithOptions = constant.NewServerConfig(
+	"mse-d12e6112-p.nacos-ans.mse.aliyuncs.com",
+	8848,
+)
+
+var localClientConfigWithOptions = constant.NewClientConfig(
+	constant.WithTimeoutMs(10*1000),
+	constant.WithBeatInterval(2*1000),
+	constant.WithNotLoadCacheAtStart(true),
+	//constant.WithAccessKey(getFileContent(path.Join(getWDR(), "ak"))),
+	//constant.WithSecretKey(getFileContent(path.Join(getWDR(), "sk"))),
+	constant.WithAccessKey("LTAxxxgQL"),
+	constant.WithSecretKey("iG4xxxV6C"),
+	constant.WithOpenKMS(true),
+	constant.WithKMSVersion(constant.KMSv1),
+	constant.WithRegionId("cn-beijing"),
+)
+
+var localConfigList = []vo.ConfigParam{
+	{
+		DataId:  "common-config",
+		Group:   "default",
+		Content: "common",
+	},
+	{
+		DataId:  "cipher-crypt",
+		Group:   "default",
+		Content: "cipher",
+	},
+	{
+		DataId:  "cipher-kms-aes-128-crypt",
+		Group:   "default",
+		Content: "cipher-aes-128",
+	},
+	{
+		DataId:  "cipher-kms-aes-256-crypt",
+		Group:   "default",
+		Content: "cipher-aes-256",
+	},
+}
+
 func main() {
-	cc := constant2.ClientConfig{
-		Endpoint:    "acm.aliyun.com:8080",
-		NamespaceId: "e525eafa-f7d7-4029-83d9-008937f9d468",
-		RegionId:    "cn-shanghai",
-		AccessKey:   "LTAI4G8KxxxxxxxxxxxxxbwZLBr",
-		SecretKey:   "n5jTL9YxxxxxxxxxxxxaxmPLZV9",
-		OpenKMS:     true,
-		TimeoutMs:   5000,
-	}
 
-	// a more graceful way to create config client
-	client, err := clients2.NewConfigClient(
-		vo2.NacosClientParam{
-			ClientConfig: &cc,
-		},
-	)
-
+	client, err := createConfigClient()
 	if err != nil {
 		panic(err)
 	}
 
-	// to enable encrypt/decrypt, DataId should be start with "cipher-"
-	_, err = client.PublishConfig(vo2.ConfigParam{
-		DataId:  "cipher-dataId-1",
-		Group:   "test-group",
-		Content: "hello world!",
-	})
+	for _, localConfig := range localConfigList {
+		// to enable encrypt/decrypt, DataId should be start with "cipher-"
+		configParam := vo.ConfigParam{
+			DataId:  localConfig.DataId,
+			Group:   localConfig.Group,
+			Content: localConfig.Content,
+			OnChange: func(namespace, group, dataId, data string) {
+				fmt.Printf("successfully receive changed config: \n"+
+					"group[%s], dataId[%s], data[%s]\n", group, dataId, data)
+			},
+		}
 
-	if err != nil {
-		fmt.Printf("PublishConfig err: %v\n", err)
+		err := client.ListenConfig(configParam)
+		if err != nil {
+			fmt.Printf("failed to listen: group[%s], dataId[%s] with error: %s\n",
+				configParam.Group, configParam.DataId, err)
+		} else {
+			fmt.Printf("successfully ListenConfig: group[%s], dataId[%s]\n", configParam.Group, configParam.DataId)
+		}
+
+		published, err := client.PublishConfig(configParam)
+		if published && err == nil {
+			fmt.Printf("successfully publish: group[%s], dataId[%s], data[%s]\n", configParam.Group, configParam.DataId, configParam.Content)
+		} else {
+			fmt.Printf("failed to publish: group[%s], dataId[%s], data[%s]\n with error: %s\n",
+				configParam.Group, configParam.DataId, configParam.Content, err)
+		}
+
+		//wait for config change callback to execute
+		time.Sleep(2 * time.Second)
+
+		//get config
+		content, err := client.GetConfig(configParam)
+		if err == nil {
+			fmt.Printf("successfully get config: group[%s], dataId[%s], data[%s]\n", configParam.Group, configParam.DataId, configParam.Content)
+		} else {
+			fmt.Printf("failed to get config: group[%s], dataId[%s], data[%s]\n with error: %s\n",
+				configParam.Group, configParam.DataId, configParam.Content, err)
+		}
+
+		if content != localConfig.Content {
+			panic("publish/get encrypted config failed.")
+		} else {
+			fmt.Println("publish/get encrypted config success.")
+		}
+		//wait for config change callback to execute
+		//time.Sleep(2 * time.Second)
 	}
 
-	//get config
-	content, err := client.GetConfig(vo2.ConfigParam{
-		DataId: "cipher-dataId-3",
-		Group:  "test-group",
-	})
-	fmt.Printf("GetConfig, config: %s, error: %v\n", content, err)
+}
 
-	// DataId is not start with "cipher-", content will not be encrypted.
-	_, err = client.PublishConfig(vo2.ConfigParam{
-		DataId:  "dataId-1",
-		Group:   "test-group",
-		Content: "hello world!",
-	})
-
+func createConfigClient() (*config_client.ConfigClient, error) {
+	nc := nacos_client.NacosClient{}
+	_ = nc.SetServerConfig([]constant.ServerConfig{*localServerConfigWithOptions})
+	_ = nc.SetClientConfig(*localClientConfigWithOptions)
+	fmt.Println("ak: " + localClientConfigWithOptions.AccessKey)
+	fmt.Println("sk: " + localClientConfigWithOptions.SecretKey)
+	_ = nc.SetHttpAgent(&http_agent.HttpAgent{})
+	client, err := config_client.NewConfigClient(&nc)
 	if err != nil {
-		fmt.Printf("PublishConfig err: %v\n", err)
+		return nil, err
 	}
-
-	//get config
-	content, err = client.GetConfig(vo2.ConfigParam{
-		DataId: "dataId-1",
-		Group:  "test-group",
-	})
-	fmt.Printf("GetConfig, config: %s, error: %v\n", content, err)
+	return client, nil
 }

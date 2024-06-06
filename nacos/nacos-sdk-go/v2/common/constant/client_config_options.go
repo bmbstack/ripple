@@ -17,9 +17,10 @@
 package constant
 
 import (
-	file2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/file"
 	"os"
 	"time"
+
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/file"
 )
 
 func NewClientConfig(opts ...ClientOption) *ClientConfig {
@@ -27,11 +28,11 @@ func NewClientConfig(opts ...ClientOption) *ClientConfig {
 		TimeoutMs:            10 * 1000,
 		BeatInterval:         5 * 1000,
 		OpenKMS:              false,
-		CacheDir:             file2.GetCurrentPath() + string(os.PathSeparator) + "cache",
+		CacheDir:             file.GetCurrentPath() + string(os.PathSeparator) + "cache",
 		UpdateThreadNum:      20,
 		NotLoadCacheAtStart:  false,
 		UpdateCacheWhenEmpty: false,
-		LogDir:               file2.GetCurrentPath() + string(os.PathSeparator) + "log",
+		LogDir:               file.GetCurrentPath() + string(os.PathSeparator) + "log",
 		LogLevel:             "info",
 	}
 
@@ -80,6 +81,27 @@ func WithEndpoint(endpoint string) ClientOption {
 	}
 }
 
+// WithEndpointContextPath ...
+func WithEndpointContextPath(endpointContextPath string) ClientOption {
+	return func(config *ClientConfig) {
+		config.EndpointContextPath = endpointContextPath
+	}
+}
+
+// WithEndpointQueryParams ...
+func WithEndpointQueryParams(endpointQueryPrams string) ClientOption {
+	return func(config *ClientConfig) {
+		config.EndpointQueryParams = endpointQueryPrams
+	}
+}
+
+// WithClusterName ...
+func WithClusterName(clusterName string) ClientOption {
+	return func(config *ClientConfig) {
+		config.ClusterName = clusterName
+	}
+}
+
 // WithRegionId ...
 func WithRegionId(regionId string) ClientOption {
 	return func(config *ClientConfig) {
@@ -108,10 +130,30 @@ func WithOpenKMS(openKMS bool) ClientOption {
 	}
 }
 
+// WithOpenKMS ...
+func WithKMSVersion(kmsVersion KMSVersion) ClientOption {
+	return func(config *ClientConfig) {
+		config.KMSVersion = kmsVersion
+	}
+}
+
+func WithKMSv3Config(kmsv3Config *KMSv3Config) ClientOption {
+	return func(config *ClientConfig) {
+		config.KMSv3Config = kmsv3Config
+	}
+}
+
 // WithCacheDir ...
 func WithCacheDir(cacheDir string) ClientOption {
 	return func(config *ClientConfig) {
 		config.CacheDir = cacheDir
+	}
+}
+
+// WithDisableUseSnapShot ...
+func WithDisableUseSnapShot(disableUseSnapShot bool) ClientOption {
+	return func(config *ClientConfig) {
+		config.DisableUseSnapShot = disableUseSnapShot
 	}
 }
 
@@ -180,6 +222,13 @@ func WithLogRollingConfig(rollingConfig *ClientLogRollingConfig) ClientOption {
 
 func WithTLS(tlsCfg TLSConfig) ClientOption {
 	return func(config *ClientConfig) {
+		tlsCfg.Appointed = true
 		config.TLSCfg = tlsCfg
+	}
+}
+
+func WithAppConnLabels(appConnLabels map[string]string) ClientOption {
+	return func(config *ClientConfig) {
+		config.AppConnLabels = appConnLabels
 	}
 }

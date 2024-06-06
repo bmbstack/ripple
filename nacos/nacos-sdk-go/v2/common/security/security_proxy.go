@@ -17,17 +17,20 @@
 package security
 
 import (
+	"context"
 	"encoding/json"
-	"errors"
-	constant2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
-	http_agent2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/http_agent"
-	logger2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
 	"sync/atomic"
 	"time"
+
+	"github.com/pkg/errors"
+
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/http_agent"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
 )
 
 type AuthClient struct {
@@ -37,12 +40,12 @@ type AuthClient struct {
 	tokenTtl           int64
 	lastRefreshTime    int64
 	tokenRefreshWindow int64
-	agent              http_agent2.IHttpAgent
-	clientCfg          constant2.ClientConfig
-	serverCfgs         []constant2.ServerConfig
+	agent              http_agent.IHttpAgent
+	clientCfg          constant.ClientConfig
+	serverCfgs         []constant.ServerConfig
 }
 
-func NewAuthClient(clientCfg constant2.ClientConfig, serverCfgs []constant2.ServerConfig, agent http_agent2.IHttpAgent) AuthClient {
+func NewAuthClient(clientCfg constant.ClientConfig, serverCfgs []constant.ServerConfig, agent http_agent.IHttpAgent) AuthClient {
 	client := AuthClient{
 		username:    clientCfg.Username,
 		password:    clientCfg.Password,
@@ -63,7 +66,7 @@ func (ac *AuthClient) GetAccessToken() string {
 	return v.(string)
 }
 
-func (ac *AuthClient) AutoRefresh() {
+func (ac *AuthClient) AutoRefresh(ctx context.Context) {
 
 	// If the username is not set, the automatic refresh Token is not enabled
 
@@ -72,16 +75,26 @@ func (ac *AuthClient) AutoRefresh() {
 	}
 
 	go func() {
-		timer := time.NewTimer(time.Second * time.Duration(ac.tokenTtl-ac.tokenRefreshWindow))
-
+		var timer *time.Timer
+		if lastLoginSuccess := ac.lastRefreshTime > 0 && ac.tokenTtl > 0 && ac.tokenRefreshWindow > 0; lastLoginSuccess {
+			timer = time.NewTimer(time.Second * time.Duration(ac.tokenTtl-ac.tokenRefreshWindow))
+		} else {
+			timer = time.NewTimer(time.Second * time.Duration(5))
+		}
+		defer timer.Stop()
 		for {
 			select {
 			case <-timer.C:
 				_, err := ac.Login()
 				if err != nil {
-					logger2.Errorf("login has error %+v", err)
+					logger.Errorf("login has error %+v", err)
+					timer.Reset(time.Second * time.Duration(5))
+				} else {
+					logger.Infof("login success, tokenTtl: %+v seconds, tokenRefreshWindow: %+v seconds", ac.tokenTtl, ac.tokenRefreshWindow)
+					timer.Reset(time.Second * time.Duration(ac.tokenTtl-ac.tokenRefreshWindow))
 				}
-				timer.Reset(time.Second * time.Duration(ac.tokenTtl-ac.tokenRefreshWindow))
+			case <-ctx.Done():
+				return
 			}
 		}
 	}()
@@ -99,7 +112,15 @@ func (ac *AuthClient) Login() (bool, error) {
 	return false, throwable
 }
 
-func (ac *AuthClient) login(server constant2.ServerConfig) (bool, error) {
+func (ac *AuthClient) UpdateServerList(serverList []constant.ServerConfig) {
+	ac.serverCfgs = serverList
+}
+
+func (ac *AuthClient) GetServerList() []constant.ServerConfig {
+	return ac.serverCfgs
+}
+
+func (ac *AuthClient) login(server constant.ServerConfig) (bool, error) {
 	if ac.username != "" {
 		contextPath := server.ContextPath
 
@@ -130,13 +151,13 @@ func (ac *AuthClient) login(server constant2.ServerConfig) (bool, error) {
 		}
 
 		var bytes []byte
-		bytes, err = ioutil.ReadAll(resp.Body)
+		bytes, err = io.ReadAll(resp.Body)
 		defer resp.Body.Close()
 		if err != nil {
 			return false, err
 		}
 
-		if resp.StatusCode != constant2.RESPONSE_CODE_SUCCESS {
+		if resp.StatusCode != constant.RESPONSE_CODE_SUCCESS {
 			errMsg := string(bytes)
 			return false, errors.New(errMsg)
 		}
@@ -149,9 +170,10 @@ func (ac *AuthClient) login(server constant2.ServerConfig) (bool, error) {
 			return false, err
 		}
 
-		if val, ok := result[constant2.KEY_ACCESS_TOKEN]; ok {
+		if val, ok := result[constant.KEY_ACCESS_TOKEN]; ok {
 			ac.accessToken.Store(val)
-			ac.tokenTtl = int64(result[constant2.KEY_TOKEN_TTL].(float64))
+			ac.lastRefreshTime = time.Now().Unix()
+			ac.tokenTtl = int64(result[constant.KEY_TOKEN_TTL].(float64))
 			ac.tokenRefreshWindow = ac.tokenTtl / 10
 		}
 	}

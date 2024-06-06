@@ -17,7 +17,11 @@
 package rpc_request
 
 import (
-	model2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
+	"fmt"
+	"strconv"
+	"time"
+
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
 )
 
 type NamingRequest struct {
@@ -26,12 +30,6 @@ type NamingRequest struct {
 	ServiceName string `json:"serviceName"`
 	GroupName   string `json:"groupName"`
 	Module      string `json:"module"`
-}
-
-type InstanceRequest struct {
-	*NamingRequest
-	Type     string          `json:"type"`
-	Instance model2.Instance `json:"instance"`
 }
 
 func NewNamingRequest(namespace, serviceName, groupName string) *NamingRequest {
@@ -47,7 +45,21 @@ func NewNamingRequest(namespace, serviceName, groupName string) *NamingRequest {
 	}
 }
 
-func NewInstanceRequest(namespace, serviceName, groupName, Type string, instance model2.Instance) *InstanceRequest {
+func (r *NamingRequest) GetStringToSign() string {
+	data := strconv.FormatInt(time.Now().Unix()*1000, 10)
+	if r.ServiceName != "" || r.GroupName != "" {
+		data = fmt.Sprintf("%s@@%s@@%s", data, r.GroupName, r.ServiceName)
+	}
+	return data
+}
+
+type InstanceRequest struct {
+	*NamingRequest
+	Type     string         `json:"type"`
+	Instance model.Instance `json:"instance"`
+}
+
+func NewInstanceRequest(namespace, serviceName, groupName, Type string, instance model.Instance) *InstanceRequest {
 	return &InstanceRequest{
 		NamingRequest: NewNamingRequest(namespace, serviceName, groupName),
 		Type:          Type,
@@ -59,9 +71,27 @@ func (r *InstanceRequest) GetRequestType() string {
 	return "InstanceRequest"
 }
 
+type BatchInstanceRequest struct {
+	*NamingRequest
+	Type      string           `json:"type"`
+	Instances []model.Instance `json:"instances"`
+}
+
+func NewBatchInstanceRequest(namespace, serviceName, groupName, Type string, instances []model.Instance) *BatchInstanceRequest {
+	return &BatchInstanceRequest{
+		NamingRequest: NewNamingRequest(namespace, serviceName, groupName),
+		Type:          Type,
+		Instances:     instances,
+	}
+}
+
+func (r *BatchInstanceRequest) GetRequestType() string {
+	return "BatchInstanceRequest"
+}
+
 type NotifySubscriberRequest struct {
 	*NamingRequest
-	ServiceInfo model2.Service `json:"serviceInfo"`
+	ServiceInfo model.Service `json:"serviceInfo"`
 }
 
 func (r *NotifySubscriberRequest) GetRequestType() string {
@@ -108,15 +138,15 @@ func (r *SubscribeServiceRequest) GetRequestType() string {
 
 type ServiceQueryRequest struct {
 	*NamingRequest
-	Clusters    string `json:"clusters"`
+	Cluster     string `json:"cluster"`
 	HealthyOnly bool   `json:"healthyOnly"`
 	UdpPort     int    `json:"udpPort"`
 }
 
-func NewServiceQueryRequest(namespace, serviceName, groupName, clusters string, healthyOnly bool, udpPort int) *ServiceQueryRequest {
+func NewServiceQueryRequest(namespace, serviceName, groupName, cluster string, healthyOnly bool, udpPort int) *ServiceQueryRequest {
 	return &ServiceQueryRequest{
 		NamingRequest: NewNamingRequest(namespace, serviceName, groupName),
-		Clusters:      clusters,
+		Cluster:       cluster,
 		HealthyOnly:   healthyOnly,
 		UdpPort:       udpPort,
 	}

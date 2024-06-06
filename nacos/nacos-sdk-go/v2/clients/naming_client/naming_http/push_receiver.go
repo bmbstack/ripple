@@ -19,21 +19,24 @@ package naming_http
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/json"
-	naming_cache2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/naming_client/naming_cache"
-	logger2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
-	util2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"net"
 	"strconv"
 	"time"
+
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/naming_client/naming_cache"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
 )
 
 type PushReceiver struct {
+	ctx               context.Context
 	port              int
 	host              string
-	serviceInfoHolder *naming_cache2.ServiceInfoHolder
+	serviceInfoHolder *naming_cache.ServiceInfoHolder
 }
 
 type PushData struct {
@@ -46,8 +49,9 @@ var (
 	GZIP_MAGIC = []byte("\x1F\x8B")
 )
 
-func NewPushReceiver(serviceInfoHolder *naming_cache2.ServiceInfoHolder) *PushReceiver {
+func NewPushReceiver(ctx context.Context, serviceInfoHolder *naming_cache.ServiceInfoHolder) *PushReceiver {
 	pr := PushReceiver{
+		ctx:               ctx,
 		serviceInfoHolder: serviceInfoHolder,
 	}
 	return &pr
@@ -56,13 +60,13 @@ func NewPushReceiver(serviceInfoHolder *naming_cache2.ServiceInfoHolder) *PushRe
 func (us *PushReceiver) tryListen() (*net.UDPConn, bool) {
 	addr, err := net.ResolveUDPAddr("udp", us.host+":"+strconv.Itoa(us.port))
 	if err != nil {
-		logger2.Errorf("can't resolve address,err: %+v", err)
+		logger.Errorf("can't resolve address,err: %+v", err)
 		return nil, false
 	}
 
 	conn, err := net.ListenUDP("udp", addr)
 	if err != nil {
-		logger2.Errorf("error listening %s:%d,err:%+v", us.host, us.port, err)
+		logger.Errorf("error listening %s:%d,err:%+v", us.host, us.port, err)
 		return nil, false
 	}
 
@@ -75,19 +79,19 @@ func (us *PushReceiver) startServer() {
 		ok   bool
 	)
 
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	for i := 0; i < 3; i++ {
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		port := r.Intn(1000) + 54951
 		us.port = port
 		conn, ok = us.tryListen()
 
 		if ok {
-			logger2.Infof("udp server start, port: " + strconv.Itoa(port))
+			logger.Infof("udp server start, port: " + strconv.Itoa(port))
 			break
 		}
 
 		if !ok && i == 2 {
-			logger2.Errorf("failed to start udp server after trying 3 times.")
+			logger.Errorf("failed to start udp server after trying 3 times.")
 		}
 	}
 
@@ -98,7 +102,12 @@ func (us *PushReceiver) startServer() {
 	go func() {
 		defer conn.Close()
 		for {
-			us.handleClient(conn)
+			select {
+			case <-us.ctx.Done():
+				return
+			default:
+				us.handleClient(conn)
+			}
 		}
 	}()
 }
@@ -107,17 +116,17 @@ func (us *PushReceiver) handleClient(conn *net.UDPConn) {
 	data := make([]byte, 4024)
 	n, remoteAddr, err := conn.ReadFromUDP(data)
 	if err != nil {
-		logger2.Errorf("failed to read UDP msg because of %+v", err)
+		logger.Errorf("failed to read UDP msg because of %+v", err)
 		return
 	}
 
 	s := TryDecompressData(data[:n])
-	logger2.Info("receive push: "+s+" from: ", remoteAddr)
+	logger.Info("receive push: "+s+" from: ", remoteAddr)
 
 	var pushData PushData
 	err1 := json.Unmarshal([]byte(s), &pushData)
 	if err1 != nil {
-		logger2.Infof("failed to process push data.err:%+v", err1)
+		logger.Infof("failed to process push data.err:%+v", err1)
 		return
 	}
 	ack := make(map[string]string)
@@ -132,7 +141,7 @@ func (us *PushReceiver) handleClient(conn *net.UDPConn) {
 	} else if pushData.PushType == "dump" {
 		ack["type"] = "dump-ack"
 		ack["lastRefTime"] = strconv.FormatInt(pushData.LastRefTime, 10)
-		ack["data"] = util2.ToJsonString(us.serviceInfoHolder.ServiceInfoMap)
+		ack["data"] = util.ToJsonString(us.serviceInfoHolder.ServiceInfoMap)
 	} else {
 		ack["type"] = "unknow-ack"
 		ack["lastRefTime"] = strconv.FormatInt(pushData.LastRefTime, 10)
@@ -142,7 +151,7 @@ func (us *PushReceiver) handleClient(conn *net.UDPConn) {
 	bs, _ := json.Marshal(ack)
 	c, err := conn.WriteToUDP(bs, remoteAddr)
 	if err != nil {
-		logger2.Errorf("WriteToUDP failed,return:%d,err:%+v", c, err)
+		logger.Errorf("WriteToUDP failed,return:%d,err:%+v", c, err)
 	}
 }
 
@@ -154,15 +163,15 @@ func TryDecompressData(data []byte) string {
 	reader, err := gzip.NewReader(bytes.NewReader(data))
 
 	if err != nil {
-		logger2.Errorf("failed to decompress gzip data,err:%+v", err)
+		logger.Errorf("failed to decompress gzip data,err:%+v", err)
 		return ""
 	}
 
 	defer reader.Close()
-	bs, err := ioutil.ReadAll(reader)
+	bs, err := io.ReadAll(reader)
 
 	if err != nil {
-		logger2.Errorf("failed to decompress gzip data,err:%+v", err)
+		logger.Errorf("failed to decompress gzip data,err:%+v", err)
 		return ""
 	}
 

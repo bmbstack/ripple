@@ -17,27 +17,28 @@
 package naming_grpc
 
 import (
-	cache2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/cache"
-	naming_proxy2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/naming_client/naming_proxy"
-	constant2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
-	logger2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
-	model2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
-	util2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
-	"reflect"
 	"strings"
+
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/naming_client/naming_proxy"
+
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/cache"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
 )
 
 type ConnectionEventListener struct {
-	clientProxy              naming_proxy2.INamingProxy
-	registeredInstanceCached cache2.ConcurrentMap
-	subscribes               cache2.ConcurrentMap
+	clientProxy              naming_proxy.INamingProxy
+	registeredInstanceCached cache.ConcurrentMap
+	subscribes               cache.ConcurrentMap
 }
 
-func NewConnectionEventListener(clientProxy naming_proxy2.INamingProxy) *ConnectionEventListener {
+func NewConnectionEventListener(clientProxy naming_proxy.INamingProxy) *ConnectionEventListener {
 	return &ConnectionEventListener{
 		clientProxy:              clientProxy,
-		registeredInstanceCached: cache2.NewConcurrentMap(),
-		subscribes:               cache2.NewConcurrentMap(),
+		registeredInstanceCached: cache.NewConcurrentMap(),
+		subscribes:               cache.NewConcurrentMap(),
 	}
 }
 
@@ -51,24 +52,23 @@ func (c *ConnectionEventListener) OnDisConnect() {
 }
 
 func (c *ConnectionEventListener) redoSubscribe() {
+	grpcProxy, ok := c.clientProxy.(*NamingGrpcProxy)
+	if !ok {
+		logger.Error("redo subscribe clientProxy type error")
+		return
+	}
 	for _, key := range c.subscribes.Keys() {
-		info := strings.Split(key, constant2.SERVICE_INFO_SPLITER)
+		info := strings.Split(key, constant.SERVICE_INFO_SPLITER)
 		var err error
-		var service model2.Service
+		var service model.Service
 		if len(info) > 2 {
 			service, err = c.clientProxy.Subscribe(info[1], info[0], info[2])
 		} else {
 			service, err = c.clientProxy.Subscribe(info[1], info[0], "")
 		}
-
 		if err != nil {
-			logger2.Warnf("redo subscribe service:%s faild:%+v", info[1], err)
-			return
-		}
-
-		grpcProxy, ok := c.clientProxy.(*NamingGrpcProxy)
-		if !ok {
-			return
+			logger.Warnf("redo subscribe service:%s faild:%+v", info[1], err)
+			continue
 		}
 		grpcProxy.serviceInfoHolder.ProcessService(&service)
 	}
@@ -76,32 +76,36 @@ func (c *ConnectionEventListener) redoSubscribe() {
 
 func (c *ConnectionEventListener) redoRegisterEachService() {
 	for k, v := range c.registeredInstanceCached.Items() {
-		info := strings.Split(k, constant2.SERVICE_INFO_SPLITER)
+		info := strings.Split(k, constant.SERVICE_INFO_SPLITER)
 		serviceName := info[1]
 		groupName := info[0]
-		instance, ok := v.(model2.Instance)
-		if !ok {
-			logger2.Warnf("redo register service:%s faild,instances type not is model.instance", info[1])
-			return
+		if instance, ok := v.(model.Instance); ok {
+			if _, err := c.clientProxy.RegisterInstance(serviceName, groupName, instance); err != nil {
+				logger.Warnf("redo register service:%s groupName:%s faild:%s", info[1], info[0], err.Error())
+				continue
+			}
 		}
-		_, err := c.clientProxy.RegisterInstance(serviceName, groupName, instance)
-		if err != nil {
-			logger2.Warnf("redo register service:%s groupName:%s faild:%s", info[1], info[0], err.Error())
+		if instances, ok := v.([]model.Instance); ok {
+			if _, err := c.clientProxy.BatchRegisterInstance(serviceName, groupName, instances); err != nil {
+				logger.Warnf("redo batch register service:%s groupName:%s faild:%s", info[1], info[0], err.Error())
+				continue
+			}
 		}
 	}
 }
 
-func (c *ConnectionEventListener) CacheInstanceForRedo(serviceName, groupName string, instance model2.Instance) {
-	key := util2.GetGroupName(serviceName, groupName)
-	getInstance, _ := c.registeredInstanceCached.Get(key)
-	if getInstance != nil && reflect.DeepEqual(getInstance.(model2.Instance), instance) {
-		return
-	}
+func (c *ConnectionEventListener) CacheInstanceForRedo(serviceName, groupName string, instance model.Instance) {
+	key := util.GetGroupName(serviceName, groupName)
 	c.registeredInstanceCached.Set(key, instance)
 }
 
-func (c *ConnectionEventListener) RemoveInstanceForRedo(serviceName, groupName string, instance model2.Instance) {
-	key := util2.GetGroupName(serviceName, groupName)
+func (c *ConnectionEventListener) CacheInstancesForRedo(serviceName, groupName string, instances []model.Instance) {
+	key := util.GetGroupName(serviceName, groupName)
+	c.registeredInstanceCached.Set(key, instances)
+}
+
+func (c *ConnectionEventListener) RemoveInstanceForRedo(serviceName, groupName string, instance model.Instance) {
+	key := util.GetGroupName(serviceName, groupName)
 	_, ok := c.registeredInstanceCached.Get(key)
 	if !ok {
 		return
@@ -110,12 +114,17 @@ func (c *ConnectionEventListener) RemoveInstanceForRedo(serviceName, groupName s
 }
 
 func (c *ConnectionEventListener) CacheSubscriberForRedo(fullServiceName, clusters string) {
-	key := util2.GetServiceCacheKey(fullServiceName, clusters)
-	if _, ok := c.subscribes.Get(key); !ok {
+	key := util.GetServiceCacheKey(fullServiceName, clusters)
+	if !c.IsSubscriberCached(key) {
 		c.subscribes.Set(key, struct{}{})
 	}
 }
 
+func (c *ConnectionEventListener) IsSubscriberCached(key string) bool {
+	_, ok := c.subscribes.Get(key)
+	return ok
+}
+
 func (c *ConnectionEventListener) RemoveSubscriberForRedo(fullServiceName, clusters string) {
-	c.subscribes.Remove(util2.GetServiceCacheKey(fullServiceName, clusters))
+	c.subscribes.Remove(util.GetServiceCacheKey(fullServiceName, clusters))
 }

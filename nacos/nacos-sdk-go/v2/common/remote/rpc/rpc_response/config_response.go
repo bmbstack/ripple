@@ -16,13 +16,11 @@
 
 package rpc_response
 
-import (
-	model2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
-)
+import "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
 
 type ConfigChangeBatchListenResponse struct {
 	*Response
-	ChangedConfigs []model2.ConfigContext `json:"changedConfigs"`
+	ChangedConfigs []model.ConfigContext `json:"changedConfigs"`
 }
 
 func (c *ConfigChangeBatchListenResponse) GetResponseType() string {

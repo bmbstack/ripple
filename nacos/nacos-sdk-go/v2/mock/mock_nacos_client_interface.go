@@ -21,9 +21,10 @@
 package mock
 
 import (
-	constant2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
-	http_agent2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/http_agent"
 	reflect "reflect"
+
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/http_agent"
 
 	gomock "github.com/golang/mock/gomock"
 )
@@ -52,7 +53,7 @@ func (m *MockINacosClient) EXPECT() *MockINacosClientMockRecorder {
 }
 
 // SetClientConfig mocks base method
-func (m *MockINacosClient) SetClientConfig(arg0 constant2.ClientConfig) error {
+func (m *MockINacosClient) SetClientConfig(arg0 constant.ClientConfig) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetClientConfig", arg0)
 	ret0, _ := ret[0].(error)
@@ -66,7 +67,7 @@ func (mr *MockINacosClientMockRecorder) SetClientConfig(arg0 interface{}) *gomoc
 }
 
 // SetServerConfig mocks base method
-func (m *MockINacosClient) SetServerConfig(arg0 []constant2.ServerConfig) error {
+func (m *MockINacosClient) SetServerConfig(arg0 []constant.ServerConfig) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetServerConfig", arg0)
 	ret0, _ := ret[0].(error)
@@ -80,10 +81,10 @@ func (mr *MockINacosClientMockRecorder) SetServerConfig(arg0 interface{}) *gomoc
 }
 
 // GetClientConfig mocks base method
-func (m *MockINacosClient) GetClientConfig() (constant2.ClientConfig, error) {
+func (m *MockINacosClient) GetClientConfig() (constant.ClientConfig, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetClientConfig")
-	ret0, _ := ret[0].(constant2.ClientConfig)
+	ret0, _ := ret[0].(constant.ClientConfig)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -95,10 +96,10 @@ func (mr *MockINacosClientMockRecorder) GetClientConfig() *gomock.Call {
 }
 
 // GetServerConfig mocks base method
-func (m *MockINacosClient) GetServerConfig() ([]constant2.ServerConfig, error) {
+func (m *MockINacosClient) GetServerConfig() ([]constant.ServerConfig, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetServerConfig")
-	ret0, _ := ret[0].([]constant2.ServerConfig)
+	ret0, _ := ret[0].([]constant.ServerConfig)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -110,7 +111,7 @@ func (mr *MockINacosClientMockRecorder) GetServerConfig() *gomock.Call {
 }
 
 // SetHttpAgent mocks base method
-func (m *MockINacosClient) SetHttpAgent(arg0 http_agent2.IHttpAgent) error {
+func (m *MockINacosClient) SetHttpAgent(arg0 http_agent.IHttpAgent) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetHttpAgent", arg0)
 	ret0, _ := ret[0].(error)
@@ -124,10 +125,10 @@ func (mr *MockINacosClientMockRecorder) SetHttpAgent(arg0 interface{}) *gomock.C
 }
 
 // GetHttpAgent mocks base method
-func (m *MockINacosClient) GetHttpAgent() (http_agent2.IHttpAgent, error) {
+func (m *MockINacosClient) GetHttpAgent() (http_agent.IHttpAgent, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetHttpAgent")
-	ret0, _ := ret[0].(http_agent2.IHttpAgent)
+	ret0, _ := ret[0].(http_agent.IHttpAgent)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

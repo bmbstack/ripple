@@ -17,8 +17,8 @@
 package config_client
 
 import (
-	model2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
-	vo2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/vo"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/vo"
 )
 
 //go:generate mockgen -destination ../../mock/mock_config_client_interface.go -package mock -source=./config_client_interface.go
@@ -28,33 +28,33 @@ type IConfigClient interface {
 	// dataId  require
 	// group   require
 	// tenant ==>nacos.namespace optional
-	GetConfig(param vo2.ConfigParam) (string, error)
+	GetConfig(param vo.ConfigParam) (string, error)
 
 	// PublishConfig use to publish config to nacos server
 	// dataId  require
 	// group   require
 	// content require
 	// tenant ==>nacos.namespace optional
-	PublishConfig(param vo2.ConfigParam) (bool, error)
+	PublishConfig(param vo.ConfigParam) (bool, error)
 
 	// DeleteConfig use to delete config
 	// dataId  require
 	// group   require
 	// tenant ==>nacos.namespace optional
-	DeleteConfig(param vo2.ConfigParam) (bool, error)
+	DeleteConfig(param vo.ConfigParam) (bool, error)
 
 	// ListenConfig use to listen config change,it will callback OnChange() when config change
 	// dataId  require
 	// group   require
 	// onchange require
 	// tenant ==>nacos.namespace optional
-	ListenConfig(params vo2.ConfigParam) (err error)
+	ListenConfig(params vo.ConfigParam) (err error)
 
 	//CancelListenConfig use to cancel listen config change
 	// dataId  require
 	// group   require
 	// tenant ==>nacos.namespace optional
-	CancelListenConfig(params vo2.ConfigParam) (err error)
+	CancelListenConfig(params vo.ConfigParam) (err error)
 
 	// SearchConfig use to search nacos config
 	// search  require search=accurate--精确搜索  search=blur--模糊搜索
@@ -63,7 +63,7 @@ type IConfigClient interface {
 	// tenant ==>nacos.namespace optional
 	// pageNo  option,default is 1
 	// pageSize option,default is 10
-	SearchConfig(param vo2.SearchConfigParm) (*model2.ConfigPage, error)
+	SearchConfig(param vo.SearchConfigParam) (*model.ConfigPage, error)
 
 	// CloseClient Close the GRPC client
 	CloseClient()

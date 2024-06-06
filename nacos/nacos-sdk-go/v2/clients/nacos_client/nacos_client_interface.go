@@ -17,8 +17,8 @@
 package nacos_client
 
 import (
-	constant2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
-	http_agent2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/http_agent"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/http_agent"
 )
 
 //go:generate mockgen -destination mock_nacos_client_interface.go -package nacos_client -source=./nacos_client_interface.go
@@ -26,15 +26,15 @@ import (
 type INacosClient interface {
 
 	//SetClientConfig is use to set nacos client config
-	SetClientConfig(constant2.ClientConfig) error
+	SetClientConfig(constant.ClientConfig) error
 	//SetServerConfig is use to set nacos server config
-	SetServerConfig([]constant2.ServerConfig) error
+	SetServerConfig([]constant.ServerConfig) error
 	//GetClientConfig use to get client config
-	GetClientConfig() (constant2.ClientConfig, error)
+	GetClientConfig() (constant.ClientConfig, error)
 	//GetServerConfig use to get server config
-	GetServerConfig() ([]constant2.ServerConfig, error)
+	GetServerConfig() ([]constant.ServerConfig, error)
 	//SetHttpAgent use to set http agent
-	SetHttpAgent(http_agent2.IHttpAgent) error
+	SetHttpAgent(http_agent.IHttpAgent) error
 	//GetHttpAgent use to get http agent
-	GetHttpAgent() (http_agent2.IHttpAgent, error)
+	GetHttpAgent() (http_agent.IHttpAgent, error)
 }

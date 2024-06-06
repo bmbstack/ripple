@@ -16,9 +16,7 @@
 
 package rpc_request
 
-import (
-	util2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
-)
+import "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
 
 type Request struct {
 	Headers   map[string]string `json:"-"`
@@ -31,9 +29,19 @@ type IRequest interface {
 	GetBody(request IRequest) string
 	PutAllHeaders(headers map[string]string)
 	GetRequestId() string
+	GetStringToSign() string
+}
+
+type IConfigRequest interface {
+	GetDataId() string
+	GetGroup() string
+	GetTenant() string
 }
 
 func (r *Request) PutAllHeaders(headers map[string]string) {
+	if r.Headers == nil {
+		r.Headers = make(map[string]string)
+	}
 	for k, v := range headers {
 		r.Headers[k] = v
 	}
@@ -48,8 +56,12 @@ func (r *Request) GetHeaders() map[string]string {
 }
 
 func (r *Request) GetBody(request IRequest) string {
-	return util2.ToJsonString(request)
+	return util.ToJsonString(request)
 }
 func (r *Request) GetRequestId() string {
 	return r.RequestId
+}
+
+func (r *Request) GetStringToSign() string {
+	return ""
 }

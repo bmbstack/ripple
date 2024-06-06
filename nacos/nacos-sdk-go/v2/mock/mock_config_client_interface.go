@@ -21,10 +21,10 @@
 package mock
 
 import (
-	vo2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/vo"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+	vo "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/vo"
 )
 
 // MockIConfigClient is a mock of IConfigClient interface
@@ -51,7 +51,7 @@ func (m *MockIConfigClient) EXPECT() *MockIConfigClientMockRecorder {
 }
 
 // GetConfig mocks base method
-func (m *MockIConfigClient) GetConfig(param vo2.ConfigParam) (string, error) {
+func (m *MockIConfigClient) GetConfig(param vo.ConfigParam) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetConfig", param)
 	ret0, _ := ret[0].(string)
@@ -66,7 +66,7 @@ func (mr *MockIConfigClientMockRecorder) GetConfig(param interface{}) *gomock.Ca
 }
 
 // PublishConfig mocks base method
-func (m *MockIConfigClient) PublishConfig(param vo2.ConfigParam) (bool, error) {
+func (m *MockIConfigClient) PublishConfig(param vo.ConfigParam) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "PublishConfig", param)
 	ret0, _ := ret[0].(bool)
@@ -81,7 +81,7 @@ func (mr *MockIConfigClientMockRecorder) PublishConfig(param interface{}) *gomoc
 }
 
 // DeleteConfig mocks base method
-func (m *MockIConfigClient) DeleteConfig(param vo2.ConfigParam) (bool, error) {
+func (m *MockIConfigClient) DeleteConfig(param vo.ConfigParam) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteConfig", param)
 	ret0, _ := ret[0].(bool)
@@ -96,7 +96,7 @@ func (mr *MockIConfigClientMockRecorder) DeleteConfig(param interface{}) *gomock
 }
 
 // ListenConfig mocks base method
-func (m *MockIConfigClient) ListenConfig(params []vo2.ConfigParam) error {
+func (m *MockIConfigClient) ListenConfig(params []vo.ConfigParam) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListenConfig", params)
 	ret0, _ := ret[0].(error)
@@ -110,7 +110,7 @@ func (mr *MockIConfigClientMockRecorder) ListenConfig(params interface{}) *gomoc
 }
 
 // AddConfigToListen mocks base method
-func (m *MockIConfigClient) AddConfigToListen(params []vo2.ConfigParam) error {
+func (m *MockIConfigClient) AddConfigToListen(params []vo.ConfigParam) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddConfigToListen", params)
 	ret0, _ := ret[0].(error)

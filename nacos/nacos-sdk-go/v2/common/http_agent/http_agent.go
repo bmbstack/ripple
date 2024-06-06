@@ -17,18 +17,19 @@
 package http_agent
 
 import (
-	constant2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
-	logger2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
-	tls2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/tls"
-	util2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
-	"io/ioutil"
+	"io"
 	"net/http"
 
-	"github.com/go-errors/errors"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/tls"
+
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
+	"github.com/pkg/errors"
 )
 
 type HttpAgent struct {
-	TlsConfig constant2.TLSConfig
+	TlsConfig constant.TLSConfig
 }
 
 func (agent *HttpAgent) Get(path string, header http.Header, timeoutMs uint64,
@@ -57,20 +58,20 @@ func (agent *HttpAgent) RequestOnlyResult(method string, path string, header htt
 		response, err = agent.Delete(path, header, timeoutMs, params)
 		break
 	default:
-		logger2.Errorf("request method[%s], path[%s],header:[%s],params:[%s], not avaliable method ", method, path, util2.ToJsonString(header), util2.ToJsonString(params))
+		logger.Errorf("request method[%s], path[%s],header:[%s],params:[%s], not avaliable method ", method, path, util.ToJsonString(header), util.ToJsonString(params))
 	}
 	if err != nil {
-		logger2.Errorf("request method[%s],request path[%s],header:[%s],params:[%s],err:%+v", method, path, util2.ToJsonString(header), util2.ToJsonString(params), err)
+		logger.Errorf("request method[%s],request path[%s],header:[%s],params:[%s],err:%+v", method, path, util.ToJsonString(header), util.ToJsonString(params), err)
 		return ""
 	}
-	if response.StatusCode != constant2.RESPONSE_CODE_SUCCESS {
-		logger2.Errorf("request method[%s],request path[%s],header:[%s],params:[%s],status code error:%d", method, path, util2.ToJsonString(header), util2.ToJsonString(params), response.StatusCode)
+	if response.StatusCode != constant.RESPONSE_CODE_SUCCESS {
+		logger.Errorf("request method[%s],request path[%s],header:[%s],params:[%s],status code error:%d", method, path, util.ToJsonString(header), util.ToJsonString(params), response.StatusCode)
 		return ""
 	}
-	bytes, errRead := ioutil.ReadAll(response.Body)
+	bytes, errRead := io.ReadAll(response.Body)
 	defer response.Body.Close()
 	if errRead != nil {
-		logger2.Errorf("request method[%s],request path[%s],header:[%s],params:[%s],read error:%+v", method, path, util2.ToJsonString(header), util2.ToJsonString(params), errRead)
+		logger.Errorf("request method[%s],request path[%s],header:[%s],params:[%s],read error:%+v", method, path, util.ToJsonString(header), util.ToJsonString(params), errRead)
 		return ""
 	}
 	return string(bytes)
@@ -93,7 +94,7 @@ func (agent *HttpAgent) Request(method string, path string, header http.Header, 
 		return
 	default:
 		err = errors.New("not available method")
-		logger2.Errorf("request method[%s], path[%s],header:[%s],params:[%s], not available method ", method, path, util2.ToJsonString(header), util2.ToJsonString(params))
+		logger.Errorf("request method[%s], path[%s],header:[%s],params:[%s], not available method ", method, path, util.ToJsonString(header), util.ToJsonString(params))
 	}
 	return
 }
@@ -126,7 +127,7 @@ func (agent *HttpAgent) createClient() (*http.Client, error) {
 	if !agent.TlsConfig.Enable {
 		return &http.Client{}, nil
 	}
-	cfg, err := tls2.NewTLS(agent.TlsConfig)
+	cfg, err := tls.NewTLS(agent.TlsConfig)
 	if err != nil {
 		return nil, err
 	}

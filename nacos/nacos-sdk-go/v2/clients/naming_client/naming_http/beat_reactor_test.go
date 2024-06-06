@@ -17,61 +17,62 @@
 package naming_http
 
 import (
-	constant2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
-	nacos_server2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/nacos_server"
-	model2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
-	util2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
+	"context"
 	"testing"
 
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/nacos_server"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestBeatReactor_AddBeatInfo(t *testing.T) {
-	br := NewBeatReactor(constant2.ClientConfig{}, &nacos_server2.NacosServer{})
+	br := NewBeatReactor(context.Background(), constant.ClientConfig{}, &nacos_server.NacosServer{})
 	serviceName := "Test"
 	groupName := "public"
-	beatInfo := &model2.BeatInfo{
+	beatInfo := &model.BeatInfo{
 		Ip:          "127.0.0.1",
 		Port:        8080,
 		Metadata:    map[string]string{},
-		ServiceName: util2.GetGroupName(serviceName, groupName),
+		ServiceName: util.GetGroupName(serviceName, groupName),
 		Cluster:     "default",
 		Weight:      1,
 	}
-	br.AddBeatInfo(util2.GetGroupName(serviceName, groupName), beatInfo)
-	key := buildKey(util2.GetGroupName(serviceName, groupName), beatInfo.Ip, beatInfo.Port)
+	br.AddBeatInfo(util.GetGroupName(serviceName, groupName), beatInfo)
+	key := buildKey(util.GetGroupName(serviceName, groupName), beatInfo.Ip, beatInfo.Port)
 	result, ok := br.beatMap.Get(key)
 	assert.Equal(t, ok, true, "key should exists!")
-	assert.ObjectsAreEqual(result.(*model2.BeatInfo), beatInfo)
+	assert.ObjectsAreEqual(result.(*model.BeatInfo), beatInfo)
 }
 
 func TestBeatReactor_RemoveBeatInfo(t *testing.T) {
-	br := NewBeatReactor(constant2.ClientConfig{}, &nacos_server2.NacosServer{})
+	br := NewBeatReactor(context.Background(), constant.ClientConfig{}, &nacos_server.NacosServer{})
 	serviceName := "Test"
 	groupName := "public"
-	beatInfo1 := &model2.BeatInfo{
+	beatInfo1 := &model.BeatInfo{
 		Ip:          "127.0.0.1",
 		Port:        8080,
 		Metadata:    map[string]string{},
-		ServiceName: util2.GetGroupName(serviceName, groupName),
+		ServiceName: util.GetGroupName(serviceName, groupName),
 		Cluster:     "default",
 		Weight:      1,
 	}
-	br.AddBeatInfo(util2.GetGroupName(serviceName, groupName), beatInfo1)
-	beatInfo2 := &model2.BeatInfo{
+	br.AddBeatInfo(util.GetGroupName(serviceName, groupName), beatInfo1)
+	beatInfo2 := &model.BeatInfo{
 		Ip:          "127.0.0.2",
 		Port:        8080,
 		Metadata:    map[string]string{},
-		ServiceName: util2.GetGroupName(serviceName, groupName),
+		ServiceName: util.GetGroupName(serviceName, groupName),
 		Cluster:     "default",
 		Weight:      1,
 	}
-	br.AddBeatInfo(util2.GetGroupName(serviceName, groupName), beatInfo2)
-	br.RemoveBeatInfo(util2.GetGroupName(serviceName, groupName), "127.0.0.1", 8080)
-	key := buildKey(util2.GetGroupName(serviceName, groupName), beatInfo2.Ip, beatInfo2.Port)
+	br.AddBeatInfo(util.GetGroupName(serviceName, groupName), beatInfo2)
+	br.RemoveBeatInfo(util.GetGroupName(serviceName, groupName), "127.0.0.1", 8080)
+	key := buildKey(util.GetGroupName(serviceName, groupName), beatInfo2.Ip, beatInfo2.Port)
 	result, ok := br.beatMap.Get(key)
 	assert.Equal(t, br.beatMap.Count(), 1, "beatinfo map length should be 1")
 	assert.Equal(t, ok, true, "key should exists!")
-	assert.ObjectsAreEqual(result.(*model2.BeatInfo), beatInfo2)
+	assert.ObjectsAreEqual(result.(*model.BeatInfo), beatInfo2)
 
 }

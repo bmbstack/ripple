@@ -17,8 +17,8 @@
 package naming_client
 
 import (
-	model2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
-	vo2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/vo"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/vo"
 )
 
 //go:generate mockgen -destination ../../mock/mock_service_client_interface.go -package mock -source=./service_client_interface.go
@@ -37,7 +37,14 @@ type INamingClient interface {
 	// ServiceName require
 	// GroupName optional,default:DEFAULT_GROUP
 	// Ephemeral optional
-	RegisterInstance(param vo2.RegisterInstanceParam) (bool, error)
+	RegisterInstance(param vo.RegisterInstanceParam) (bool, error)
+
+	// BatchRegisterInstance use to batch register instance
+	// ClusterName  optional,default:DEFAULT
+	// ServiceName require
+	// GroupName optional,default:DEFAULT_GROUP
+	// Instances require,batch register instance list (serviceName, groupName in instances do not need to be set)
+	BatchRegisterInstance(param vo.BatchRegisterInstanceParam) (bool, error)
 
 	// DeregisterInstance use to deregister instance
 	// Ip required
@@ -47,7 +54,7 @@ type INamingClient interface {
 	// ServiceName  require
 	// GroupName  optional,default:DEFAULT_GROUP
 	// Ephemeral optional
-	DeregisterInstance(param vo2.DeregisterInstanceParam) (bool, error)
+	DeregisterInstance(param vo.DeregisterInstanceParam) (bool, error)
 
 	// UpdateInstance use to update instance
 	// Ip  require
@@ -60,50 +67,53 @@ type INamingClient interface {
 	// ServiceName require
 	// GroupName optional,default:DEFAULT_GROUP
 	// Ephemeral optional
-	UpdateInstance(param vo2.UpdateInstanceParam) (bool, error)
+	UpdateInstance(param vo.UpdateInstanceParam) (bool, error)
 
 	// GetService use to get service
 	// ServiceName require
 	// Clusters optional,default:DEFAULT
 	// GroupName optional,default:DEFAULT_GROUP
-	GetService(param vo2.GetServiceParam) (model2.Service, error)
+	GetService(param vo.GetServiceParam) (model.Service, error)
 
 	// SelectAllInstances return all instances,include healthy=false,enable=false,weight<=0
 	// ServiceName require
 	// Clusters optional,default:DEFAULT
 	// GroupName optional,default:DEFAULT_GROUP
-	SelectAllInstances(param vo2.SelectAllInstancesParam) ([]model2.Instance, error)
+	SelectAllInstances(param vo.SelectAllInstancesParam) ([]model.Instance, error)
 
 	// SelectInstances only return the instances of healthy=${HealthyOnly},enable=true and weight>0
 	// ServiceName require
 	// Clusters optional,default:DEFAULT
 	// GroupName optional,default:DEFAULT_GROUP
 	// HealthyOnly optional
-	SelectInstances(param vo2.SelectInstancesParam) ([]model2.Instance, error)
+	SelectInstances(param vo.SelectInstancesParam) ([]model.Instance, error)
 
 	// SelectOneHealthyInstance return one instance by WRR strategy for load balance
 	// And the instance should be health=true,enable=true and weight>0
 	// ServiceName require
 	// Clusters optional,default:DEFAULT
 	// GroupName optional,default:DEFAULT_GROUP
-	SelectOneHealthyInstance(param vo2.SelectOneHealthInstanceParam) (*model2.Instance, error)
+	SelectOneHealthyInstance(param vo.SelectOneHealthInstanceParam) (*model.Instance, error)
 
 	// Subscribe use to subscribe service change event
 	// ServiceName require
 	// Clusters optional,default:DEFAULT
 	// GroupName optional,default:DEFAULT_GROUP
 	// SubscribeCallback require
-	Subscribe(param *vo2.SubscribeParam) error
+	Subscribe(param *vo.SubscribeParam) error
 
 	// Unsubscribe use to unsubscribe service change event
 	// ServiceName require
 	// Clusters optional,default:DEFAULT
 	// GroupName optional,default:DEFAULT_GROUP
 	// SubscribeCallback require
-	Unsubscribe(param *vo2.SubscribeParam) error
+	Unsubscribe(param *vo.SubscribeParam) error
 
 	// GetAllServicesInfo use to get all service info by page
-	GetAllServicesInfo(param vo2.GetAllServiceInfoParam) (model2.ServiceList, error)
+	GetAllServicesInfo(param vo.GetAllServiceInfoParam) (model.ServiceList, error)
+
+	// ServerHealthy use to check the connectivity to server
+	ServerHealthy() bool
 
 	//CloseClient close the GRPC client
 	CloseClient()

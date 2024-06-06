@@ -17,50 +17,52 @@
 package naming_http
 
 import (
-	"errors"
-	"fmt"
-	naming_cache2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/naming_client/naming_cache"
-	constant2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
-	logger2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
-	nacos_server2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/nacos_server"
-	model2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
-	util2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
+	"context"
 	"net/http"
 	"strconv"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/buger/jsonparser"
+
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/naming_client/naming_cache"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/nacos_server"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
 )
 
 // NamingHttpProxy ...
 type NamingHttpProxy struct {
-	clientConfig      constant2.ClientConfig
-	nacosServer       *nacos_server2.NacosServer
+	clientConfig      constant.ClientConfig
+	nacosServer       *nacos_server.NacosServer
 	beatReactor       BeatReactor
-	serviceInfoHolder *naming_cache2.ServiceInfoHolder
+	serviceInfoHolder *naming_cache.ServiceInfoHolder
 }
 
 // NewNamingHttpProxy  create naming http proxy
-func NewNamingHttpProxy(clientCfg constant2.ClientConfig, nacosServer *nacos_server2.NacosServer,
-	serviceInfoHolder *naming_cache2.ServiceInfoHolder) (*NamingHttpProxy, error) {
+func NewNamingHttpProxy(ctx context.Context, clientCfg constant.ClientConfig, nacosServer *nacos_server.NacosServer,
+	serviceInfoHolder *naming_cache.ServiceInfoHolder) (*NamingHttpProxy, error) {
 	srvProxy := NamingHttpProxy{
 		clientConfig:      clientCfg,
 		nacosServer:       nacosServer,
 		serviceInfoHolder: serviceInfoHolder,
 	}
 
-	srvProxy.beatReactor = NewBeatReactor(clientCfg, nacosServer)
+	srvProxy.beatReactor = NewBeatReactor(ctx, clientCfg, nacosServer)
 
-	NewPushReceiver(serviceInfoHolder).startServer()
+	NewPushReceiver(ctx, serviceInfoHolder).startServer()
 
 	return &srvProxy, nil
 }
 
 // RegisterInstance ...
-func (proxy *NamingHttpProxy) RegisterInstance(serviceName string, groupName string, instance model2.Instance) (bool, error) {
-	logger2.Infof("register instance namespaceId:<%s>,serviceName:<%s> with instance:<%s>",
-		proxy.clientConfig.NamespaceId, serviceName, util2.ToJsonString(instance))
-	serviceName = util2.GetGroupName(serviceName, groupName)
+func (proxy *NamingHttpProxy) RegisterInstance(serviceName string, groupName string, instance model.Instance) (bool, error) {
+	logger.Infof("register instance namespaceId:<%s>,serviceName:<%s> with instance:<%s>",
+		proxy.clientConfig.NamespaceId, serviceName, util.ToJsonString(instance))
+	serviceName = util.GetGroupName(serviceName, groupName)
 	params := map[string]string{}
 	params["namespaceId"] = proxy.clientConfig.NamespaceId
 	params["serviceName"] = serviceName
@@ -72,32 +74,36 @@ func (proxy *NamingHttpProxy) RegisterInstance(serviceName string, groupName str
 	params["weight"] = strconv.FormatFloat(instance.Weight, 'f', -1, 64)
 	params["enable"] = strconv.FormatBool(instance.Enable)
 	params["healthy"] = strconv.FormatBool(instance.Healthy)
-	params["metadata"] = util2.ToJsonString(instance.Metadata)
+	params["metadata"] = util.ToJsonString(instance.Metadata)
 	params["ephemeral"] = strconv.FormatBool(instance.Ephemeral)
-	_, err := proxy.nacosServer.ReqApi(constant2.SERVICE_PATH, params, http.MethodPost)
+	_, err := proxy.nacosServer.ReqApi(constant.SERVICE_PATH, params, http.MethodPost, proxy.clientConfig)
 	if err != nil {
 		return false, err
 	}
 	if instance.Ephemeral {
-		beatInfo := &model2.BeatInfo{
+		beatInfo := &model.BeatInfo{
 			Ip:          instance.Ip,
 			Port:        instance.Port,
 			Metadata:    instance.Metadata,
-			ServiceName: util2.GetGroupName(serviceName, groupName),
+			ServiceName: util.GetGroupName(serviceName, groupName),
 			Cluster:     instance.ClusterName,
 			Weight:      instance.Weight,
-			Period:      util2.GetDurationWithDefault(instance.Metadata, constant2.HEART_BEAT_INTERVAL, time.Second*5),
-			State:       model2.StateRunning,
+			Period:      util.GetDurationWithDefault(instance.Metadata, constant.HEART_BEAT_INTERVAL, time.Second*5),
+			State:       model.StateRunning,
 		}
-		proxy.beatReactor.AddBeatInfo(util2.GetGroupName(serviceName, groupName), beatInfo)
+		proxy.beatReactor.AddBeatInfo(util.GetGroupName(serviceName, groupName), beatInfo)
 	}
 	return true, nil
 }
 
+func (proxy *NamingHttpProxy) BatchRegisterInstance(serviceName string, groupName string, instances []model.Instance) (bool, error) {
+	panic("implement me")
+}
+
 // DeregisterInstance ...
-func (proxy *NamingHttpProxy) DeregisterInstance(serviceName string, groupName string, instance model2.Instance) (bool, error) {
-	serviceName = util2.GetGroupName(serviceName, groupName)
-	logger2.Infof("deregister instance namespaceId:<%s>,serviceName:<%s> with instance:<%s:%d@%s>",
+func (proxy *NamingHttpProxy) DeregisterInstance(serviceName string, groupName string, instance model.Instance) (bool, error) {
+	serviceName = util.GetGroupName(serviceName, groupName)
+	logger.Infof("deregister instance namespaceId:<%s>,serviceName:<%s> with instance:<%s:%d@%s>",
 		proxy.clientConfig.NamespaceId, serviceName, instance.Ip, instance.Port, instance.ClusterName)
 	proxy.beatReactor.RemoveBeatInfo(serviceName, instance.Ip, instance.Port)
 	params := map[string]string{}
@@ -107,7 +113,7 @@ func (proxy *NamingHttpProxy) DeregisterInstance(serviceName string, groupName s
 	params["ip"] = instance.Ip
 	params["port"] = strconv.Itoa(int(instance.Port))
 	params["ephemeral"] = strconv.FormatBool(instance.Ephemeral)
-	_, err := proxy.nacosServer.ReqApi(constant2.SERVICE_PATH, params, http.MethodDelete)
+	_, err := proxy.nacosServer.ReqApi(constant.SERVICE_PATH, params, http.MethodDelete, proxy.clientConfig)
 	if err != nil {
 		return false, err
 	}
@@ -115,9 +121,9 @@ func (proxy *NamingHttpProxy) DeregisterInstance(serviceName string, groupName s
 }
 
 // GetServiceList ...
-func (proxy *NamingHttpProxy) GetServiceList(pageNo uint32, pageSize uint32, groupName string, selector *model2.ExpressionSelector) (model2.ServiceList, error) {
+func (proxy *NamingHttpProxy) GetServiceList(pageNo uint32, pageSize uint32, groupName, namespaceId string, selector *model.ExpressionSelector) (model.ServiceList, error) {
 	params := map[string]string{}
-	params["namespaceId"] = proxy.clientConfig.NamespaceId
+	params["namespaceId"] = namespaceId
 	params["groupName"] = groupName
 	params["pageNo"] = strconv.Itoa(int(pageNo))
 	params["pageSize"] = strconv.Itoa(int(pageSize))
@@ -125,17 +131,17 @@ func (proxy *NamingHttpProxy) GetServiceList(pageNo uint32, pageSize uint32, gro
 	if selector != nil {
 		switch selector.Type {
 		case "label":
-			params["selector"] = util2.ToJsonString(selector)
+			params["selector"] = util.ToJsonString(selector)
 			break
 		default:
 			break
 
 		}
 	}
-	serviceList := model2.ServiceList{}
+	serviceList := model.ServiceList{}
 
-	api := constant2.SERVICE_BASE_PATH + "/service/list"
-	result, err := proxy.nacosServer.ReqApi(api, params, http.MethodGet)
+	api := constant.SERVICE_BASE_PATH + "/service/list"
+	result, err := proxy.nacosServer.ReqApi(api, params, http.MethodGet, proxy.clientConfig)
 	if err != nil {
 		return serviceList, err
 	}
@@ -145,14 +151,14 @@ func (proxy *NamingHttpProxy) GetServiceList(pageNo uint32, pageSize uint32, gro
 
 	count, err := jsonparser.GetInt([]byte(result), "count")
 	if err != nil {
-		return serviceList, errors.New(fmt.Sprintf("namespaceId:<%s> get service list pageNo:<%d> pageSize:<%d> selector:<%s> from <%s> get 'count' from <%s> error:<%+v>", proxy.clientConfig.NamespaceId, pageNo, pageSize, util2.ToJsonString(selector), groupName, result, err))
+		return serviceList, errors.Errorf("namespaceId:<%s> get service list pageNo:<%d> pageSize:<%d> selector:<%s> from <%s> get 'count' from <%s> error:<%+v>", namespaceId, pageNo, pageSize, util.ToJsonString(selector), groupName, result, err)
 	}
 	var doms []string
 	_, err = jsonparser.ArrayEach([]byte(result), func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 		doms = append(doms, string(value))
 	}, "doms")
 	if err != nil {
-		return serviceList, errors.New(fmt.Sprintf("namespaceId:<%s> get service list pageNo:<%d> pageSize:<%d> selector:<%s> from <%s> get 'doms' from <%s> error:<%+v> ", proxy.clientConfig.NamespaceId, pageNo, pageSize, util2.ToJsonString(selector), groupName, result, err))
+		return serviceList, errors.Errorf("namespaceId:<%s> get service list pageNo:<%d> pageSize:<%d> selector:<%s> from <%s> get 'doms' from <%s> error:<%+v> ", namespaceId, pageNo, pageSize, util.ToJsonString(selector), groupName, result, err)
 	}
 	serviceList.Count = count
 	serviceList.Doms = doms
@@ -161,16 +167,16 @@ func (proxy *NamingHttpProxy) GetServiceList(pageNo uint32, pageSize uint32, gro
 
 // ServerHealthy ...
 func (proxy *NamingHttpProxy) ServerHealthy() bool {
-	api := constant2.SERVICE_BASE_PATH + "/operator/metrics"
-	result, err := proxy.nacosServer.ReqApi(api, map[string]string{}, http.MethodGet)
+	api := constant.SERVICE_BASE_PATH + "/operator/metrics"
+	result, err := proxy.nacosServer.ReqApi(api, map[string]string{}, http.MethodGet, proxy.clientConfig)
 	if err != nil {
-		logger2.Errorf("namespaceId:[%s] sending server healthy failed!,result:%s error:%+v", proxy.clientConfig.NamespaceId, result, err)
+		logger.Errorf("namespaceId:[%s] sending server healthy failed!,result:%s error:%+v", proxy.clientConfig.NamespaceId, result, err)
 		return false
 	}
 	if result != "" {
 		status, err := jsonparser.GetString([]byte(result), "status")
 		if err != nil {
-			logger2.Errorf("namespaceId:[%s] sending server healthy failed!,result:%s error:%+v", proxy.clientConfig.NamespaceId, result, err)
+			logger.Errorf("namespaceId:[%s] sending server healthy failed!,result:%s error:%+v", proxy.clientConfig.NamespaceId, result, err)
 		} else {
 			return status == "UP"
 		}
@@ -179,27 +185,27 @@ func (proxy *NamingHttpProxy) ServerHealthy() bool {
 }
 
 // QueryInstancesOfService ...
-func (proxy *NamingHttpProxy) QueryInstancesOfService(serviceName, groupName, clusters string, udpPort int, healthyOnly bool) (*model2.Service, error) {
+func (proxy *NamingHttpProxy) QueryInstancesOfService(serviceName, groupName, clusters string, udpPort int, healthyOnly bool) (*model.Service, error) {
 	param := make(map[string]string)
 	param["namespaceId"] = proxy.clientConfig.NamespaceId
-	param["serviceName"] = util2.GetGroupName(serviceName, groupName)
+	param["serviceName"] = util.GetGroupName(serviceName, groupName)
 	param["app"] = proxy.clientConfig.AppName
 	param["clusters"] = clusters
 	param["udpPort"] = strconv.Itoa(udpPort)
 	param["healthyOnly"] = strconv.FormatBool(healthyOnly)
-	param["clientIP"] = util2.LocalIP()
-	api := constant2.SERVICE_PATH + "/list"
-	result, err := proxy.nacosServer.ReqApi(api, param, http.MethodGet)
+	param["clientIP"] = util.LocalIP()
+	api := constant.SERVICE_PATH + "/list"
+	result, err := proxy.nacosServer.ReqApi(api, param, http.MethodGet, proxy.clientConfig)
 	if err != nil {
 		return nil, err
 	}
-	return util2.JsonToService(result), nil
+	return util.JsonToService(result), nil
 
 }
 
 // Subscribe ...
-func (proxy *NamingHttpProxy) Subscribe(serviceName, groupName, clusters string) (model2.Service, error) {
-	return model2.Service{}, nil
+func (proxy *NamingHttpProxy) Subscribe(serviceName, groupName, clusters string) (model.Service, error) {
+	return model.Service{}, nil
 }
 
 // Unsubscribe ...

@@ -17,33 +17,38 @@
 package naming_client
 
 import (
-	nacos_client2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/nacos_client"
-	naming_cache2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/naming_client/naming_cache"
-	naming_proxy2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/naming_client/naming_proxy"
-	constant2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
-	logger2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
-	model2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
-	util2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
-	vo2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/vo"
+	"context"
 	"math"
 	"math/rand"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
+
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/nacos_client"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/naming_client/naming_cache"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/naming_client/naming_proxy"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/vo"
 )
 
 // NamingClient ...
 type NamingClient struct {
-	nacos_client2.INacosClient
-	serviceProxy      naming_proxy2.INamingProxy
-	serviceInfoHolder *naming_cache2.ServiceInfoHolder
+	nacos_client.INacosClient
+	ctx               context.Context
+	cancel            context.CancelFunc
+	serviceProxy      naming_proxy.INamingProxy
+	serviceInfoHolder *naming_cache.ServiceInfoHolder
 }
 
 // NewNamingClient ...
-func NewNamingClient(nc nacos_client2.INacosClient) (*NamingClient, error) {
+func NewNamingClient(nc nacos_client.INacosClient) (*NamingClient, error) {
+	ctx, cancel := context.WithCancel(context.Background())
 	rand.Seed(time.Now().UnixNano())
-	naming := &NamingClient{INacosClient: nc}
+	naming := &NamingClient{INacosClient: nc, ctx: ctx, cancel: cancel}
 	clientConfig, err := nc.GetClientConfig()
 	if err != nil {
 		return naming, err
@@ -62,15 +67,19 @@ func NewNamingClient(nc nacos_client2.INacosClient) (*NamingClient, error) {
 	if err = initLogger(clientConfig); err != nil {
 		return naming, err
 	}
+
 	if clientConfig.NamespaceId == "" {
-		clientConfig.NamespaceId = constant2.DEFAULT_NAMESPACE_ID
+		clientConfig.NamespaceId = constant.DEFAULT_NAMESPACE_ID
 	}
-	naming.serviceInfoHolder = naming_cache2.NewServiceInfoHolder(clientConfig.NamespaceId, clientConfig.CacheDir,
+
+	naming.serviceInfoHolder = naming_cache.NewServiceInfoHolder(clientConfig.NamespaceId, clientConfig.CacheDir,
 		clientConfig.UpdateCacheWhenEmpty, clientConfig.NotLoadCacheAtStart)
 
-	naming.serviceProxy, err = NewNamingProxyDelegate(clientConfig, serverConfig, httpAgent, naming.serviceInfoHolder)
+	naming.serviceProxy, err = NewNamingProxyDelegate(ctx, clientConfig, serverConfig, httpAgent, naming.serviceInfoHolder)
 
-	go NewServiceInfoUpdater(naming.serviceInfoHolder, clientConfig.UpdateThreadNum, naming.serviceProxy).asyncUpdateService()
+	if clientConfig.AsyncUpdateService {
+		go NewServiceInfoUpdater(ctx, naming.serviceInfoHolder, clientConfig.UpdateThreadNum, naming.serviceProxy).asyncUpdateService()
+	}
 	if err != nil {
 		return naming, err
 	}
@@ -78,22 +87,22 @@ func NewNamingClient(nc nacos_client2.INacosClient) (*NamingClient, error) {
 	return naming, nil
 }
 
-func initLogger(clientConfig constant2.ClientConfig) error {
-	return logger2.InitLogger(logger2.BuildLoggerConfig(clientConfig))
+func initLogger(clientConfig constant.ClientConfig) error {
+	return logger.InitLogger(logger.BuildLoggerConfig(clientConfig))
 }
 
 // RegisterInstance ...
-func (sc *NamingClient) RegisterInstance(param vo2.RegisterInstanceParam) (bool, error) {
+func (sc *NamingClient) RegisterInstance(param vo.RegisterInstanceParam) (bool, error) {
 	if param.ServiceName == "" {
 		return false, errors.New("serviceName cannot be empty!")
 	}
 	if len(param.GroupName) == 0 {
-		param.GroupName = constant2.DEFAULT_GROUP
+		param.GroupName = constant.DEFAULT_GROUP
 	}
 	if param.Metadata == nil {
 		param.Metadata = make(map[string]string)
 	}
-	instance := model2.Instance{
+	instance := model.Instance{
 		Ip:          param.Ip,
 		Port:        param.Port,
 		Metadata:    param.Metadata,
@@ -103,17 +112,45 @@ func (sc *NamingClient) RegisterInstance(param vo2.RegisterInstanceParam) (bool,
 		Weight:      param.Weight,
 		Ephemeral:   param.Ephemeral,
 	}
-
 	return sc.serviceProxy.RegisterInstance(param.ServiceName, param.GroupName, instance)
+}
 
+func (sc *NamingClient) BatchRegisterInstance(param vo.BatchRegisterInstanceParam) (bool, error) {
+	if param.ServiceName == "" {
+		return false, errors.New("serviceName cannot be empty!")
+	}
+	if len(param.GroupName) == 0 {
+		param.GroupName = constant.DEFAULT_GROUP
+	}
+	if len(param.Instances) == 0 {
+		return false, errors.New("instances cannot be empty!")
+	}
+	var modelInstances []model.Instance
+	for _, param := range param.Instances {
+		if !param.Ephemeral {
+			return false, errors.Errorf("Batch registration does not allow persistent instance registration! instance:%+v", param)
+		}
+		modelInstances = append(modelInstances, model.Instance{
+			Ip:          param.Ip,
+			Port:        param.Port,
+			Metadata:    param.Metadata,
+			ClusterName: param.ClusterName,
+			Healthy:     param.Healthy,
+			Enable:      param.Enable,
+			Weight:      param.Weight,
+			Ephemeral:   param.Ephemeral,
+		})
+	}
+
+	return sc.serviceProxy.BatchRegisterInstance(param.ServiceName, param.GroupName, modelInstances)
 }
 
 // DeregisterInstance ...
-func (sc *NamingClient) DeregisterInstance(param vo2.DeregisterInstanceParam) (bool, error) {
+func (sc *NamingClient) DeregisterInstance(param vo.DeregisterInstanceParam) (bool, error) {
 	if len(param.GroupName) == 0 {
-		param.GroupName = constant2.DEFAULT_GROUP
+		param.GroupName = constant.DEFAULT_GROUP
 	}
-	instance := model2.Instance{
+	instance := model.Instance{
 		Ip:          param.Ip,
 		Port:        param.Port,
 		ClusterName: param.Cluster,
@@ -123,17 +160,17 @@ func (sc *NamingClient) DeregisterInstance(param vo2.DeregisterInstanceParam) (b
 }
 
 // UpdateInstance ...
-func (sc *NamingClient) UpdateInstance(param vo2.UpdateInstanceParam) (bool, error) {
+func (sc *NamingClient) UpdateInstance(param vo.UpdateInstanceParam) (bool, error) {
 	if param.ServiceName == "" {
 		return false, errors.New("serviceName cannot be empty!")
 	}
 	if len(param.GroupName) == 0 {
-		param.GroupName = constant2.DEFAULT_GROUP
+		param.GroupName = constant.DEFAULT_GROUP
 	}
 	if param.Metadata == nil {
 		param.Metadata = make(map[string]string)
 	}
-	instance := model2.Instance{
+	instance := model.Instance{
 		Ip:          param.Ip,
 		Port:        param.Port,
 		Metadata:    param.Metadata,
@@ -149,9 +186,9 @@ func (sc *NamingClient) UpdateInstance(param vo2.UpdateInstanceParam) (bool, err
 }
 
 // GetService Get service info by Group and DataId, clusters was optional
-func (sc *NamingClient) GetService(param vo2.GetServiceParam) (service model2.Service, err error) {
+func (sc *NamingClient) GetService(param vo.GetServiceParam) (service model.Service, err error) {
 	if len(param.GroupName) == 0 {
-		param.GroupName = constant2.DEFAULT_GROUP
+		param.GroupName = constant.DEFAULT_GROUP
 	}
 	var ok bool
 	clusters := strings.Join(param.Clusters, ",")
@@ -163,30 +200,30 @@ func (sc *NamingClient) GetService(param vo2.GetServiceParam) (service model2.Se
 }
 
 // GetAllServicesInfo Get all instance by Namespace and Group with page
-func (sc *NamingClient) GetAllServicesInfo(param vo2.GetAllServiceInfoParam) (model2.ServiceList, error) {
+func (sc *NamingClient) GetAllServicesInfo(param vo.GetAllServiceInfoParam) (model.ServiceList, error) {
 	if len(param.GroupName) == 0 {
-		param.GroupName = constant2.DEFAULT_GROUP
+		param.GroupName = constant.DEFAULT_GROUP
 	}
 	clientConfig, _ := sc.GetClientConfig()
 	if len(param.NameSpace) == 0 {
 		if len(clientConfig.NamespaceId) == 0 {
-			param.NameSpace = constant2.DEFAULT_NAMESPACE_ID
+			param.NameSpace = constant.DEFAULT_NAMESPACE_ID
 		} else {
 			param.NameSpace = clientConfig.NamespaceId
 		}
 	}
-	services, err := sc.serviceProxy.GetServiceList(param.PageNo, param.PageSize, param.GroupName, &model2.ExpressionSelector{})
+	services, err := sc.serviceProxy.GetServiceList(param.PageNo, param.PageSize, param.GroupName, param.NameSpace, &model.ExpressionSelector{})
 	return services, err
 }
 
 // SelectAllInstances Get all instance by DataId 和 Group
-func (sc *NamingClient) SelectAllInstances(param vo2.SelectAllInstancesParam) ([]model2.Instance, error) {
+func (sc *NamingClient) SelectAllInstances(param vo.SelectAllInstancesParam) ([]model.Instance, error) {
 	if len(param.GroupName) == 0 {
-		param.GroupName = constant2.DEFAULT_GROUP
+		param.GroupName = constant.DEFAULT_GROUP
 	}
 	clusters := strings.Join(param.Clusters, ",")
 	var (
-		service model2.Service
+		service model.Service
 		ok      bool
 		err     error
 	)
@@ -196,18 +233,18 @@ func (sc *NamingClient) SelectAllInstances(param vo2.SelectAllInstancesParam) ([
 		service, err = sc.serviceProxy.Subscribe(param.ServiceName, param.GroupName, clusters)
 	}
 	if err != nil || service.Hosts == nil || len(service.Hosts) == 0 {
-		return []model2.Instance{}, err
+		return []model.Instance{}, err
 	}
 	return service.Hosts, err
 }
 
 // SelectInstances Get all instance by DataId, Group and Health
-func (sc *NamingClient) SelectInstances(param vo2.SelectInstancesParam) ([]model2.Instance, error) {
+func (sc *NamingClient) SelectInstances(param vo.SelectInstancesParam) ([]model.Instance, error) {
 	if len(param.GroupName) == 0 {
-		param.GroupName = constant2.DEFAULT_GROUP
+		param.GroupName = constant.DEFAULT_GROUP
 	}
 	var (
-		service model2.Service
+		service model.Service
 		ok      bool
 		err     error
 	)
@@ -222,12 +259,13 @@ func (sc *NamingClient) SelectInstances(param vo2.SelectInstancesParam) ([]model
 	return sc.selectInstances(service, param.HealthyOnly)
 }
 
-func (sc *NamingClient) selectInstances(service model2.Service, healthy bool) ([]model2.Instance, error) {
+func (sc *NamingClient) selectInstances(service model.Service, healthy bool) ([]model.Instance, error) {
 	if service.Hosts == nil || len(service.Hosts) == 0 {
-		return []model2.Instance{}, errors.New("instance list is empty!")
+		return []model.Instance{}, errors.New("instance list is empty!")
 	}
 	hosts := service.Hosts
-	var result []model2.Instance
+	var result []model.Instance
+	logger.Infof("select instances with options: [healthy:<%s>], with service:<%s>", healthy, util.GetGroupName(service.Name, service.GroupName))
 	for _, host := range hosts {
 		if host.Healthy == healthy && host.Enable && host.Weight > 0 {
 			result = append(result, host)
@@ -237,12 +275,12 @@ func (sc *NamingClient) selectInstances(service model2.Service, healthy bool) ([
 }
 
 // SelectOneHealthyInstance Get one healthy instance by DataId and Group
-func (sc *NamingClient) SelectOneHealthyInstance(param vo2.SelectOneHealthInstanceParam) (*model2.Instance, error) {
+func (sc *NamingClient) SelectOneHealthyInstance(param vo.SelectOneHealthInstanceParam) (*model.Instance, error) {
 	if len(param.GroupName) == 0 {
-		param.GroupName = constant2.DEFAULT_GROUP
+		param.GroupName = constant.DEFAULT_GROUP
 	}
 	var (
-		service model2.Service
+		service model.Service
 		ok      bool
 		err     error
 	)
@@ -258,12 +296,12 @@ func (sc *NamingClient) SelectOneHealthyInstance(param vo2.SelectOneHealthInstan
 	return sc.selectOneHealthyInstances(service)
 }
 
-func (sc *NamingClient) selectOneHealthyInstances(service model2.Service) (*model2.Instance, error) {
+func (sc *NamingClient) selectOneHealthyInstances(service model.Service) (*model.Instance, error) {
 	if service.Hosts == nil || len(service.Hosts) == 0 {
 		return nil, errors.New("instance list is empty!")
 	}
 	hosts := service.Hosts
-	var result []model2.Instance
+	var result []model.Instance
 	mw := 0
 	for _, host := range hosts {
 		if host.Healthy && host.Enable && host.Weight > 0 {
@@ -283,20 +321,20 @@ func (sc *NamingClient) selectOneHealthyInstances(service model2.Service) (*mode
 }
 
 // Subscribe ...
-func (sc *NamingClient) Subscribe(param *vo2.SubscribeParam) error {
+func (sc *NamingClient) Subscribe(param *vo.SubscribeParam) error {
 	if len(param.GroupName) == 0 {
-		param.GroupName = constant2.DEFAULT_GROUP
+		param.GroupName = constant.DEFAULT_GROUP
 	}
 	clusters := strings.Join(param.Clusters, ",")
-	sc.serviceInfoHolder.RegisterCallback(util2.GetGroupName(param.ServiceName, param.GroupName), clusters, &param.SubscribeCallback)
+	sc.serviceInfoHolder.RegisterCallback(util.GetGroupName(param.ServiceName, param.GroupName), clusters, &param.SubscribeCallback)
 	_, err := sc.serviceProxy.Subscribe(param.ServiceName, param.GroupName, clusters)
 	return err
 }
 
 // Unsubscribe ...
-func (sc *NamingClient) Unsubscribe(param *vo2.SubscribeParam) (err error) {
+func (sc *NamingClient) Unsubscribe(param *vo.SubscribeParam) (err error) {
 	clusters := strings.Join(param.Clusters, ",")
-	serviceFullName := util2.GetGroupName(param.ServiceName, param.GroupName)
+	serviceFullName := util.GetGroupName(param.ServiceName, param.GroupName)
 	sc.serviceInfoHolder.DeregisterCallback(serviceFullName, clusters, &param.SubscribeCallback)
 	if sc.serviceInfoHolder.IsSubscribed(serviceFullName, clusters) {
 		err = sc.serviceProxy.Unsubscribe(param.ServiceName, param.GroupName, clusters)
@@ -305,7 +343,13 @@ func (sc *NamingClient) Unsubscribe(param *vo2.SubscribeParam) (err error) {
 	return err
 }
 
+// ServerHealthy ...
+func (sc *NamingClient) ServerHealthy() bool {
+	return sc.serviceProxy.ServerHealthy()
+}
+
 // CloseClient ...
 func (sc *NamingClient) CloseClient() {
 	sc.serviceProxy.CloseClient()
+	sc.cancel()
 }

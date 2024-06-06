@@ -19,84 +19,185 @@ package cache
 import (
 	"encoding/json"
 	"fmt"
-	file2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/file"
-	logger2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
-	model2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
-	util2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
-	"io/ioutil"
 	"os"
 	"strconv"
+	"strings"
+	"syscall"
 
-	"github.com/go-errors/errors"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/file"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
+	"github.com/pkg/errors"
 )
 
-func GetFileName(cacheKey string, cacheDir string) string {
+var (
+	fileNotExistError = errors.New("file not exist")
+)
+
+func GetFileName(cacheKey, cacheDir string) string {
 	return cacheDir + string(os.PathSeparator) + cacheKey
 }
 
-func WriteServicesToFile(service model2.Service, cacheDir string) {
-	file2.MkdirIfNecessary(cacheDir)
-	sb, _ := json.Marshal(service)
-	domFileName := GetFileName(util2.GetServiceCacheKey(service.Name, service.Clusters), cacheDir)
-
-	err := ioutil.WriteFile(domFileName, sb, 0666)
-	if err != nil {
-		logger2.Errorf("failed to write name cache:%s ,value:%s ,err:%+v", domFileName, string(sb), err)
-	}
-
+func GetEncryptedDataKeyDir(cacheDir string) string {
+	return cacheDir + string(os.PathSeparator) + ENCRYPTED_DATA_KEY_FILE_NAME
 }
 
-func ReadServicesFromFile(cacheDir string) map[string]model2.Service {
-	files, err := ioutil.ReadDir(cacheDir)
+func GetConfigEncryptedDataKeyFileName(cacheKey, cacheDir string) string {
+	return GetEncryptedDataKeyDir(cacheDir) + string(os.PathSeparator) + cacheKey
+}
+
+func GetConfigFailOverContentFileName(cacheKey, cacheDir string) string {
+	return GetFileName(cacheKey, cacheDir) + FAILOVER_FILE_SUFFIX
+}
+
+func GetConfigFailOverEncryptedDataKeyFileName(cacheKey, cacheDir string) string {
+	return GetConfigEncryptedDataKeyFileName(cacheKey, cacheDir) + FAILOVER_FILE_SUFFIX
+}
+
+func WriteServicesToFile(service *model.Service, cacheKey, cacheDir string) {
+	err := file.MkdirIfNecessary(cacheDir)
 	if err != nil {
-		logger2.Errorf("read cacheDir:%s failed!err:%+v", cacheDir, err)
+		logger.Errorf("mkdir cacheDir failed,cacheDir:%s,err:", cacheDir, err)
+		return
+	}
+	bytes, _ := json.Marshal(service)
+	domFileName := GetFileName(cacheKey, cacheDir)
+	err = os.WriteFile(domFileName, bytes, 0666)
+	if err != nil {
+		logger.Errorf("failed to write name cache:%s ,value:%s ,err:%v", domFileName, string(bytes), err)
+	}
+}
+
+func ReadServicesFromFile(cacheDir string) map[string]model.Service {
+	files, err := os.ReadDir(cacheDir)
+	if err != nil {
+		logger.Errorf("read cacheDir:%s failed!err:%+v", cacheDir, err)
 		return nil
 	}
-	serviceMap := map[string]model2.Service{}
+	serviceMap := map[string]model.Service{}
 	for _, f := range files {
 		fileName := GetFileName(f.Name(), cacheDir)
-		b, err := ioutil.ReadFile(fileName)
+		b, err := os.ReadFile(fileName)
 		if err != nil {
-			logger2.Errorf("failed to read name cache file:%s,err:%+v ", fileName, err)
+			logger.Errorf("failed to read name cache file:%s,err:%v ", fileName, err)
 			continue
 		}
 
 		s := string(b)
-		service := util2.JsonToService(s)
+		service := util.JsonToService(s)
 
 		if service == nil {
 			continue
 		}
-		cacheKey := util2.GetServiceCacheKey(util2.GetGroupName(service.Name, service.GroupName), service.Clusters)
+		cacheKey := util.GetServiceCacheKey(util.GetGroupName(service.Name, service.GroupName), service.Clusters)
 		serviceMap[cacheKey] = *service
 	}
 
-	logger2.Infof("finish loading name cache, total: %s", strconv.Itoa(len(files)))
+	logger.Infof("finish loading name cache, total: %s", strconv.Itoa(len(files)))
 	return serviceMap
 }
 
-func WriteConfigToFile(cacheKey string, cacheDir string, content string) {
-	file2.MkdirIfNecessary(cacheDir)
-	fileName := GetFileName(cacheKey, cacheDir)
-	if len(content) == 0 {
+func WriteConfigToFile(cacheKey string, cacheDir string, content string) error {
+	err := file.MkdirIfNecessary(cacheDir)
+	if err != nil {
+		errMsg := fmt.Sprintf("make dir failed, dir path %s, err: %v.", cacheDir, err)
+		logger.Error(errMsg)
+		return errors.New(errMsg)
+	}
+	err = writeConfigToFile(GetFileName(cacheKey, cacheDir), content, ConfigContent)
+	if err != nil {
+		logger.Error(err)
+		return err
+	}
+	return nil
+}
+
+func WriteEncryptedDataKeyToFile(cacheKey string, cacheDir string, content string) error {
+	err := file.MkdirIfNecessary(GetEncryptedDataKeyDir(cacheDir))
+	if err != nil {
+		errMsg := fmt.Sprintf("make dir failed, dir path %s, err: %v.", cacheDir, err)
+		logger.Error(errMsg)
+		return errors.New(errMsg)
+	}
+	err = writeConfigToFile(GetConfigEncryptedDataKeyFileName(cacheKey, cacheDir), content, ConfigEncryptedDataKey)
+	if err != nil {
+		logger.Error(err)
+		return err
+	}
+	return nil
+}
+
+func writeConfigToFile(fileName string, content string, fileType ConfigCachedFileType) error {
+	if len(strings.TrimSpace(content)) == 0 {
 		// delete config snapshot
 		if err := os.Remove(fileName); err != nil {
-			logger2.Errorf("failed to delete config file,cache:%s ,value:%s ,err:%+v", fileName, content, err)
+			if err != syscall.ENOENT {
+				logger.Debug(fmt.Sprintf("no need to delete %s cache file, file path %s, file doesn't exist.", fileType, fileName))
+				return nil
+			}
+			errMsg := fmt.Sprintf("failed to delete %s cache file, file path %s, err:%v", fileType, fileName, err)
+			return errors.New(errMsg)
 		}
-		return
 	}
-	err := ioutil.WriteFile(fileName, []byte(content), 0666)
+	err := os.WriteFile(fileName, []byte(content), 0666)
 	if err != nil {
-		logger2.Errorf("failed to write config  cache:%s ,value:%s ,err:%+v", fileName, content, err)
+		errMsg := fmt.Sprintf("failed to write %s cache file, file name: %s, value: %s, err:%v", fileType, fileName, content, err)
+		return errors.New(errMsg)
 	}
+	return nil
+}
 
+func ReadEncryptedDataKeyFromFile(cacheKey string, cacheDir string) (string, error) {
+	content, err := readConfigFromFile(GetConfigEncryptedDataKeyFileName(cacheKey, cacheDir), ConfigEncryptedDataKey)
+	if err != nil {
+		if errors.Is(err, fileNotExistError) {
+			logger.Warn(err)
+			return "", nil
+		}
+	}
+	return content, nil
 }
 
 func ReadConfigFromFile(cacheKey string, cacheDir string) (string, error) {
-	fileName := GetFileName(cacheKey, cacheDir)
-	b, err := ioutil.ReadFile(fileName)
+	return readConfigFromFile(GetFileName(cacheKey, cacheDir), ConfigEncryptedDataKey)
+}
+
+func readConfigFromFile(fileName string, fileType ConfigCachedFileType) (string, error) {
+	if !file.IsExistFile(fileName) {
+		errMsg := fmt.Sprintf("read cache file %s failed. cause file doesn't exist, file path: %s.", fileType, fileName)
+		return "", errors.Wrap(fileNotExistError, errMsg)
+	}
+	b, err := os.ReadFile(fileName)
 	if err != nil {
-		return "", errors.New(fmt.Sprintf("failed to read config cache file:%s,err:%+v ", fileName, err))
+		errMsg := fmt.Sprintf("get %s from cache failed, filePath:%s, error:%v ", fileType, fileName, err)
+		return "", errors.New(errMsg)
 	}
 	return string(b), nil
+}
+
+// GetFailover , get failover content
+func GetFailover(key, dir string) string {
+	filePath := GetConfigFailOverContentFileName(key, dir)
+	return getFailOverConfig(filePath, ConfigContent)
+}
+
+func GetFailoverEncryptedDataKey(key, dir string) string {
+	filePath := GetConfigFailOverEncryptedDataKeyFileName(key, dir)
+	return getFailOverConfig(filePath, ConfigEncryptedDataKey)
+}
+
+func getFailOverConfig(filePath string, fileType ConfigCachedFileType) string {
+	if !file.IsExistFile(filePath) {
+		errMsg := fmt.Sprintf("read %s failed. cause file doesn't exist, file path: %s.", fileType, filePath)
+		logger.Error(errMsg)
+		return ""
+	}
+	logger.Warnf("reading failover %s from path:%s", fileType, filePath)
+	fileContent, err := os.ReadFile(filePath)
+	if err != nil {
+		logger.Errorf("fail to read failover %s from %s", fileType, filePath)
+		return ""
+	}
+	return string(fileContent)
 }

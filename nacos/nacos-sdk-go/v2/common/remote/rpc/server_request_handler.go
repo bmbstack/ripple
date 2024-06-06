@@ -17,19 +17,20 @@
 package rpc
 
 import (
-	naming_cache2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/naming_client/naming_cache"
-	constant2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
-	logger2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
-	rpc_request2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/remote/rpc/rpc_request"
-	rpc_response2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/remote/rpc/rpc_response"
 	"strconv"
+
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/naming_client/naming_cache"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/remote/rpc/rpc_request"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/remote/rpc/rpc_response"
 )
 
-//IServerRequestHandler to process the request from server side.
+// IServerRequestHandler to process the request from server side.
 type IServerRequestHandler interface {
 	Name() string
 	//RequestReply Handle request from server.
-	RequestReply(request rpc_request2.IRequest, rpcClient *RpcClient) rpc_response2.IResponse
+	RequestReply(request rpc_request.IRequest, rpcClient *RpcClient) rpc_response.IResponse
 }
 
 type ConnectResetRequestHandler struct {
@@ -39,8 +40,8 @@ func (c *ConnectResetRequestHandler) Name() string {
 	return "ConnectResetRequestHandler"
 }
 
-func (c *ConnectResetRequestHandler) RequestReply(request rpc_request2.IRequest, rpcClient *RpcClient) rpc_response2.IResponse {
-	connectResetRequest, ok := request.(*rpc_request2.ConnectResetRequest)
+func (c *ConnectResetRequestHandler) RequestReply(request rpc_request.IRequest, rpcClient *RpcClient) rpc_response.IResponse {
+	connectResetRequest, ok := request.(*rpc_request.ConnectResetRequest)
 	if ok {
 		rpcClient.mux.Lock()
 		defer rpcClient.mux.Unlock()
@@ -48,7 +49,7 @@ func (c *ConnectResetRequestHandler) RequestReply(request rpc_request2.IRequest,
 			if connectResetRequest.ServerIp != "" {
 				serverPortNum, err := strconv.Atoi(connectResetRequest.ServerPort)
 				if err != nil {
-					logger2.Errorf("ConnectResetRequest ServerPort type conversion error:%+v", err)
+					logger.Errorf("ConnectResetRequest ServerPort type conversion error:%+v", err)
 					return nil
 				}
 				rpcClient.switchServerAsync(ServerInfo{serverIp: connectResetRequest.ServerIp, serverPort: uint64(serverPortNum)}, false)
@@ -56,7 +57,7 @@ func (c *ConnectResetRequestHandler) RequestReply(request rpc_request2.IRequest,
 				rpcClient.switchServerAsync(ServerInfo{}, true)
 			}
 		}
-		return &rpc_response2.ConnectResetResponse{Response: &rpc_response2.Response{ResultCode: constant2.RESPONSE_CODE_SUCCESS}}
+		return &rpc_response.ConnectResetResponse{Response: &rpc_response.Response{ResultCode: constant.RESPONSE_CODE_SUCCESS}}
 	}
 	return nil
 }
@@ -68,34 +69,32 @@ func (c *ClientDetectionRequestHandler) Name() string {
 	return "ClientDetectionRequestHandler"
 }
 
-func (c *ClientDetectionRequestHandler) RequestReply(request rpc_request2.IRequest, rpcClient *RpcClient) rpc_response2.IResponse {
-	_, ok := request.(*rpc_request2.ClientDetectionRequest)
+func (c *ClientDetectionRequestHandler) RequestReply(request rpc_request.IRequest, _ *RpcClient) rpc_response.IResponse {
+	_, ok := request.(*rpc_request.ClientDetectionRequest)
 	if ok {
-		return &rpc_response2.ClientDetectionResponse{
-			Response: &rpc_response2.Response{ResultCode: constant2.RESPONSE_CODE_SUCCESS},
+		return &rpc_response.ClientDetectionResponse{
+			Response: &rpc_response.Response{ResultCode: constant.RESPONSE_CODE_SUCCESS},
 		}
 	}
 	return nil
 }
 
 type NamingPushRequestHandler struct {
-	ServiceInfoHolder *naming_cache2.ServiceInfoHolder
+	ServiceInfoHolder *naming_cache.ServiceInfoHolder
 }
 
 func (*NamingPushRequestHandler) Name() string {
 	return "NamingPushRequestHandler"
 }
 
-func (c *NamingPushRequestHandler) RequestReply(request rpc_request2.IRequest, rpcClient *RpcClient) rpc_response2.IResponse {
-	notifySubscriberRequest, ok := request.(*rpc_request2.NotifySubscriberRequest)
+func (c *NamingPushRequestHandler) RequestReply(request rpc_request.IRequest, client *RpcClient) rpc_response.IResponse {
+	notifySubscriberRequest, ok := request.(*rpc_request.NotifySubscriberRequest)
 	if ok {
-		// TODO modify
-		if notifySubscriberRequest.ServiceInfo.Clusters == "" && len(notifySubscriberRequest.ServiceInfo.Hosts) > 0 {
-			notifySubscriberRequest.ServiceInfo.Clusters = notifySubscriberRequest.ServiceInfo.Hosts[0].ClusterName
-		}
 		c.ServiceInfoHolder.ProcessService(&notifySubscriberRequest.ServiceInfo)
-		return &rpc_response2.NotifySubscriberResponse{
-			Response: &rpc_response2.Response{ResultCode: constant2.RESPONSE_CODE_SUCCESS},
+		logger.Debugf("%s naming push response success ackId->%s", client.currentConnection.getConnectionId(),
+			request.GetRequestId())
+		return &rpc_response.NotifySubscriberResponse{
+			Response: &rpc_response.Response{ResultCode: constant.RESPONSE_CODE_SUCCESS, Success: true},
 		}
 	}
 	return nil

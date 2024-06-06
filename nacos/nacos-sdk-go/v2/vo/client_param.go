@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package vo
 
-import (
-	constant2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
-)
+import "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
 
 type NacosClientParam struct {
-	ClientConfig  *constant2.ClientConfig  // optional
-	ServerConfigs []constant2.ServerConfig // optional
+	ClientConfig  *constant.ClientConfig  // optional
+	ServerConfigs []constant.ServerConfig // optional
 }

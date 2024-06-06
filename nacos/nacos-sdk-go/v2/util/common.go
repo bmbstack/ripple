@@ -18,29 +18,30 @@ package util
 
 import (
 	"encoding/json"
-	constant2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
-	logger2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
-	model2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
 	"net"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
+
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
 )
 
 func CurrentMillis() int64 {
 	return time.Now().UnixNano() / 1e6
 }
 
-func JsonToService(result string) *model2.Service {
-	var service model2.Service
+func JsonToService(result string) *model.Service {
+	var service model.Service
 	err := json.Unmarshal([]byte(result), &service)
 	if err != nil {
-		logger2.Errorf("failed to unmarshal json string:%s err:%+v", result, err)
+		logger.Errorf("failed to unmarshal json string:%s err:%+v", result, err)
 		return nil
 	}
 	if len(service.Hosts) == 0 {
-		logger2.Warnf("instance list is empty,json string:%s", result)
+		logger.Warnf("instance list is empty,json string:%s", result)
 	}
 	return &service
 
@@ -51,18 +52,18 @@ func ToJsonString(object interface{}) string {
 }
 
 func GetGroupName(serviceName string, groupName string) string {
-	return groupName + constant2.SERVICE_INFO_SPLITER + serviceName
+	return groupName + constant.SERVICE_INFO_SPLITER + serviceName
 }
 
 func GetServiceCacheKey(serviceName string, clusters string) string {
 	if clusters == "" {
 		return serviceName
 	}
-	return serviceName + constant2.SERVICE_INFO_SPLITER + clusters
+	return serviceName + constant.SERVICE_INFO_SPLITER + clusters
 }
 
 func GetConfigCacheKey(dataId string, group string, tenant string) string {
-	return dataId + constant2.CONFIG_INFO_SPLITER + group + constant2.CONFIG_INFO_SPLITER + tenant
+	return dataId + constant.CONFIG_INFO_SPLITER + group + constant.CONFIG_INFO_SPLITER + tenant
 }
 
 var localIP = ""
@@ -71,7 +72,7 @@ func LocalIP() string {
 	if localIP == "" {
 		netInterfaces, err := net.Interfaces()
 		if err != nil {
-			logger2.Errorf("get Interfaces failed,err:%+v", err)
+			logger.Errorf("get Interfaces failed,err:%+v", err)
 			return ""
 		}
 
@@ -79,7 +80,7 @@ func LocalIP() string {
 			if ((netInterfaces[i].Flags & net.FlagUp) != 0) && ((netInterfaces[i].Flags & net.FlagLoopback) == 0) {
 				addrs, err := netInterfaces[i].Addrs()
 				if err != nil {
-					logger2.Errorf("get InterfaceAddress failed,err:%+v", err)
+					logger.Errorf("get InterfaceAddress failed,err:%+v", err)
 					return ""
 				}
 				for _, address := range addrs {
@@ -92,7 +93,7 @@ func LocalIP() string {
 		}
 
 		if len(localIP) > 0 {
-			logger2.Infof("Local IP:%s", localIP)
+			logger.Infof("Local IP:%s", localIP)
 		}
 	}
 	return localIP
@@ -103,7 +104,7 @@ func GetDurationWithDefault(metadata map[string]string, key string, defaultDurat
 	if ok {
 		value, err := strconv.ParseInt(data, 10, 64)
 		if err != nil {
-			logger2.Errorf("key:%s is not a number", key)
+			logger.Errorf("key:%s is not a number", key)
 			return defaultDuration
 		}
 		return time.Duration(value)

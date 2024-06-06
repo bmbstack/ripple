@@ -17,62 +17,66 @@
 package config_client
 
 import (
+	"context"
 	"encoding/json"
-	"errors"
-	cache2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/cache"
-	constant2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
-	http_agent2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/http_agent"
-	logger2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
-	monitor2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/monitor"
-	nacos_server2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/nacos_server"
-	rpc2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/remote/rpc"
-	rpc_request2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/remote/rpc/rpc_request"
-	rpc_response2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/remote/rpc/rpc_response"
-	model2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
-	util2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
-	vo2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/vo"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/pkg/errors"
+
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/monitor"
+
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/remote/rpc"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/remote/rpc/rpc_request"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/remote/rpc/rpc_response"
+
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/cache"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/http_agent"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/nacos_server"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/vo"
 )
 
 type ConfigProxy struct {
-	nacosServer  *nacos_server2.NacosServer
-	clientConfig constant2.ClientConfig
+	nacosServer  *nacos_server.NacosServer
+	clientConfig constant.ClientConfig
 }
 
-func NewConfigProxy(serverConfig []constant2.ServerConfig, clientConfig constant2.ClientConfig, httpAgent http_agent2.IHttpAgent) (IConfigProxy, error) {
+func NewConfigProxy(ctx context.Context, serverConfig []constant.ServerConfig, clientConfig constant.ClientConfig, httpAgent http_agent.IHttpAgent) (IConfigProxy, error) {
 	proxy := ConfigProxy{}
 	var err error
-	proxy.nacosServer, err = nacos_server2.NewNacosServer(serverConfig, clientConfig, httpAgent, clientConfig.TimeoutMs, clientConfig.Endpoint)
+	proxy.nacosServer, err = nacos_server.NewNacosServer(ctx, serverConfig, clientConfig, httpAgent, clientConfig.TimeoutMs, clientConfig.Endpoint, nil)
 	proxy.clientConfig = clientConfig
 	return &proxy, err
 }
 
-func (cp *ConfigProxy) requestProxy(rpcClient *rpc2.RpcClient, request rpc_request2.IRequest, timeoutMills uint64) (rpc_response2.IResponse, error) {
+func (cp *ConfigProxy) requestProxy(rpcClient *rpc.RpcClient, request rpc_request.IRequest, timeoutMills uint64) (rpc_response.IResponse, error) {
 	start := time.Now()
 	cp.nacosServer.InjectSecurityInfo(request.GetHeaders())
 	cp.injectCommHeader(request.GetHeaders())
 	cp.nacosServer.InjectSkAk(request.GetHeaders(), cp.clientConfig)
-	signHeaders := nacos_server2.GetSignHeaders(request.GetHeaders(), cp.clientConfig.SecretKey)
+	signHeaders := nacos_server.GetSignHeadersFromRequest(request.(rpc_request.IConfigRequest), cp.clientConfig.SecretKey)
 	request.PutAllHeaders(signHeaders)
-	//todo Config Limiter
 	response, err := rpcClient.Request(request, int64(timeoutMills))
-	monitor2.GetConfigRequestMonitor(constant2.GRPC, request.GetRequestType(), rpc_response2.GetGrpcResponseStatusCode(response)).Observe(float64(time.Now().Nanosecond() - start.Nanosecond()))
+	monitor.GetConfigRequestMonitor(constant.GRPC, request.GetRequestType(), rpc_response.GetGrpcResponseStatusCode(response)).Observe(float64(time.Now().Nanosecond() - start.Nanosecond()))
 	return response, err
 }
 
 func (cp *ConfigProxy) injectCommHeader(param map[string]string) {
-	now := strconv.FormatInt(util2.CurrentMillis(), 10)
-	param[constant2.CLIENT_APPNAME_HEADER] = cp.clientConfig.AppName
-	param[constant2.CLIENT_REQUEST_TS_HEADER] = now
-	param[constant2.CLIENT_REQUEST_TOKEN_HEADER] = util2.Md5(now + cp.clientConfig.AppKey)
-	param[constant2.EX_CONFIG_INFO] = "true"
-	param[constant2.CHARSET_KEY] = "utf-8"
+	now := strconv.FormatInt(util.CurrentMillis(), 10)
+	param[constant.CLIENT_APPNAME_HEADER] = cp.clientConfig.AppName
+	param[constant.CLIENT_REQUEST_TS_HEADER] = now
+	param[constant.CLIENT_REQUEST_TOKEN_HEADER] = util.Md5(now + cp.clientConfig.AppKey)
+	param[constant.EX_CONFIG_INFO] = "true"
+	param[constant.CHARSET_KEY] = "utf-8"
 }
 
-func (cp *ConfigProxy) searchConfigProxy(param vo2.SearchConfigParm, tenant, accessKey, secretKey string) (*model2.ConfigPage, error) {
-	params := util2.TransformObject2Param(param)
+func (cp *ConfigProxy) searchConfigProxy(param vo.SearchConfigParam, tenant, accessKey, secretKey string) (*model.ConfigPage, error) {
+	params := util.TransformObject2Param(param)
 	if len(tenant) > 0 {
 		params["tenant"] = tenant
 	}
@@ -85,11 +89,11 @@ func (cp *ConfigProxy) searchConfigProxy(param vo2.SearchConfigParm, tenant, acc
 	var headers = map[string]string{}
 	headers["accessKey"] = accessKey
 	headers["secretKey"] = secretKey
-	result, err := cp.nacosServer.ReqConfigApi(constant2.CONFIG_PATH, params, headers, http.MethodGet, cp.clientConfig.TimeoutMs)
+	result, err := cp.nacosServer.ReqConfigApi(constant.CONFIG_PATH, params, headers, http.MethodGet, cp.clientConfig.TimeoutMs)
 	if err != nil {
 		return nil, err
 	}
-	var configPage model2.ConfigPage
+	var configPage model.ConfigPage
 	err = json.Unmarshal([]byte(result), &configPage)
 	if err != nil {
 		return nil, err
@@ -97,25 +101,29 @@ func (cp *ConfigProxy) searchConfigProxy(param vo2.SearchConfigParm, tenant, acc
 	return &configPage, nil
 }
 
-func (cp *ConfigProxy) queryConfig(dataId, group, tenant string, timeout uint64, notify bool, client *ConfigClient) (*rpc_response2.ConfigQueryResponse, error) {
+func (cp *ConfigProxy) queryConfig(dataId, group, tenant string, timeout uint64, notify bool, client *ConfigClient) (*rpc_response.ConfigQueryResponse, error) {
 	if group == "" {
-		group = constant2.DEFAULT_GROUP
+		group = constant.DEFAULT_GROUP
 	}
-	configQueryRequest := rpc_request2.NewConfigQueryRequest(group, dataId, tenant)
+	configQueryRequest := rpc_request.NewConfigQueryRequest(group, dataId, tenant)
 	configQueryRequest.Headers["notify"] = strconv.FormatBool(notify)
+	cacheKey := util.GetConfigCacheKey(dataId, group, tenant)
+	// use the same key of config file as the limit checker's key
+	if IsLimited(cacheKey) {
+		// return error when check limited
+		return nil, errors.New("ConfigQueryRequest is limited")
+	}
 	iResponse, err := cp.requestProxy(cp.getRpcClient(client), configQueryRequest, timeout)
 	if err != nil {
 		return nil, err
 	}
-	response, ok := iResponse.(*rpc_response2.ConfigQueryResponse)
+	response, ok := iResponse.(*rpc_response.ConfigQueryResponse)
 	if !ok {
 		return nil, errors.New("ConfigQueryRequest returns type error")
 	}
 	if response.IsSuccess() {
-		//todo LocalConfigInfoProcessor.saveSnapshot
-		cacheKey := util2.GetConfigCacheKey(dataId, group, tenant)
-		cache2.WriteConfigToFile(cacheKey, cp.clientConfig.CacheDir, response.Content)
-		//todo LocalConfigInfoProcessor.saveEncryptDataKeySnapshot
+		cache.WriteConfigToFile(cacheKey, cp.clientConfig.CacheDir, response.Content)
+		cache.WriteEncryptedDataKeyToFile(cacheKey, cp.clientConfig.CacheDir, response.EncryptedDataKey)
 		if response.ContentType == "" {
 			response.ContentType = "text"
 		}
@@ -123,39 +131,47 @@ func (cp *ConfigProxy) queryConfig(dataId, group, tenant string, timeout uint64,
 	}
 
 	if response.GetErrorCode() == 300 {
-		//todo LocalConfigInfoProcessor.saveSnapshot
-		cacheKey := util2.GetConfigCacheKey(dataId, group, tenant)
-		cache2.WriteConfigToFile(cacheKey, cp.clientConfig.CacheDir, "")
-		//todo LocalConfigInfoProcessor.saveEncryptDataKeySnapshot
+		cache.WriteConfigToFile(cacheKey, cp.clientConfig.CacheDir, "")
+		cache.WriteEncryptedDataKeyToFile(cacheKey, cp.clientConfig.CacheDir, "")
 		return response, nil
 	}
 
 	if response.GetErrorCode() == 400 {
-		logger2.Errorf(
+		logger.Errorf(
 			"[config_rpc_client] [sub-server-error] get server config being modified concurrently, dataId=%s, group=%s, "+
 				"tenant=%s", dataId, group, tenant)
 		return nil, errors.New("data being modified, dataId=" + dataId + ",group=" + group + ",tenant=" + tenant)
 	}
 
 	if response.GetErrorCode() > 0 {
-		logger2.Errorf("[config_rpc_client] [sub-server-error]  dataId=%s, group=%s, tenant=%s, code=%v", dataId, group,
+		logger.Errorf("[config_rpc_client] [sub-server-error]  dataId=%s, group=%s, tenant=%s, code=%+v", dataId, group,
 			tenant, response)
 	}
 	return response, nil
 }
 
-func (cp *ConfigProxy) createRpcClient(taskId string, client *ConfigClient) *rpc2.RpcClient {
+func appName(client *ConfigClient) string {
+	if clientConfig, err := client.GetClientConfig(); err == nil {
+		appName := clientConfig.AppName
+		return appName
+	}
+	return "unknown"
+}
+
+func (cp *ConfigProxy) createRpcClient(ctx context.Context, taskId string, client *ConfigClient) *rpc.RpcClient {
 	labels := map[string]string{
-		constant2.LABEL_SOURCE: constant2.LABEL_SOURCE_SDK,
-		constant2.LABEL_MODULE: constant2.LABEL_MODULE_CONFIG,
-		"taskId":               taskId,
+		constant.LABEL_SOURCE:   constant.LABEL_SOURCE_SDK,
+		constant.LABEL_MODULE:   constant.LABEL_MODULE_CONFIG,
+		constant.APPNAME_HEADER: appName(client),
+		"taskId":                taskId,
 	}
 
-	iRpcClient, _ := rpc2.CreateClient("config-"+taskId+"-"+client.uid, rpc2.GRPC, labels, cp.nacosServer)
+	iRpcClient, _ := rpc.CreateClient(ctx, "config-"+taskId+"-"+client.uid, rpc.GRPC, labels, cp.nacosServer, &cp.clientConfig.TLSCfg, cp.clientConfig.AppConnLabels)
 	rpcClient := iRpcClient.GetRpcClient()
 	if rpcClient.IsInitialized() {
-		rpcClient.RegisterServerRequestHandler(func() rpc_request2.IRequest {
-			return &rpc_request2.ConfigChangeNotifyRequest{ConfigRequest: rpc_request2.NewConfigRequest()}
+		rpcClient.RegisterServerRequestHandler(func() rpc_request.IRequest {
+			// TODO fix the group/dataId empty problem
+			return rpc_request.NewConfigChangeNotifyRequest("", "", "")
 		}, &ConfigChangeNotifyRequestHandler{client: client})
 		rpcClient.Tenant = cp.clientConfig.NamespaceId
 		rpcClient.Start()
@@ -163,8 +179,8 @@ func (cp *ConfigProxy) createRpcClient(taskId string, client *ConfigClient) *rpc
 	return rpcClient
 }
 
-func (cp *ConfigProxy) getRpcClient(client *ConfigClient) *rpc2.RpcClient {
-	return cp.createRpcClient("0", client)
+func (cp *ConfigProxy) getRpcClient(client *ConfigClient) *rpc.RpcClient {
+	return cp.createRpcClient(client.ctx, "0", client)
 }
 
 type ConfigChangeNotifyRequestHandler struct {
@@ -175,24 +191,25 @@ func (c *ConfigChangeNotifyRequestHandler) Name() string {
 	return "ConfigChangeNotifyRequestHandler"
 }
 
-func (c *ConfigChangeNotifyRequestHandler) RequestReply(request rpc_request2.IRequest, rpcClient *rpc2.RpcClient) rpc_response2.IResponse {
-	configChangeNotifyRequest, ok := request.(*rpc_request2.ConfigChangeNotifyRequest)
-	if ok {
-		logger2.Infof("%s [server-push] config changed. dataId=%s, group=%s,tenant=%s", rpcClient.Name,
-			configChangeNotifyRequest.DataId, configChangeNotifyRequest.Group, configChangeNotifyRequest.Tenant)
-
-		cacheKey := util2.GetConfigCacheKey(configChangeNotifyRequest.DataId, configChangeNotifyRequest.Group,
-			configChangeNotifyRequest.Tenant)
-		data, ok := c.client.cacheMap.Get(cacheKey)
-		if !ok {
-			return nil
-		}
-		cData := data.(*cacheData)
-		cData.isSyncWithServer = false
-		c.client.notifyListenConfig()
-		return &rpc_response2.NotifySubscriberResponse{
-			Response: &rpc_response2.Response{ResultCode: constant2.RESPONSE_CODE_SUCCESS},
-		}
+func (c *ConfigChangeNotifyRequestHandler) RequestReply(request rpc_request.IRequest, rpcClient *rpc.RpcClient) rpc_response.IResponse {
+	configChangeNotifyRequest, ok := request.(*rpc_request.ConfigChangeNotifyRequest)
+	if !ok {
+		return nil
 	}
-	return nil
+	logger.Infof("%s [server-push] config changed. dataId=%s, group=%s,tenant=%s", rpcClient.Name(),
+		configChangeNotifyRequest.DataId, configChangeNotifyRequest.Group, configChangeNotifyRequest.Tenant)
+
+	cacheKey := util.GetConfigCacheKey(configChangeNotifyRequest.DataId, configChangeNotifyRequest.Group,
+		configChangeNotifyRequest.Tenant)
+	data, ok := c.client.cacheMap.Get(cacheKey)
+	if !ok {
+		return nil
+	}
+	cData := data.(cacheData)
+	cData.isSyncWithServer = false
+	c.client.cacheMap.Set(cacheKey, cData)
+	c.client.asyncNotifyListenConfig()
+	return &rpc_response.NotifySubscriberResponse{
+		Response: &rpc_response.Response{ResultCode: constant.RESPONSE_CODE_SUCCESS},
+	}
 }

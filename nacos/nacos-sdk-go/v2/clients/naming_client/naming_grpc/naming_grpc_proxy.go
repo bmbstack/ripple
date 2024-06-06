@@ -17,49 +17,51 @@
 package naming_grpc
 
 import (
-	naming_cache2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/naming_client/naming_cache"
-	constant2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
-	logger2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
-	monitor2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/monitor"
-	nacos_server2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/nacos_server"
-	rpc2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/remote/rpc"
-	rpc_request2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/remote/rpc/rpc_request"
-	rpc_response2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/remote/rpc/rpc_response"
-	uuid2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/inner/uuid"
-	model2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
-	util2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
+	"context"
 	"time"
+
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/naming_client/naming_cache"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/monitor"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/nacos_server"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/remote/rpc"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/remote/rpc/rpc_request"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/remote/rpc/rpc_response"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/inner/uuid"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
 )
 
 // NamingGrpcProxy ...
 type NamingGrpcProxy struct {
-	clientConfig      constant2.ClientConfig
-	nacosServer       *nacos_server2.NacosServer
-	rpcClient         rpc2.IRpcClient
+	clientConfig      constant.ClientConfig
+	nacosServer       *nacos_server.NacosServer
+	rpcClient         rpc.IRpcClient
 	eventListener     *ConnectionEventListener
-	serviceInfoHolder *naming_cache2.ServiceInfoHolder
+	serviceInfoHolder *naming_cache.ServiceInfoHolder
 }
 
 // NewNamingGrpcProxy create naming grpc proxy
-func NewNamingGrpcProxy(clientCfg constant2.ClientConfig, nacosServer *nacos_server2.NacosServer,
-	serviceInfoHolder *naming_cache2.ServiceInfoHolder) (*NamingGrpcProxy, error) {
+func NewNamingGrpcProxy(ctx context.Context, clientCfg constant.ClientConfig, nacosServer *nacos_server.NacosServer,
+	serviceInfoHolder *naming_cache.ServiceInfoHolder) (*NamingGrpcProxy, error) {
 	srvProxy := NamingGrpcProxy{
 		clientConfig:      clientCfg,
 		nacosServer:       nacosServer,
 		serviceInfoHolder: serviceInfoHolder,
 	}
 
-	uid, err := uuid2.NewV4()
+	uid, err := uuid.NewV4()
 	if err != nil {
 		return nil, err
 	}
 
 	labels := map[string]string{
-		constant2.LABEL_SOURCE: constant2.LABEL_SOURCE_SDK,
-		constant2.LABEL_MODULE: constant2.LABEL_MODULE_NAMING,
+		constant.LABEL_SOURCE: constant.LABEL_SOURCE_SDK,
+		constant.LABEL_MODULE: constant.LABEL_MODULE_NAMING,
 	}
 
-	iRpcClient, err := rpc2.CreateClient(uid.String(), rpc2.GRPC, labels, srvProxy.nacosServer)
+	iRpcClient, err := rpc.CreateClient(ctx, uid.String(), rpc.GRPC, labels, srvProxy.nacosServer, &clientCfg.TLSCfg, clientCfg.AppConnLabels)
 	if err != nil {
 		return nil, err
 	}
@@ -69,9 +71,9 @@ func NewNamingGrpcProxy(clientCfg constant2.ClientConfig, nacosServer *nacos_ser
 	rpcClient := srvProxy.rpcClient.GetRpcClient()
 	rpcClient.Start()
 
-	rpcClient.RegisterServerRequestHandler(func() rpc_request2.IRequest {
-		return &rpc_request2.NotifySubscriberRequest{NamingRequest: &rpc_request2.NamingRequest{}}
-	}, &rpc2.NamingPushRequestHandler{ServiceInfoHolder: serviceInfoHolder})
+	rpcClient.RegisterServerRequestHandler(func() rpc_request.IRequest {
+		return &rpc_request.NotifySubscriberRequest{NamingRequest: &rpc_request.NamingRequest{}}
+	}, &rpc.NamingPushRequestHandler{ServiceInfoHolder: serviceInfoHolder})
 
 	srvProxy.eventListener = NewConnectionEventListener(&srvProxy)
 	rpcClient.RegisterConnectionListener(srvProxy.eventListener)
@@ -79,22 +81,35 @@ func NewNamingGrpcProxy(clientCfg constant2.ClientConfig, nacosServer *nacos_ser
 	return &srvProxy, nil
 }
 
-func (proxy *NamingGrpcProxy) requestToServer(request rpc_request2.IRequest) (rpc_response2.IResponse, error) {
+func (proxy *NamingGrpcProxy) requestToServer(request rpc_request.IRequest) (rpc_response.IResponse, error) {
 	start := time.Now()
-	proxy.nacosServer.InjectSkAk(request.GetHeaders(), proxy.clientConfig)
+	proxy.nacosServer.InjectSign(request, request.GetHeaders(), proxy.clientConfig)
 	proxy.nacosServer.InjectSecurityInfo(request.GetHeaders())
 	response, err := proxy.rpcClient.GetRpcClient().Request(request, int64(proxy.clientConfig.TimeoutMs))
-	monitor2.GetConfigRequestMonitor(constant2.GRPC, request.GetRequestType(), rpc_response2.GetGrpcResponseStatusCode(response)).Observe(float64(time.Now().Nanosecond() - start.Nanosecond()))
+	monitor.GetNamingRequestMonitor(constant.GRPC, request.GetRequestType(), rpc_response.GetGrpcResponseStatusCode(response)).Observe(float64(time.Now().Nanosecond() - start.Nanosecond()))
 	return response, err
 }
 
 // RegisterInstance ...
-func (proxy *NamingGrpcProxy) RegisterInstance(serviceName string, groupName string, instance model2.Instance) (bool, error) {
-	logger2.Infof("instance namespaceId:<%s>,serviceName:<%s> with instance:<%s>",
-		proxy.clientConfig.NamespaceId, serviceName, util2.ToJsonString(instance))
-	instanceRequest := rpc_request2.NewInstanceRequest(proxy.clientConfig.NamespaceId, serviceName, groupName, "registerInstance", instance)
-	response, err := proxy.requestToServer(instanceRequest)
+func (proxy *NamingGrpcProxy) RegisterInstance(serviceName string, groupName string, instance model.Instance) (bool, error) {
+	logger.Infof("register instance namespaceId:<%s>,serviceName:<%s> with instance:<%s>",
+		proxy.clientConfig.NamespaceId, serviceName, util.ToJsonString(instance))
 	proxy.eventListener.CacheInstanceForRedo(serviceName, groupName, instance)
+	instanceRequest := rpc_request.NewInstanceRequest(proxy.clientConfig.NamespaceId, serviceName, groupName, "registerInstance", instance)
+	response, err := proxy.requestToServer(instanceRequest)
+	if err != nil {
+		return false, err
+	}
+	return response.IsSuccess(), err
+}
+
+// BatchRegisterInstance ...
+func (proxy *NamingGrpcProxy) BatchRegisterInstance(serviceName string, groupName string, instances []model.Instance) (bool, error) {
+	logger.Infof("batch register instance namespaceId:<%s>,serviceName:<%s> with instance:<%s>",
+		proxy.clientConfig.NamespaceId, serviceName, util.ToJsonString(instances))
+	proxy.eventListener.CacheInstancesForRedo(serviceName, groupName, instances)
+	batchInstanceRequest := rpc_request.NewBatchInstanceRequest(proxy.clientConfig.NamespaceId, serviceName, groupName, "batchRegisterInstance", instances)
+	response, err := proxy.requestToServer(batchInstanceRequest)
 	if err != nil {
 		return false, err
 	}
@@ -102,10 +117,10 @@ func (proxy *NamingGrpcProxy) RegisterInstance(serviceName string, groupName str
 }
 
 // DeregisterInstance ...
-func (proxy *NamingGrpcProxy) DeregisterInstance(serviceName string, groupName string, instance model2.Instance) (bool, error) {
-	logger2.Infof("deregister instance namespaceId:<%s>,serviceName:<%s> with instance:<%s:%d@%s>",
+func (proxy *NamingGrpcProxy) DeregisterInstance(serviceName string, groupName string, instance model.Instance) (bool, error) {
+	logger.Infof("deregister instance namespaceId:<%s>,serviceName:<%s> with instance:<%s:%d@%s>",
 		proxy.clientConfig.NamespaceId, serviceName, instance.Ip, instance.Port, instance.ClusterName)
-	instanceRequest := rpc_request2.NewInstanceRequest(proxy.clientConfig.NamespaceId, serviceName, groupName, "deregisterInstance", instance)
+	instanceRequest := rpc_request.NewInstanceRequest(proxy.clientConfig.NamespaceId, serviceName, groupName, "deregisterInstance", instance)
 	response, err := proxy.requestToServer(instanceRequest)
 	proxy.eventListener.RemoveInstanceForRedo(serviceName, groupName, instance)
 	if err != nil {
@@ -115,23 +130,23 @@ func (proxy *NamingGrpcProxy) DeregisterInstance(serviceName string, groupName s
 }
 
 // GetServiceList ...
-func (proxy *NamingGrpcProxy) GetServiceList(pageNo uint32, pageSize uint32, groupName string, selector *model2.ExpressionSelector) (model2.ServiceList, error) {
+func (proxy *NamingGrpcProxy) GetServiceList(pageNo uint32, pageSize uint32, groupName, namespaceId string, selector *model.ExpressionSelector) (model.ServiceList, error) {
 	var selectorStr string
 	if selector != nil {
 		switch selector.Type {
 		case "label":
-			selectorStr = util2.ToJsonString(selector)
+			selectorStr = util.ToJsonString(selector)
 		default:
 			break
 		}
 	}
-	response, err := proxy.requestToServer(rpc_request2.NewServiceListRequest(proxy.clientConfig.NamespaceId, "",
+	response, err := proxy.requestToServer(rpc_request.NewServiceListRequest(namespaceId, "",
 		groupName, int(pageNo), int(pageSize), selectorStr))
 	if err != nil {
-		return model2.ServiceList{}, err
+		return model.ServiceList{}, err
 	}
-	serviceListResponse := response.(*rpc_response2.ServiceListResponse)
-	return model2.ServiceList{
+	serviceListResponse := response.(*rpc_response.ServiceListResponse)
+	return model.ServiceList{
 		Count: int64(serviceListResponse.Count),
 		Doms:  serviceListResponse.ServiceNames,
 	}, nil
@@ -143,38 +158,47 @@ func (proxy *NamingGrpcProxy) ServerHealthy() bool {
 }
 
 // QueryInstancesOfService ...
-func (proxy *NamingGrpcProxy) QueryInstancesOfService(serviceName, groupName, clusters string, udpPort int, healthyOnly bool) (*model2.Service, error) {
-	response, err := proxy.requestToServer(rpc_request2.NewServiceQueryRequest(proxy.clientConfig.NamespaceId, serviceName, groupName, clusters,
+func (proxy *NamingGrpcProxy) QueryInstancesOfService(serviceName, groupName, cluster string, udpPort int, healthyOnly bool) (*model.Service, error) {
+	response, err := proxy.requestToServer(rpc_request.NewServiceQueryRequest(proxy.clientConfig.NamespaceId, serviceName, groupName, cluster,
 		healthyOnly, udpPort))
 	if err != nil {
 		return nil, err
 	}
-	queryServiceResponse := response.(*rpc_response2.QueryServiceResponse)
+	queryServiceResponse := response.(*rpc_response.QueryServiceResponse)
 	return &queryServiceResponse.ServiceInfo, nil
 }
 
+func (proxy *NamingGrpcProxy) IsSubscribed(serviceName, groupName string, clusters string) bool {
+	return proxy.eventListener.IsSubscriberCached(util.GetServiceCacheKey(util.GetGroupName(serviceName, groupName), clusters))
+}
+
 // Subscribe ...
-func (proxy *NamingGrpcProxy) Subscribe(serviceName, groupName string, clusters string) (model2.Service, error) {
-	proxy.eventListener.CacheSubscriberForRedo(util2.GetGroupName(serviceName, groupName), clusters)
-	request := rpc_request2.NewSubscribeServiceRequest(proxy.clientConfig.NamespaceId, serviceName,
+func (proxy *NamingGrpcProxy) Subscribe(serviceName, groupName string, clusters string) (model.Service, error) {
+	logger.Infof("Subscribe Service namespaceId:<%s>, serviceName:<%s>, groupName:<%s>, clusters:<%s>",
+		proxy.clientConfig.NamespaceId, serviceName, groupName, clusters)
+	proxy.eventListener.CacheSubscriberForRedo(util.GetGroupName(serviceName, groupName), clusters)
+	request := rpc_request.NewSubscribeServiceRequest(proxy.clientConfig.NamespaceId, serviceName,
 		groupName, clusters, true)
 	request.Headers["app"] = proxy.clientConfig.AppName
 	response, err := proxy.requestToServer(request)
 	if err != nil {
-		return model2.Service{}, err
+		return model.Service{}, err
 	}
-	subscribeServiceResponse := response.(*rpc_response2.SubscribeServiceResponse)
+	subscribeServiceResponse := response.(*rpc_response.SubscribeServiceResponse)
 	return subscribeServiceResponse.ServiceInfo, nil
 }
 
 // Unsubscribe ...
 func (proxy *NamingGrpcProxy) Unsubscribe(serviceName, groupName, clusters string) error {
-	proxy.eventListener.RemoveSubscriberForRedo(util2.GetGroupName(serviceName, groupName), clusters)
-	_, err := proxy.requestToServer(rpc_request2.NewSubscribeServiceRequest(proxy.clientConfig.NamespaceId, serviceName, groupName,
+	logger.Infof("Unsubscribe Service namespaceId:<%s>, serviceName:<%s>, groupName:<%s>, clusters:<%s>",
+		proxy.clientConfig.NamespaceId, serviceName, groupName, clusters)
+	proxy.eventListener.RemoveSubscriberForRedo(util.GetGroupName(serviceName, groupName), clusters)
+	_, err := proxy.requestToServer(rpc_request.NewSubscribeServiceRequest(proxy.clientConfig.NamespaceId, serviceName, groupName,
 		clusters, false))
 	return err
 }
 
 func (proxy *NamingGrpcProxy) CloseClient() {
+	logger.Info("Close Nacos Go SDK Client...")
 	proxy.rpcClient.GetRpcClient().Shutdown()
 }

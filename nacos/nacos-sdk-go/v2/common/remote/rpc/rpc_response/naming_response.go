@@ -17,7 +17,7 @@
 package rpc_response
 
 import (
-	model2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
 )
 
 type ConnectResetResponse struct {
@@ -53,9 +53,17 @@ func (c *InstanceResponse) GetResponseType() string {
 	return "InstanceResponse"
 }
 
+type BatchInstanceResponse struct {
+	*Response
+}
+
+func (c *BatchInstanceResponse) GetResponseType() string {
+	return "BatchInstanceResponse"
+}
+
 type QueryServiceResponse struct {
 	*Response
-	ServiceInfo model2.Service `json:"serviceInfo"`
+	ServiceInfo model.Service `json:"serviceInfo"`
 }
 
 func (c *QueryServiceResponse) GetResponseType() string {
@@ -64,7 +72,7 @@ func (c *QueryServiceResponse) GetResponseType() string {
 
 type SubscribeServiceResponse struct {
 	*Response
-	ServiceInfo model2.Service `json:"serviceInfo"`
+	ServiceInfo model.Service `json:"serviceInfo"`
 }
 
 func (c *SubscribeServiceResponse) GetResponseType() string {

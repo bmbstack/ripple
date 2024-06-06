@@ -17,22 +17,24 @@
 package naming_proxy
 
 import (
-	model2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
 )
 
 // INamingProxy ...
 type INamingProxy interface {
-	RegisterInstance(serviceName string, groupName string, instance model2.Instance) (bool, error)
+	RegisterInstance(serviceName string, groupName string, instance model.Instance) (bool, error)
 
-	DeregisterInstance(serviceName string, groupName string, instance model2.Instance) (bool, error)
+	BatchRegisterInstance(serviceName string, groupName string, instances []model.Instance) (bool, error)
 
-	GetServiceList(pageNo uint32, pageSize uint32, groupName string, selector *model2.ExpressionSelector) (model2.ServiceList, error)
+	DeregisterInstance(serviceName string, groupName string, instance model.Instance) (bool, error)
+
+	GetServiceList(pageNo uint32, pageSize uint32, groupName, namespaceId string, selector *model.ExpressionSelector) (model.ServiceList, error)
 
 	ServerHealthy() bool
 
-	QueryInstancesOfService(serviceName, groupName, clusters string, udpPort int, healthyOnly bool) (*model2.Service, error)
+	QueryInstancesOfService(serviceName, groupName, clusters string, udpPort int, healthyOnly bool) (*model.Service, error)
 
-	Subscribe(serviceName, groupName, clusters string) (model2.Service, error)
+	Subscribe(serviceName, groupName, clusters string) (model.Service, error)
 
 	Unsubscribe(serviceName, groupName, clusters string) error
 

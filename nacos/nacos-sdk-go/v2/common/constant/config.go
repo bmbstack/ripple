@@ -19,10 +19,11 @@ package constant
 import "time"
 
 type ServerConfig struct {
-	Scheme      string // the nacos server scheme,defaut=http,this is not required in 2.0
-	ContextPath string // the nacos server contextpath,defaut=/nacos,this is not required in 2.0
+	Scheme      string // the nacos server scheme,default=http,this is not required in 2.0
+	ContextPath string // the nacos server contextpath,default=/nacos,this is not required in 2.0
 	IpAddr      string // the nacos server address
 	Port        uint64 // nacos server port
+	GrpcPort    uint64 // nacos server grpc port, default=server port + 1000, this is not required
 }
 
 type ClientConfig struct {
@@ -36,9 +37,12 @@ type ClientConfig struct {
 	RegionId             string                   // the regionId for kms
 	AccessKey            string                   // the AccessKey for kms
 	SecretKey            string                   // the SecretKey for kms
-	OpenKMS              bool                     // it's to open kms,default is false. https://help.aliyun.com/product/28933.html
+	OpenKMS              bool                     // it's to open kms, default is false. https://help.aliyun.com/product/28933.html
+	KMSVersion           KMSVersion               // kms client version. https://help.aliyun.com/document_detail/380927.html
+	KMSv3Config          *KMSv3Config             //KMSv3 configuration. https://help.aliyun.com/document_detail/601596.html
 	CacheDir             string                   // the directory for persist nacos service info,default value is current path
-	UpdateThreadNum      int                      // the number of gorutine for update nacos service info,default value is 20
+	DisableUseSnapShot   bool                     // It's a switch, default is false, means that when get remote config fail, use local cache file instead
+	UpdateThreadNum      int                      // the number of goroutine for update nacos service info,default value is 20
 	NotLoadCacheAtStart  bool                     // not to load persistent nacos service info in CacheDir at start time
 	UpdateCacheWhenEmpty bool                     // update cache when get empty service instance from server
 	Username             string                   // the username for nacos auth
@@ -46,9 +50,15 @@ type ClientConfig struct {
 	LogDir               string                   // the directory for log, default is current path
 	LogLevel             string                   // the level of log, it's must be debug,info,warn,error, default value is info
 	ContextPath          string                   // the nacos server contextpath
+	AppendToStdout       bool                     // if append log to stdout
 	LogSampling          *ClientLogSamplingConfig // the sampling config of log
 	LogRollingConfig     *ClientLogRollingConfig  // log rolling config
 	TLSCfg               TLSConfig                // tls Config
+	AsyncUpdateService   bool                     // open async update service by query
+	EndpointContextPath  string                   // the address server  endpoint contextPath
+	EndpointQueryParams  string                   // the address server  endpoint query params
+	ClusterName          string                   // the address server  clusterName
+	AppConnLabels        map[string]string        // app conn labels
 }
 
 type ClientLogSamplingConfig struct {
@@ -85,9 +95,18 @@ type ClientLogRollingConfig struct {
 }
 
 type TLSConfig struct {
+	Appointed          bool   // Appointed or not ,if false,will get from env.
 	Enable             bool   // enable tls
+	TrustAll           bool   // trust all server
 	CaFile             string // clients use when verifying server certificates
 	CertFile           string // server use when verifying client certificates
 	KeyFile            string // server use when verifying client certificates
 	ServerNameOverride string // serverNameOverride is for testing only
+}
+
+type KMSv3Config struct {
+	ClientKeyContent string
+	Password         string
+	Endpoint         string
+	CaContent        string
 }

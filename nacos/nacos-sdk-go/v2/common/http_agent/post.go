@@ -16,16 +16,17 @@
 package http_agent
 
 import (
-	util2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
 )
 
 func post(client *http.Client, path string, header http.Header, timeoutMs uint64, params map[string]string) (response *http.Response, err error) {
 	client.Timeout = time.Millisecond * time.Duration(timeoutMs)
 
-	body := util2.GetUrlFormedMap(params)
+	body := util.GetUrlFormedMap(params)
 	request, errNew := http.NewRequest(http.MethodPost, path, strings.NewReader(body))
 	if errNew != nil {
 		err = errNew

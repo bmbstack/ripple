@@ -18,31 +18,32 @@ package main
 
 import (
 	"fmt"
-	clients2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients"
-	constant2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
-	vo2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/vo"
 	"time"
+
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/vo"
 )
 
 func main() {
 	//create ServerConfig
-	sc := []constant2.ServerConfig{
-		*constant2.NewServerConfig("127.0.0.1", 8848, constant2.WithContextPath("/nacos")),
+	sc := []constant.ServerConfig{
+		*constant.NewServerConfig("127.0.0.1", 8848, constant.WithContextPath("/nacos")),
 	}
 
 	//create ClientConfig
-	cc := *constant2.NewClientConfig(
-		constant2.WithNamespaceId(""),
-		constant2.WithTimeoutMs(5000),
-		constant2.WithNotLoadCacheAtStart(true),
-		constant2.WithLogDir("/tmp/nacos/log"),
-		constant2.WithCacheDir("/tmp/nacos/cache"),
-		constant2.WithLogLevel("debug"),
+	cc := *constant.NewClientConfig(
+		constant.WithNamespaceId(""),
+		constant.WithTimeoutMs(5000),
+		constant.WithNotLoadCacheAtStart(true),
+		constant.WithLogDir("/tmp/nacos/log"),
+		constant.WithCacheDir("/tmp/nacos/cache"),
+		constant.WithLogLevel("debug"),
 	)
 
 	// create config client
-	client, err := clients2.NewConfigClient(
-		vo2.NacosClientParam{
+	client, err := clients.NewConfigClient(
+		vo.NacosClientParam{
 			ClientConfig:  &cc,
 			ServerConfigs: sc,
 		},
@@ -54,12 +55,12 @@ func main() {
 
 	//publish config
 	//config key=dataId+group+namespaceId
-	_, err = client.PublishConfig(vo2.ConfigParam{
+	_, err = client.PublishConfig(vo.ConfigParam{
 		DataId:  "test-data",
 		Group:   "test-group",
 		Content: "hello world!",
 	})
-	_, err = client.PublishConfig(vo2.ConfigParam{
+	_, err = client.PublishConfig(vo.ConfigParam{
 		DataId:  "test-data-2",
 		Group:   "test-group",
 		Content: "hello world!",
@@ -69,14 +70,14 @@ func main() {
 	}
 	time.Sleep(1 * time.Second)
 	//get config
-	content, err := client.GetConfig(vo2.ConfigParam{
+	content, err := client.GetConfig(vo.ConfigParam{
 		DataId: "test-data",
 		Group:  "test-group",
 	})
 	fmt.Println("GetConfig,config :" + content)
 
 	//Listen config change,key=dataId+group+namespaceId.
-	err = client.ListenConfig(vo2.ConfigParam{
+	err = client.ListenConfig(vo.ConfigParam{
 		DataId: "test-data",
 		Group:  "test-group",
 		OnChange: func(namespace, group, dataId, data string) {
@@ -84,7 +85,7 @@ func main() {
 		},
 	})
 
-	err = client.ListenConfig(vo2.ConfigParam{
+	err = client.ListenConfig(vo.ConfigParam{
 		DataId: "test-data-2",
 		Group:  "test-group",
 		OnChange: func(namespace, group, dataId, data string) {
@@ -94,7 +95,7 @@ func main() {
 
 	time.Sleep(1 * time.Second)
 
-	_, err = client.PublishConfig(vo2.ConfigParam{
+	_, err = client.PublishConfig(vo.ConfigParam{
 		DataId:  "test-data",
 		Group:   "test-group",
 		Content: "test-listen",
@@ -102,7 +103,7 @@ func main() {
 
 	time.Sleep(1 * time.Second)
 
-	_, err = client.PublishConfig(vo2.ConfigParam{
+	_, err = client.PublishConfig(vo.ConfigParam{
 		DataId:  "test-data-2",
 		Group:   "test-group",
 		Content: "test-listen",
@@ -110,20 +111,20 @@ func main() {
 
 	time.Sleep(2 * time.Second)
 
+	time.Sleep(1 * time.Second)
+	_, err = client.DeleteConfig(vo.ConfigParam{
+		DataId: "test-data",
+		Group:  "test-group",
+	})
+	time.Sleep(1 * time.Second)
+
 	//cancel config change
-	err = client.CancelListenConfig(vo2.ConfigParam{
+	err = client.CancelListenConfig(vo.ConfigParam{
 		DataId: "test-data",
 		Group:  "test-group",
 	})
 
-	time.Sleep(1 * time.Second)
-	_, err = client.DeleteConfig(vo2.ConfigParam{
-		DataId: "test-data",
-		Group:  "test-group",
-	})
-	time.Sleep(1 * time.Second)
-
-	searchPage, _ := client.SearchConfig(vo2.SearchConfigParm{
+	searchPage, _ := client.SearchConfig(vo.SearchConfigParam{
 		Search:   "blur",
 		DataId:   "",
 		Group:    "",

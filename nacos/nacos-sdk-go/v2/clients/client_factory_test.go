@@ -1,12 +1,12 @@
 package clients
 
 import (
-	constant2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
-	vo2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/vo"
 	"net"
 	"reflect"
 	"testing"
 
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/vo"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -28,24 +28,24 @@ func getIntranetIP() string {
 
 func TestSetConfigClient(t *testing.T) {
 	ip := getIntranetIP()
-	sc := []constant2.ServerConfig{
-		*constant2.NewServerConfig(
+	sc := []constant.ServerConfig{
+		*constant.NewServerConfig(
 			ip,
 			8848,
 		),
 	}
 
-	cc := *constant2.NewClientConfig(
-		constant2.WithNamespaceId("public"),
-		constant2.WithTimeoutMs(5000),
-		constant2.WithNotLoadCacheAtStart(true),
-		constant2.WithLogDir("/tmp/nacos/log"),
-		constant2.WithCacheDir("/tmp/nacos/cache"),
-		constant2.WithLogLevel("debug"),
+	cc := *constant.NewClientConfig(
+		constant.WithNamespaceId("public"),
+		constant.WithTimeoutMs(5000),
+		constant.WithNotLoadCacheAtStart(true),
+		constant.WithLogDir("/tmp/nacos/log"),
+		constant.WithCacheDir("/tmp/nacos/cache"),
+		constant.WithLogLevel("debug"),
 	)
 
 	t.Run("setConfig_error", func(t *testing.T) {
-		nacosClient, err := setConfig(vo2.NacosClientParam{})
+		nacosClient, err := setConfig(vo.NacosClientParam{})
 		assert.Nil(t, nacosClient)
 		assert.Equal(t, "server configs not found in properties", err.Error())
 	})
@@ -58,7 +58,7 @@ func TestSetConfigClient(t *testing.T) {
 		})
 		nacosClientFromMap, err := setConfig(param)
 		assert.Nil(t, err)
-		nacosClientFromStruct, err := setConfig(vo2.NacosClientParam{
+		nacosClientFromStruct, err := setConfig(vo.NacosClientParam{
 			ClientConfig:  &cc,
 			ServerConfigs: sc,
 		})

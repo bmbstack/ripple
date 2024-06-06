@@ -17,12 +17,11 @@
 package tls
 
 import (
-	constant2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -93,19 +92,19 @@ q9K53Jum9GDmkbUODa77sWR1zQsdrqSKywcjP/6FYXU9RMDqKUpm
 )
 
 func Test_NewTLS(t *testing.T) {
-	dir, err := ioutil.TempDir("", "tls-test")
+	dir, err := os.MkdirTemp("", "tls-test")
 	if err != nil {
 		t.Errorf(err.Error())
 	}
 	defer os.RemoveAll(dir)
 
 	caPath, crtPath, keyPath := filepath.Join(dir, "ca.crt"), filepath.Join(dir, "client.crt"), filepath.Join(dir, "client.key")
-	ioutil.WriteFile(caPath, testCaCrt, 0666)
-	ioutil.WriteFile(crtPath, testClientCrt, 0666)
-	ioutil.WriteFile(keyPath, testClientKey, 0666)
+	os.WriteFile(caPath, testCaCrt, 0666)
+	os.WriteFile(crtPath, testClientCrt, 0666)
+	os.WriteFile(keyPath, testClientKey, 0666)
 
 	t.Run("TestNoAuth", func(t *testing.T) {
-		cfg, err := NewTLS(constant2.SkipVerifyConfig)
+		cfg, err := NewTLS(constant.SkipVerifyConfig)
 		assert.Nil(t, err)
 		assert.Equal(t, true, cfg.InsecureSkipVerify)
 		assert.Nil(t, cfg.RootCAs)
@@ -114,8 +113,8 @@ func Test_NewTLS(t *testing.T) {
 	})
 
 	t.Run("TestClientAuth", func(t *testing.T) {
-		cfg, err := NewTLS(*constant2.NewTLSConfig(
-			constant2.WithCA(caPath, ""),
+		cfg, err := NewTLS(*constant.NewTLSConfig(
+			constant.WithCA(caPath, ""),
 		))
 		assert.Nil(t, err)
 		assert.Equal(t, false, cfg.InsecureSkipVerify)
@@ -125,9 +124,9 @@ func Test_NewTLS(t *testing.T) {
 	})
 
 	t.Run("TestServerAuth", func(t *testing.T) {
-		cfg, err := NewTLS(*constant2.NewTLSConfig(
-			constant2.WithCA(caPath, ""),
-			constant2.WithCertificate(crtPath, keyPath),
+		cfg, err := NewTLS(*constant.NewTLSConfig(
+			constant.WithCA(caPath, ""),
+			constant.WithCertificate(crtPath, keyPath),
 		))
 		assert.Nil(t, err)
 		assert.Equal(t, false, cfg.InsecureSkipVerify)

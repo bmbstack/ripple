@@ -17,9 +17,10 @@
 package rpc_response
 
 import (
-	logger2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
-	util2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
 	"strconv"
+
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
 )
 
 var ClientResponseMapping map[string]func() IResponse
@@ -35,6 +36,7 @@ type IResponse interface {
 	GetBody() string
 	GetErrorCode() int
 	IsSuccess() bool
+	SetSuccess(bool)
 	GetResultCode() int
 	GetMessage() string
 }
@@ -52,11 +54,15 @@ func (r *Response) SetRequestId(requestId string) {
 }
 
 func (r *Response) GetBody() string {
-	return util2.ToJsonString(r)
+	return util.ToJsonString(r)
 }
 
 func (r *Response) IsSuccess() bool {
 	return r.Success
+}
+
+func (r *Response) SetSuccess(successResult bool) {
+	r.Success = successResult
 }
 
 func (r *Response) GetErrorCode() int {
@@ -74,7 +80,7 @@ func (r *Response) GetMessage() string {
 func registerClientResponse(response func() IResponse) {
 	responseType := response().GetResponseType()
 	if responseType == "" {
-		logger2.Errorf("Register client response error: responseType is nil")
+		logger.Errorf("Register client response error: responseType is nil")
 		return
 	}
 	ClientResponseMapping[responseType] = response
@@ -84,6 +90,11 @@ func registerClientResponses() {
 	// register InstanceResponse.
 	registerClientResponse(func() IResponse {
 		return &InstanceResponse{Response: &Response{}}
+	})
+
+	// register BatchInstanceResponse.
+	registerClientResponse(func() IResponse {
+		return &BatchInstanceResponse{Response: &Response{}}
 	})
 
 	// register QueryServiceResponse.

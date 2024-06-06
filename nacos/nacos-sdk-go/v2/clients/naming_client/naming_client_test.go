@@ -17,49 +17,54 @@
 package naming_client
 
 import (
-	nacos_client2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/nacos_client"
-	constant2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
-	http_agent2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/http_agent"
-	model2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
-	vo2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/vo"
 	"testing"
 
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/http_agent"
+
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/nacos_client"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/vo"
 	"github.com/stretchr/testify/assert"
 )
 
-var clientConfigTest = *constant2.NewClientConfig(
-	constant2.WithTimeoutMs(10*1000),
-	constant2.WithBeatInterval(5*1000),
-	constant2.WithNotLoadCacheAtStart(true),
+var clientConfigTest = *constant.NewClientConfig(
+	constant.WithTimeoutMs(10*1000),
+	constant.WithBeatInterval(5*1000),
+	constant.WithNotLoadCacheAtStart(true),
 )
 
-var serverConfigTest = *constant2.NewServerConfig("127.0.0.1", 80, constant2.WithContextPath("/nacos"))
+var serverConfigTest = *constant.NewServerConfig("127.0.0.1", 80, constant.WithContextPath("/nacos"))
 
 type MockNamingProxy struct {
 }
 
-func (m *MockNamingProxy) RegisterInstance(serviceName string, groupName string, instance model2.Instance) (bool, error) {
+func (m *MockNamingProxy) RegisterInstance(serviceName string, groupName string, instance model.Instance) (bool, error) {
 	return true, nil
 }
 
-func (m *MockNamingProxy) DeregisterInstance(serviceName string, groupName string, instance model2.Instance) (bool, error) {
+func (m *MockNamingProxy) BatchRegisterInstance(serviceName string, groupName string, instances []model.Instance) (bool, error) {
 	return true, nil
 }
 
-func (m *MockNamingProxy) GetServiceList(pageNo uint32, pageSize uint32, groupName string, selector *model2.ExpressionSelector) (model2.ServiceList, error) {
-	return model2.ServiceList{Doms: []string{""}}, nil
+func (m *MockNamingProxy) DeregisterInstance(serviceName string, groupName string, instance model.Instance) (bool, error) {
+	return true, nil
+}
+
+func (m *MockNamingProxy) GetServiceList(pageNo uint32, pageSize uint32, groupName, namespaceId string, selector *model.ExpressionSelector) (model.ServiceList, error) {
+	return model.ServiceList{Doms: []string{""}}, nil
 }
 
 func (m *MockNamingProxy) ServerHealthy() bool {
 	return true
 }
 
-func (m *MockNamingProxy) QueryInstancesOfService(serviceName, groupName, clusters string, udpPort int, healthyOnly bool) (*model2.Service, error) {
-	return &model2.Service{}, nil
+func (m *MockNamingProxy) QueryInstancesOfService(serviceName, groupName, clusters string, udpPort int, healthyOnly bool) (*model.Service, error) {
+	return &model.Service{}, nil
 }
 
-func (m *MockNamingProxy) Subscribe(serviceName, groupName, clusters string) (model2.Service, error) {
-	return model2.Service{}, nil
+func (m *MockNamingProxy) Subscribe(serviceName, groupName, clusters string) (model.Service, error) {
+	return model.Service{}, nil
 }
 
 func (m *MockNamingProxy) Unsubscribe(serviceName, groupName, clusters string) error {
@@ -69,16 +74,16 @@ func (m *MockNamingProxy) Unsubscribe(serviceName, groupName, clusters string) e
 func (m *MockNamingProxy) CloseClient() {}
 
 func NewTestNamingClient() *NamingClient {
-	nc := nacos_client2.NacosClient{}
-	_ = nc.SetServerConfig([]constant2.ServerConfig{serverConfigTest})
+	nc := nacos_client.NacosClient{}
+	_ = nc.SetServerConfig([]constant.ServerConfig{serverConfigTest})
 	_ = nc.SetClientConfig(clientConfigTest)
-	_ = nc.SetHttpAgent(&http_agent2.HttpAgent{})
+	_ = nc.SetHttpAgent(&http_agent.HttpAgent{})
 	client, _ := NewNamingClient(&nc)
 	client.serviceProxy = &MockNamingProxy{}
 	return client
 }
 func Test_RegisterServiceInstance_withoutGroupName(t *testing.T) {
-	success, err := NewTestNamingClient().RegisterInstance(vo2.RegisterInstanceParam{
+	success, err := NewTestNamingClient().RegisterInstance(vo.RegisterInstanceParam{
 		ServiceName: "DEMO",
 		Ip:          "10.0.0.10",
 		Port:        80,
@@ -89,7 +94,7 @@ func Test_RegisterServiceInstance_withoutGroupName(t *testing.T) {
 }
 
 func Test_RegisterServiceInstance_withGroupName(t *testing.T) {
-	success, err := NewTestNamingClient().RegisterInstance(vo2.RegisterInstanceParam{
+	success, err := NewTestNamingClient().RegisterInstance(vo.RegisterInstanceParam{
 		ServiceName: "DEMO",
 		Ip:          "10.0.0.10",
 		Port:        80,
@@ -101,7 +106,7 @@ func Test_RegisterServiceInstance_withGroupName(t *testing.T) {
 }
 
 func Test_RegisterServiceInstance_withCluster(t *testing.T) {
-	success, err := NewTestNamingClient().RegisterInstance(vo2.RegisterInstanceParam{
+	success, err := NewTestNamingClient().RegisterInstance(vo.RegisterInstanceParam{
 		ServiceName: "DEMO",
 		Ip:          "10.0.0.10",
 		Port:        80,
@@ -113,7 +118,7 @@ func Test_RegisterServiceInstance_withCluster(t *testing.T) {
 	assert.Equal(t, true, success)
 }
 func TestNamingProxy_DeregisterService_WithoutGroupName(t *testing.T) {
-	success, err := NewTestNamingClient().DeregisterInstance(vo2.DeregisterInstanceParam{
+	success, err := NewTestNamingClient().DeregisterInstance(vo.DeregisterInstanceParam{
 		ServiceName: "DEMO5",
 		Ip:          "10.0.0.10",
 		Port:        80,
@@ -124,7 +129,7 @@ func TestNamingProxy_DeregisterService_WithoutGroupName(t *testing.T) {
 }
 
 func TestNamingProxy_DeregisterService_WithGroupName(t *testing.T) {
-	success, err := NewTestNamingClient().DeregisterInstance(vo2.DeregisterInstanceParam{
+	success, err := NewTestNamingClient().DeregisterInstance(vo.DeregisterInstanceParam{
 		ServiceName: "DEMO6",
 		Ip:          "10.0.0.10",
 		Port:        80,
@@ -136,10 +141,10 @@ func TestNamingProxy_DeregisterService_WithGroupName(t *testing.T) {
 }
 
 func TestNamingClient_SelectOneHealthyInstance_SameWeight(t *testing.T) {
-	services := model2.Service{
+	services := model.Service{
 		Name:        "DEFAULT_GROUP@@DEMO",
 		CacheMillis: 1000,
-		Hosts: []model2.Instance{
+		Hosts: []model.Instance{
 			{
 				InstanceId:  "10.10.10.10-80-a-DEMO",
 				Port:        80,
@@ -207,10 +212,10 @@ func TestNamingClient_SelectOneHealthyInstance_SameWeight(t *testing.T) {
 }
 
 func TestNamingClient_SelectOneHealthyInstance_Empty(t *testing.T) {
-	services := model2.Service{
+	services := model.Service{
 		Name:        "DEFAULT_GROUP@@DEMO",
 		CacheMillis: 1000,
-		Hosts:       []model2.Instance{},
+		Hosts:       []model.Instance{},
 		Checksum:    "3bbcf6dd1175203a8afdade0e77a27cd1528787794594",
 		LastRefTime: 1528787794594, Clusters: "a"}
 	instance, err := NewTestNamingClient().selectOneHealthyInstances(services)
@@ -219,10 +224,10 @@ func TestNamingClient_SelectOneHealthyInstance_Empty(t *testing.T) {
 }
 
 func TestNamingClient_SelectInstances_Healthy(t *testing.T) {
-	services := model2.Service{
+	services := model.Service{
 		Name:        "DEFAULT_GROUP@@DEMO",
 		CacheMillis: 1000,
-		Hosts: []model2.Instance{
+		Hosts: []model.Instance{
 			{
 				InstanceId:  "10.10.10.10-80-a-DEMO",
 				Port:        80,
@@ -287,10 +292,10 @@ func TestNamingClient_SelectInstances_Healthy(t *testing.T) {
 }
 
 func TestNamingClient_SelectInstances_Unhealthy(t *testing.T) {
-	services := model2.Service{
+	services := model.Service{
 		Name:        "DEFAULT_GROUP@@DEMO",
 		CacheMillis: 1000,
-		Hosts: []model2.Instance{
+		Hosts: []model.Instance{
 			{
 				InstanceId:  "10.10.10.10-80-a-DEMO",
 				Port:        80,
@@ -355,10 +360,10 @@ func TestNamingClient_SelectInstances_Unhealthy(t *testing.T) {
 }
 
 func TestNamingClient_SelectInstances_Empty(t *testing.T) {
-	services := model2.Service{
+	services := model.Service{
 		Name:        "DEFAULT_GROUP@@DEMO",
 		CacheMillis: 1000,
-		Hosts:       []model2.Instance{},
+		Hosts:       []model.Instance{},
 		Checksum:    "3bbcf6dd1175203a8afdade0e77a27cd1528787794594",
 		LastRefTime: 1528787794594, Clusters: "a"}
 	instances, err := NewTestNamingClient().selectInstances(services, false)
@@ -367,7 +372,7 @@ func TestNamingClient_SelectInstances_Empty(t *testing.T) {
 }
 
 func TestNamingClient_GetAllServicesInfo(t *testing.T) {
-	result, err := NewTestNamingClient().GetAllServicesInfo(vo2.GetAllServiceInfoParam{
+	result, err := NewTestNamingClient().GetAllServicesInfo(vo.GetAllServiceInfoParam{
 		GroupName: "DEFAULT_GROUP",
 		PageNo:    1,
 		PageSize:  20,
@@ -378,10 +383,10 @@ func TestNamingClient_GetAllServicesInfo(t *testing.T) {
 }
 
 func BenchmarkNamingClient_SelectOneHealthyInstances(b *testing.B) {
-	services := model2.Service{
+	services := model.Service{
 		Name:        "DEFAULT_GROUP@@DEMO",
 		CacheMillis: 1000,
-		Hosts: []model2.Instance{
+		Hosts: []model.Instance{
 			{
 				InstanceId:  "10.10.10.10-80-a-DEMO",
 				Port:        80,

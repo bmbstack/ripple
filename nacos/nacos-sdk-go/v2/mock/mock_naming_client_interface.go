@@ -21,11 +21,11 @@
 package mock
 
 import (
-	model2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
-	vo2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/vo"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+	model "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
+	vo "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/vo"
 )
 
 // MockINamingClient is a mock of INamingClient interface
@@ -52,7 +52,7 @@ func (m *MockINamingClient) EXPECT() *MockINamingClientMockRecorder {
 }
 
 // RegisterInstance mocks base method
-func (m *MockINamingClient) RegisterInstance(param vo2.RegisterInstanceParam) (bool, error) {
+func (m *MockINamingClient) RegisterInstance(param vo.RegisterInstanceParam) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RegisterInstance", param)
 	ret0, _ := ret[0].(bool)
@@ -67,7 +67,7 @@ func (mr *MockINamingClientMockRecorder) RegisterInstance(param interface{}) *go
 }
 
 // DeregisterInstance mocks base method
-func (m *MockINamingClient) DeregisterInstance(param vo2.DeregisterInstanceParam) (bool, error) {
+func (m *MockINamingClient) DeregisterInstance(param vo.DeregisterInstanceParam) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeregisterInstance", param)
 	ret0, _ := ret[0].(bool)
@@ -82,10 +82,10 @@ func (mr *MockINamingClientMockRecorder) DeregisterInstance(param interface{}) *
 }
 
 // GetService mocks base method
-func (m *MockINamingClient) GetService(param vo2.GetServiceParam) (model2.Service, error) {
+func (m *MockINamingClient) GetService(param vo.GetServiceParam) (model.Service, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetService", param)
-	ret0, _ := ret[0].(model2.Service)
+	ret0, _ := ret[0].(model.Service)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -97,10 +97,10 @@ func (mr *MockINamingClientMockRecorder) GetService(param interface{}) *gomock.C
 }
 
 // SelectInstances mocks base method
-func (m *MockINamingClient) SelectInstances(param vo2.SelectInstancesParam) ([]model2.Instance, error) {
+func (m *MockINamingClient) SelectInstances(param vo.SelectInstancesParam) ([]model.Instance, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SelectInstances", param)
-	ret0, _ := ret[0].([]model2.Instance)
+	ret0, _ := ret[0].([]model.Instance)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -112,10 +112,10 @@ func (mr *MockINamingClientMockRecorder) SelectInstances(param interface{}) *gom
 }
 
 // SelectOneHealthyInstance mocks base method
-func (m *MockINamingClient) SelectOneHealthyInstance(param vo2.SelectOneHealthInstanceParam) (*model2.Instance, error) {
+func (m *MockINamingClient) SelectOneHealthyInstance(param vo.SelectOneHealthInstanceParam) (*model.Instance, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SelectOneHealthyInstance", param)
-	ret0, _ := ret[0].(*model2.Instance)
+	ret0, _ := ret[0].(*model.Instance)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -127,7 +127,7 @@ func (mr *MockINamingClientMockRecorder) SelectOneHealthyInstance(param interfac
 }
 
 // Subscribe mocks base method
-func (m *MockINamingClient) Subscribe(param *vo2.SubscribeParam) error {
+func (m *MockINamingClient) Subscribe(param *vo.SubscribeParam) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Subscribe", param)
 	ret0, _ := ret[0].(error)
@@ -141,7 +141,7 @@ func (mr *MockINamingClientMockRecorder) Subscribe(param interface{}) *gomock.Ca
 }
 
 // Unsubscribe mocks base method
-func (m *MockINamingClient) Unsubscribe(param *vo2.SubscribeParam) error {
+func (m *MockINamingClient) Unsubscribe(param *vo.SubscribeParam) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Unsubscribe", param)
 	ret0, _ := ret[0].(error)
