@@ -80,5 +80,7 @@ func (s *ServiceInfoUpdater) updateServiceNow(serviceName, groupName, clusters s
 		logger.Errorf("QueryInstances error, serviceName:%s, cluster:%s, err:%v", serviceName, clusters, err)
 		return
 	}
+	// TODO modify
+	result.Clusters = clusters
 	s.serviceInfoHolder.ProcessService(result)
 }
