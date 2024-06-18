@@ -3,7 +3,10 @@ module github.com/bmbstack/ripple
 go 1.16
 
 require (
-	github.com/aliyun/alibaba-cloud-sdk-go v1.61.1691
+	github.com/alibabacloud-go/tea v1.2.2
+	github.com/aliyun/alibaba-cloud-sdk-go v1.61.1800
+	github.com/aliyun/alibabacloud-dkms-gcs-go-sdk v0.5.1
+	github.com/aliyun/alibabacloud-dkms-transfer-go-sdk v0.1.9
 	github.com/aliyun/aliyun-log-go-sdk v0.1.36
 	github.com/bmbstack/g v1.0.0
 	github.com/buger/jsonparser v1.1.1
@@ -27,8 +30,9 @@ require (
 	github.com/tencentcloud/tencentcloud-cls-sdk-go v1.0.2
 	github.com/urfave/cli/v2 v2.3.0
 	go.uber.org/zap v1.17.0
-	golang.org/x/mod v0.5.1
-	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
+	golang.org/x/mod v0.8.0
+	golang.org/x/sync v0.1.0
+	golang.org/x/time v0.0.0-20201208040808-7e3f01d25324
 	google.golang.org/grpc v1.45.0
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0

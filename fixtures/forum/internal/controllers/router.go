@@ -28,7 +28,12 @@ func RouteAPI() {
 		}
 		logger.With(nil).Info(fmt.Sprintf("time: %d, value1: %s", time.Now().Unix(), reply1.Nickname))
 		logger.With(nil).Info(fmt.Sprintf("time: %d, value2: %s", time.Now().Unix(), reply2.Name))
+
 		logger.With(nil).Info(fmt.Sprintf("time: %d, value3: %s", time.Now().Unix(), reply3.Name))
+
+		logger.WithTo(ripple.Default().GetLog("box"), nil).Info("helloworld")
+		ripple.Default().GetLog("box").WithFields(nil).Info("helloworld2")
+
 		return ctx.JSON(http.StatusOK, SuccessJSON(result))
 	})
 

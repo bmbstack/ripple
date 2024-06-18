@@ -28,7 +28,7 @@ func Commands() []*cli.Command {
 					ripple.Default().CloseCache()
 				})
 				scripts.Init(c)
-				scripts.RunRpc()
+				//scripts.RunRpc()
 				scripts.RunServer()
 				return nil
 			},

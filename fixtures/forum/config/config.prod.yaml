@@ -47,10 +47,38 @@ caches: [
     "db": 1
   }
 ]
+logs: [
+  {
+    "alias": "box",
+    "type": "sls",
+    "accessKeyId": "xxxxxxx",
+    "accessKeySecret": "xxxxxxx",
+    "endpoint": "xxxxxxx",
+    "allowLogLevel": "info",
+    "closeStdout": false,
+    "project": "boxlite",
+    "logstore": "xxxxxxx",
+    "topic": "*package",
+    "source": "source"
+  },
+  {
+    "alias": "user",
+    "type": "cls",
+    "accessKeyId": "xxxxxxx",
+    "accessKeySecret": "xxxxxxx",
+    "endpoint": "xxxxxxx",
+    "allowLogLevel": "info",
+    "closeStdout": false,
+    "project": "xxxxxxx",
+    "logstore": "xxxxxxx",
+    "topic": "topic",
+    "source": "source"
+  }
+]
 nacos:
-  host: "mse-7b574dc2-nacos-ans.mse.aliyuncs.com"
+  host: "xxxxxxx"
   port: 8848
-  namespaceId: "de27072b-2b00-45de-a2b2-b454da630590"
+  namespaceId: "xxxxxxx"
   cluster: "ripple"
   group: "DEFAULT_GROUP"
   failMode: "failtry"

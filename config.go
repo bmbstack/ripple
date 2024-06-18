@@ -15,6 +15,7 @@ type BaseConfig struct {
 	Templates   string           `mapstructure:"templates,omitempty"`   // templates=frontend/templates
 	Databases   []DatabaseConfig `mapstructure:"databases,omitempty"`   // databases
 	Caches      []CacheConfig    `mapstructure:"caches,omitempty"`      // caches
+	Logs        []LogConfig      `mapstructure:"logs,omitempty"`        // logs
 	Nacos       NacosConfig      `mapstructure:"nacos,omitempty"`       // nacos
 	SLS         SlsConfig        `mapstructure:"sls,omitempty"`         // sls
 	CLS         ClsConfig        `mapstructure:"cls,omitempty"`         // cls
@@ -59,6 +60,22 @@ type NacosConfig struct {
 	FailMode       string `mapstructure:"failMode"`
 	SelectMode     string `mapstructure:"selectMode"`
 	ClientPoolSize int    `mapstructure:"clientPoolSize"`
+}
+
+type LogConfig struct {
+	Alias string `mapstructure:"alias"`
+	Type  string `mapstructure:"type"` // sls, cls
+
+	AccessKeyId     string `mapstructure:"accessKeyId"`
+	AccessKeySecret string `mapstructure:"accessKeySecret"`
+	Endpoint        string `mapstructure:"endpoint"`
+	AllowLogLevel   string `mapstructure:"allowLogLevel"`
+	CloseStdout     bool   `mapstructure:"closeStdout"`
+
+	Project  string `mapstructure:"project"`
+	Logstore string `mapstructure:"logstore"`
+	Topic    string `mapstructure:"topic"`
+	Source   string `mapstructure:"source"`
 }
 
 type SlsConfig struct {

@@ -41,7 +41,7 @@ const (
 )
 
 // VersionName 0.8.2以后使用yaml配置文件, 1.0.1升级了脚手架(protoc, ast gen)
-const VersionName = "1.2.6"
+const VersionName = "1.2.7"
 
 func Version() string {
 	return VersionName
@@ -64,6 +64,7 @@ type Ripple struct {
 	Echo                *echo.Echo
 	Orms                map[string]*Orm
 	Caches              map[string]*cache.Cache
+	Logs                map[string]*logrus.Logger
 	RpcServer           *server.Server
 	NacosRegisterPlugin *serverplugin.NacosRegisterPlugin
 }
@@ -132,8 +133,67 @@ func NewRipple() *Ripple {
 			}
 		}
 	}
+
+	// logs
+	logs := make(map[string]*logrus.Logger)
+	if IsNotEmpty(config.Logs) {
+		for _, item := range config.Logs {
+			logs[item.Alias] = NewLog(item)
+		}
+	}
+	r.Orms = orms
 	r.Caches = caches
+	r.Logs = logs
 	return r
+}
+
+func NewLog(item LogConfig) *logrus.Logger {
+	if IsEmpty(item) {
+		return nil
+	}
+	std := logrus.New()
+	formatter := &logrus.JSONFormatter{
+		DisableHTMLEscape: true,
+	}
+	if LogTypeSLS == item.Type {
+		h := sls.NewSLSHook(
+			item.AccessKeyId,
+			item.AccessKeySecret,
+			item.Endpoint,
+			item.AllowLogLevel,
+			sls.SetProject(item.Project),
+			sls.SetLogstore(item.Logstore),
+			sls.SetTopic(item.Topic),
+			sls.SetSource(item.Source),
+		)
+		if item.CloseStdout {
+			f, err := os.OpenFile(os.DevNull, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+			if err != nil {
+				fmt.Println("SLS.CloseStdout Open file err: ", err)
+			}
+			std.SetOutput(bufio.NewWriter(f))
+		}
+		std.SetFormatter(formatter)
+		std.AddHook(h)
+	} else if LogTypeCLS == item.Type {
+		h := cls.NewCLSHook(
+			item.AccessKeyId,
+			item.AccessKeySecret,
+			item.Endpoint,
+			item.AllowLogLevel,
+			cls.SetTopic(item.Topic),
+		)
+		if item.CloseStdout {
+			f, err := os.OpenFile(os.DevNull, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+			if err != nil {
+				fmt.Println("CLS.CloseStdout Open file err: ", err)
+			}
+			std.SetOutput(bufio.NewWriter(f))
+		}
+		std.SetFormatter(formatter)
+		std.AddHook(h)
+	}
+	return std
 }
 
 // AddLogType  add log type (ripple.LogTypeSLS, ripple.LogTypeCLS)
@@ -205,6 +265,14 @@ func (this *Ripple) GetCache(alias string) *cache.Cache {
 		panic(fmt.Errorf("GetCache: cannot get cache alias '%s'", alias))
 	}
 	return this.Caches[alias]
+}
+
+// GetLog  return ripple log
+func (this *Ripple) GetLog(alias string) *logrus.Logger {
+	if _, ok := this.Logs[alias]; !ok {
+		panic(fmt.Errorf("GetLog: cannot get log alias '%s'", alias))
+	}
+	return this.Logs[alias]
 }
 
 // RegisterController register a controller for ripple App

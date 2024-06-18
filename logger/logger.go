@@ -28,6 +28,15 @@ func With(fields map[string]interface{}) *logrus.Entry {
 	return WithFields(fields)
 }
 
+func WithTo(one *logrus.Logger, fields map[string]interface{}) *logrus.Entry {
+	if fields == nil {
+		fields = make(map[string]interface{})
+	}
+	_, file, line, _ := runtime.Caller(1)
+	fields["caller"] = fmt.Sprintf("%s:%d", file, line)
+	return one.WithFields(fields)
+}
+
 // SetOutput sets the standard logger output.
 func SetOutput(out io.Writer) {
 	std.SetOutput(out)
