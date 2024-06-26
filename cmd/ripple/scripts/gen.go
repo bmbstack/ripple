@@ -321,7 +321,6 @@ func generateOneServiceByName(currentPath, module, source string) {
 package %s
 
 import (
-	"github.com/labstack/echo/v4"
 	"sync"
 )
 
@@ -331,16 +330,14 @@ var (
 )
 
 // Get%[4]sService 单例
-func Get%[4]sService(ctx echo.Context) *%[4]sService {
+func Get%[4]sService() *%[4]sService {
 	%[3]sServiceOnce.Do(func() {
 		%[3]sService = &%[4]sService{}
 	})
-	%[3]sService.ctx = ctx
 	return %[3]sService
 }
 
 type %[4]sService struct {
-	ctx echo.Context
 }
 		`, source, pkg, lower, upper)
 
@@ -952,9 +949,7 @@ func createCloseAllRpcClientFunc() *dst.FuncDecl {
 		Type: &dst.FuncType{},
 		Body: &dst.BlockStmt{
 			Decs: dst.BlockStmtDecorations{Lbrace: dst.Decorations{"\n"}},
-			List: []dst.Stmt{
-
-			},
+			List: []dst.Stmt{},
 		},
 		Decs: dst.FuncDeclDecorations{NodeDecs: dst.NodeDecs{Before: dst.EmptyLine}},
 	}
