@@ -34,13 +34,15 @@ type DatabaseConfig struct {
 }
 
 type CacheConfig struct {
-	Alias    string `mapstructure:"alias"`    // alias=forum
-	Section  string `mapstructure:"section"`  // section=forum
-	Adapter  string `mapstructure:"adapter"`  // adapter=redis
-	Host     string `mapstructure:"host"`     // host=127.0.0.1
-	Port     int    `mapstructure:"port"`     // port=6379
-	Password string `mapstructure:"password"` // password=123456
-	DB       int    `mapstructure:"db"`       // db, select db
+	Alias        string `mapstructure:"alias"`        // alias=forum
+	Section      string `mapstructure:"section"`      // section=forum
+	Adapter      string `mapstructure:"adapter"`      // adapter=redis
+	Host         string `mapstructure:"host"`         // host=127.0.0.1
+	Port         int    `mapstructure:"port"`         // port=6379
+	Password     string `mapstructure:"password"`     // password=123456
+	DB           int    `mapstructure:"db"`           // db, select db
+	PoolSize     int    `mapstructure:"poolSize"`     // poolSize
+	MinIdleConns int    `mapstructure:"minIdleConns"` // minIdleConns
 }
 
 type NacosConfig struct {
@@ -156,8 +158,10 @@ func GetEnv() string {
 
 func (cacheConfig CacheConfig) GetCacheAdapterConfig() cache.AdapterConfig {
 	return cache.AdapterConfig{
-		Addr:     fmt.Sprintf("%s:%d", cacheConfig.Host, cacheConfig.Port),
-		Password: cacheConfig.Password,
-		DB:       cacheConfig.DB,
+		Addr:         fmt.Sprintf("%s:%d", cacheConfig.Host, cacheConfig.Port),
+		Password:     cacheConfig.Password,
+		DB:           cacheConfig.DB,
+		PoolSize:     cacheConfig.PoolSize,
+		MinIdleConns: cacheConfig.MinIdleConns,
 	}
 }

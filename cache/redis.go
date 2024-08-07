@@ -28,9 +28,11 @@ func (r *RedisCache) connect(opt Options) error {
 	r.alias = opt.Alias
 
 	nc := redis.NewClient(&redis.Options{
-		Addr:     opt.AdapterConfig.Addr,
-		Password: opt.AdapterConfig.Password,
-		DB:       opt.AdapterConfig.DB,
+		Addr:         opt.AdapterConfig.Addr,
+		Password:     opt.AdapterConfig.Password,
+		DB:           opt.AdapterConfig.DB,
+		PoolSize:     opt.AdapterConfig.PoolSize,
+		MinIdleConns: opt.AdapterConfig.MinIdleConns,
 	})
 	clients[opt.Alias] = nc
 

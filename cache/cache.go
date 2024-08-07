@@ -97,6 +97,13 @@ type AdapterConfig struct {
 	Addr     string
 	Password string
 	DB       int
+
+	// Maximum number of socket connections.
+	// Default is 10 connections per every available CPU as reported by runtime.GOMAXPROCS.
+	PoolSize int
+	// Minimum number of idle connections which is useful when establishing
+	// new connection is slow.
+	MinIdleConns int
 }
 
 type Options struct {
