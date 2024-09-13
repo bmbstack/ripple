@@ -221,7 +221,8 @@ func (r *ripple) generateService(file *generator.FileDescriptor, service *pb.Ser
 
 		// %[1]s is a client wrapped XClient.
 		type %[1]sClient struct{
-			XClientPool   *client.XClientPool
+			XClientPool *client.XClientPool
+			Plugins     client.PluginContainer
 		}
 
 		// New%[1]sClient wraps a XClient as %[1]sClient.
@@ -232,7 +233,18 @@ func (r *ripple) generateService(file *generator.FileDescriptor, service *pb.Ser
 				fmt.Println(fmt.Sprintf("Create rpcx client err: %s", err.Error()))
 				return &%[1]sClient{}
 			}
-			return &%[1]sClient{XClientPool: pool}
+			return &%[1]sClient{XClientPool: pool, Plugins: client.NewPluginContainer()}
+		}
+
+		// New%[1]sClientWithPlugins wraps a XClient as %[1]sClient.
+		// You can pass a shared XClient object created by NewXClientFor%[1]s.
+		func New%[1]sClientWithPlugins(plugins client.PluginContainer) *%[1]sClient {
+			pool, err := newXClientPoolFor%[1]s()
+			if err != nil {
+				fmt.Println(fmt.Sprintf("Create rpcx client err: %s", err.Error()))
+				return &%[1]sClient{}
+			}
+			return &%[1]sClient{XClientPool: pool, Plugins: plugins}
 		}
 	`, serviceName, cluster, group))
 	for _, method := range service.Method {
@@ -273,6 +285,7 @@ func (r *ripple) generateClientCode(service *pb.ServiceDescriptorProto, method *
 		func (c *%sClient) %s(ctx context.Context, req *%s)(reply *%s, err error){
 			reply = &%s{}
 			if c.XClientPool != nil {
+				c.XClientPool.Get().SetPlugins(c.Plugins)
 				err = c.XClientPool.Get().Call(ctx,"%s",req, reply)
 			}
 			return reply, err
@@ -291,9 +304,11 @@ func upperFirstLatter(s string) string {
 	return strings.ToUpper(string(s[0])) + s[1:]
 }
 
-//=======================================================
-//             parse @NacosGroup @NacosCluster
-//=======================================================
+// =======================================================
+//
+//	parse @NacosGroup @NacosCluster
+//
+// =======================================================
 func trimAnnot(s string) string {
 	s = strings.ReplaceAll(s, "//", "")
 	s = strings.ReplaceAll(s, "/*", "")
@@ -324,9 +339,11 @@ func parseKey(key, line string) (value string) {
 	return value
 }
 
-//=======================================================
-//                  use AST to write *.rpc.go
-//=======================================================
+// =======================================================
+//
+//	use AST to write *.rpc.go
+//
+// =======================================================
 func (r *ripple) generateRpcSource(file *generator.FileDescriptor, service *pb.ServiceDescriptorProto) {
 	appPkg, err := getAppPkg()
 	if err != nil {
