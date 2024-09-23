@@ -13,7 +13,6 @@ require (
 	github.com/dave/dst v0.26.2
 	github.com/flosch/pongo2/v4 v4.0.1
 	github.com/go-co-op/gocron v1.16.2
-	github.com/go-errors/errors v1.0.1
 	github.com/go-playground/validator/v10 v10.4.1
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/gogo/protobuf v1.3.2

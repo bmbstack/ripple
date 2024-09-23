@@ -353,8 +353,9 @@ func NewUserClientWithPlugins(plugins client.PluginContainer) *UserClient {
 func (c *UserClient) GetInfo(ctx context.Context, req *GetInfoReq) (reply *GetInfoReply, err error) {
 	reply = &GetInfoReply{}
 	if c.XClientPool != nil {
-		c.XClientPool.Get().SetPlugins(c.Plugins)
-		err = c.XClientPool.Get().Call(ctx, "GetInfo", req, reply)
+		mc := c.XClientPool.Get()
+		mc.SetPlugins(c.Plugins)
+		err = mc.Call(ctx, "GetInfo", req, reply)
 	}
 	return reply, err
 }

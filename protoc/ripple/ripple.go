@@ -285,8 +285,9 @@ func (r *ripple) generateClientCode(service *pb.ServiceDescriptorProto, method *
 		func (c *%sClient) %s(ctx context.Context, req *%s)(reply *%s, err error){
 			reply = &%s{}
 			if c.XClientPool != nil {
-				c.XClientPool.Get().SetPlugins(c.Plugins)
-				err = c.XClientPool.Get().Call(ctx,"%s",req, reply)
+				mc := c.XClientPool.Get()
+				mc.SetPlugins(c.Plugins)
+				err = mc.Call(ctx,"%s",req, reply)
 			}
 			return reply, err
 		}
