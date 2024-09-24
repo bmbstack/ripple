@@ -225,26 +225,30 @@ func (r *ripple) generateService(file *generator.FileDescriptor, service *pb.Ser
 			Plugins     client.PluginContainer
 		}
 
-		// New%[1]sClient wraps a XClient as %[1]sClient.
-		// You can pass a shared XClient object created by NewXClientFor%[1]s.
-		func New%[1]sClient() *%[1]sClient {
-			pool, err := newXClientPoolFor%[1]s()
-			if err != nil {
-				fmt.Println(fmt.Sprintf("Create rpcx client err: %s", err.Error()))
-				return &%[1]sClient{}
-			}
-			return &%[1]sClient{XClientPool: pool, Plugins: client.NewPluginContainer()}
+		type ClientOption struct {
+			Plugins client.PluginContainer
 		}
 
-		// New%[1]sClientWithPlugins wraps a XClient as %[1]sClient.
+		// WithPlugins 设置插件
+		func WithPlugins(plugins client.PluginContainer) func(*ClientOption) {
+			return func(opt *ClientOption) {
+				opt.Plugins = plugins
+			}
+		}
+
+		// New%[1]sClient wraps a XClient as %[1]sClient.
 		// You can pass a shared XClient object created by NewXClientFor%[1]s.
-		func New%[1]sClientWithPlugins(plugins client.PluginContainer) *%[1]sClient {
+		func New%[1]sClient(options ...func(*ClientOption)) *%[1]sClient {
 			pool, err := newXClientPoolFor%[1]s()
 			if err != nil {
 				fmt.Println(fmt.Sprintf("Create rpcx client err: %s", err.Error()))
 				return &%[1]sClient{}
 			}
-			return &%[1]sClient{XClientPool: pool, Plugins: plugins}
+			opt := &ClientOption{}
+			for _, option := range options {
+				option(opt)
+			}
+			return &%[1]sClient{XClientPool: pool, Plugins: opt.Plugins}
 		}
 	`, serviceName, cluster, group))
 	for _, method := range service.Method {
