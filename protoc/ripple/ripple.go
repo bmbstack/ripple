@@ -3,12 +3,7 @@ package ripple
 import (
 	"bufio"
 	"fmt"
-	"github.com/bmbstack/ripple/cmd/ripple/util"
-	"github.com/bmbstack/ripple/rst"
-	"github.com/dave/dst"
-	"github.com/dave/dst/decorator/resolver/guess"
 	"go/token"
-	"golang.org/x/mod/modfile"
 	"io"
 	"io/ioutil"
 	"os"
@@ -16,6 +11,12 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/bmbstack/ripple/cmd/ripple/util"
+	"github.com/bmbstack/ripple/rst"
+	"github.com/dave/dst"
+	"github.com/dave/dst/decorator/resolver/guess"
+	"golang.org/x/mod/modfile"
 
 	pb "github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
 	"github.com/gogo/protobuf/protoc-gen-gogo/generator"
@@ -288,14 +289,19 @@ func (r *ripple) generateClientCode(service *pb.ServiceDescriptorProto, method *
 	r.P(fmt.Sprintf(`// %s is client rpc method as defined
 		func (c *%sClient) %s(ctx context.Context, req *%s)(reply *%s, err error){
 			reply = &%s{}
-			if c.XClientPool != nil {
-				mc := c.XClientPool.Get()
-				mc.SetPlugins(c.Plugins)
-				err = mc.Call(ctx,"%s",req, reply)
+
+			if c.XClientPool == nil {
+				return nil, errors.New("rpcx client pool is nil")
 			}
+
+			xcli := c.XClientPool.Get()	
+
+			c.Plugins.DoPreCall(ctx, xcli.servicePath, "%s", req)
+			err = xcli.Call(ctx,"%s",req, reply)
+			c.Plugins.DoPostCall(ctx, xcli.servicePath, "%s", req, reply, err)
 			return reply, err
 		}
-	`, methodName, serviceName, methodName, inType, outType, outType, method.GetName()))
+	`, methodName, serviceName, methodName, inType, outType, outType, method.GetName(), method.GetName(), method.GetName()))
 }
 
 // upperFirstLatter make the fisrt charater of given string  upper class
