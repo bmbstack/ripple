@@ -3,6 +3,13 @@ package ripple
 import (
 	"bufio"
 	"fmt"
+	"io"
+	"os"
+	"os/exec"
+	"runtime"
+	"strings"
+	"sync"
+
 	"github.com/bmbstack/g"
 	"github.com/bmbstack/ripple/cache"
 	log "github.com/bmbstack/ripple/logger"
@@ -14,16 +21,11 @@ import (
 	"github.com/bmbstack/ripple/middleware/recover"
 	"github.com/bmbstack/ripple/nacos/rpcxnacos/serverplugin"
 	"github.com/bmbstack/ripple/util"
+	"github.com/labstack/echo/v4"
 	mw "github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/color"
 	"github.com/sirupsen/logrus"
 	"github.com/smallnest/rpcx/server"
-	"io"
-	"os"
-	"os/exec"
-	"runtime"
-	"strings"
-	"sync"
 )
 
 var firstRegController = true
@@ -39,7 +41,7 @@ const (
 )
 
 // VersionName 0.8.2以后使用yaml配置文件, 1.0.1升级了脚手架(protoc, ast gen)
-const VersionName = "1.3.5"
+const VersionName = "1.3.6"
 
 func Version() string {
 	return VersionName
