@@ -226,26 +226,26 @@ func (r *ripple) generateService(file *generator.FileDescriptor, service *pb.Ser
 			Plugins     client.PluginContainer
 		}
 
-		type ClientOption struct {
+		type %[1]sClientOption struct {
 			Plugins client.PluginContainer
 		}
 
-		// WithPlugins 设置插件
-		func WithPlugins(plugins client.PluginContainer) func(*ClientOption) {
-			return func(opt *ClientOption) {
+		// WithPluginsFor%[1]sClient 设置插件
+		func WithPluginsFor%[1]sClient(plugins client.PluginContainer) func(*%[1]sClientOption) {
+			return func(opt *%[1]sClientOption) {
 				opt.Plugins = plugins
 			}
 		}
 
 		// New%[1]sClient wraps a XClient as %[1]sClient.
 		// You can pass a shared XClient object created by NewXClientFor%[1]s.
-		func New%[1]sClient(options ...func(*ClientOption)) *%[1]sClient {
+		func New%[1]sClient(options ...func(*%[1]sClientOption)) *%[1]sClient {
 			pool, err := newXClientPoolFor%[1]s()
 			if err != nil {
 				fmt.Println(fmt.Sprintf("Create rpcx client err: %s", err.Error()))
 				return &%[1]sClient{}
 			}
-			opt := &ClientOption{}
+			opt := &%[1]sClientOption{}
 			for _, option := range options {
 				option(opt)
 			}
@@ -296,12 +296,12 @@ func (r *ripple) generateClientCode(service *pb.ServiceDescriptorProto, method *
 
 			xcli := c.XClientPool.Get()	
 
-			c.Plugins.DoPreCall(ctx, xcli.servicePath, "%s", req)
-			err = xcli.Call(ctx,"%s",req, reply)
-			c.Plugins.DoPostCall(ctx, xcli.servicePath, "%s", req, reply, err)
+			c.Plugins.DoPreCall(ctx, "%[2]sRpc", "%[7]s", req)
+			err = xcli.Call(ctx,"%[7]s",req, reply)
+			c.Plugins.DoPostCall(ctx, "%[2]sRpc", "%[7]s", req, reply, err)
 			return reply, err
 		}
-	`, methodName, serviceName, methodName, inType, outType, outType, method.GetName(), method.GetName(), method.GetName()))
+	`, methodName, serviceName, methodName, inType, outType, outType, method.GetName()))
 }
 
 // upperFirstLatter make the fisrt charater of given string  upper class

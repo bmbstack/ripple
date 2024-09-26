@@ -235,7 +235,7 @@ func encodeVarintStudent(dAtA []byte, offset int, v uint64) int {
 
 const ServiceNameOfStudent = "StudentRpc"
 
-//================== interface ===================
+// ================== interface ===================
 type StudentInterface interface {
 
 	// StudentInterface can be used for interface verification.
@@ -243,8 +243,8 @@ type StudentInterface interface {
 	Learn(ctx context.Context, req *LearnReq, reply *LearnReply) (err error)
 }
 
-//================== server implement demo ===================
-//ripple.Default().RegisterRpc("User", &UserRpcDemo{}, "")
+// ================== server implement demo ===================
+// ripple.Default().RegisterRpc("User", &UserRpcDemo{}, "")
 type StudentRpcDemo struct{}
 
 func (this *StudentRpcDemo) Learn(ctx context.Context, req *LearnReq, reply *LearnReply) (err error) {
@@ -253,7 +253,7 @@ func (this *StudentRpcDemo) Learn(ctx context.Context, req *LearnReq, reply *Lea
 	return nil
 }
 
-//================== client stub ===================
+// ================== client stub ===================
 // newXClientForStudent creates a XClient.
 // You can configure this client pool with more options such as etcd registry, serialize type, select algorithm and fail mode.
 func newXClientPoolForStudent() (*client.XClientPool, error) {
@@ -327,25 +327,48 @@ func newXClientPoolForStudent() (*client.XClientPool, error) {
 // Student is a client wrapped XClient.
 type StudentClient struct {
 	XClientPool *client.XClientPool
+	Plugins     client.PluginContainer
+}
+
+type StudentClientOption struct {
+	Plugins client.PluginContainer
+}
+
+// WithPluginsForStudentClient 设置插件
+func WithPluginsForStudentClient(plugins client.PluginContainer) func(*StudentClientOption) {
+	return func(opt *StudentClientOption) {
+		opt.Plugins = plugins
+	}
 }
 
 // NewStudentClient wraps a XClient as StudentClient.
 // You can pass a shared XClient object created by NewXClientForStudent.
-func NewStudentClient() *StudentClient {
+func NewStudentClient(options ...func(*StudentClientOption)) *StudentClient {
 	pool, err := newXClientPoolForStudent()
 	if err != nil {
 		fmt.Println(fmt.Sprintf("Create rpcx client err: ripple", err.Error()))
 		return &StudentClient{}
 	}
-	return &StudentClient{XClientPool: pool}
+	opt := &StudentClientOption{}
+	for _, option := range options {
+		option(opt)
+	}
+	return &StudentClient{XClientPool: pool, Plugins: opt.Plugins}
 }
 
 // Learn is client rpc method as defined
 func (c *StudentClient) Learn(ctx context.Context, req *LearnReq) (reply *LearnReply, err error) {
 	reply = &LearnReply{}
-	if c.XClientPool != nil {
-		err = c.XClientPool.Get().Call(ctx, "Learn", req, reply)
+
+	if c.XClientPool == nil {
+		return nil, errors.New("rpcx client pool is nil")
 	}
+
+	xcli := c.XClientPool.Get()
+
+	c.Plugins.DoPreCall(ctx, "StudentRpc", "Learn", req)
+	err = xcli.Call(ctx, "Learn", req, reply)
+	c.Plugins.DoPostCall(ctx, "StudentRpc", "Learn", req, reply, err)
 	return reply, err
 }
 

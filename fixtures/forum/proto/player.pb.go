@@ -311,7 +311,7 @@ func encodeVarintPlayer(dAtA []byte, offset int, v uint64) int {
 
 const ServiceNameOfPlayer = "PlayerRpc"
 
-//================== interface ===================
+// ================== interface ===================
 type PlayerInterface interface {
 
 	// PlayerInterface can be used for interface verification.
@@ -319,8 +319,8 @@ type PlayerInterface interface {
 	GetPlayerInfo(ctx context.Context, req *GetPlayerInfoReq, reply *GetPlayerInfoResponse) (err error)
 }
 
-//================== server implement demo ===================
-//ripple.Default().RegisterRpc("User", &UserRpcDemo{}, "")
+// ================== server implement demo ===================
+// ripple.Default().RegisterRpc("User", &UserRpcDemo{}, "")
 type PlayerRpcDemo struct{}
 
 func (this *PlayerRpcDemo) GetPlayerInfo(ctx context.Context, req *GetPlayerInfoReq, reply *GetPlayerInfoResponse) (err error) {
@@ -329,7 +329,7 @@ func (this *PlayerRpcDemo) GetPlayerInfo(ctx context.Context, req *GetPlayerInfo
 	return nil
 }
 
-//================== client stub ===================
+// ================== client stub ===================
 // newXClientForPlayer creates a XClient.
 // You can configure this client pool with more options such as etcd registry, serialize type, select algorithm and fail mode.
 func newXClientPoolForPlayer() (*client.XClientPool, error) {
@@ -403,25 +403,48 @@ func newXClientPoolForPlayer() (*client.XClientPool, error) {
 // Player is a client wrapped XClient.
 type PlayerClient struct {
 	XClientPool *client.XClientPool
+	Plugins     client.PluginContainer
+}
+
+type PlayerClientOption struct {
+	Plugins client.PluginContainer
+}
+
+// WithPluginsForPlayerClient 设置插件
+func WithPluginsForPlayerClient(plugins client.PluginContainer) func(*PlayerClientOption) {
+	return func(opt *PlayerClientOption) {
+		opt.Plugins = plugins
+	}
 }
 
 // NewPlayerClient wraps a XClient as PlayerClient.
 // You can pass a shared XClient object created by NewXClientForPlayer.
-func NewPlayerClient() *PlayerClient {
+func NewPlayerClient(options ...func(*PlayerClientOption)) *PlayerClient {
 	pool, err := newXClientPoolForPlayer()
 	if err != nil {
 		fmt.Println(fmt.Sprintf("Create rpcx client err: playerserver", err.Error()))
 		return &PlayerClient{}
 	}
-	return &PlayerClient{XClientPool: pool}
+	opt := &PlayerClientOption{}
+	for _, option := range options {
+		option(opt)
+	}
+	return &PlayerClient{XClientPool: pool, Plugins: opt.Plugins}
 }
 
 // GetPlayerInfo is client rpc method as defined
 func (c *PlayerClient) GetPlayerInfo(ctx context.Context, req *GetPlayerInfoReq) (reply *GetPlayerInfoResponse, err error) {
 	reply = &GetPlayerInfoResponse{}
-	if c.XClientPool != nil {
-		err = c.XClientPool.Get().Call(ctx, "GetPlayerInfo", req, reply)
+
+	if c.XClientPool == nil {
+		return nil, errors.New("rpcx client pool is nil")
 	}
+
+	xcli := c.XClientPool.Get()
+
+	c.Plugins.DoPreCall(ctx, "PlayerRpc", "GetPlayerInfo", req)
+	err = xcli.Call(ctx, "GetPlayerInfo", req, reply)
+	c.Plugins.DoPostCall(ctx, "PlayerRpc", "GetPlayerInfo", req, reply, err)
 	return reply, err
 }
 

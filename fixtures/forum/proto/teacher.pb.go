@@ -235,7 +235,7 @@ func encodeVarintTeacher(dAtA []byte, offset int, v uint64) int {
 
 const ServiceNameOfTeacher = "TeacherRpc"
 
-//================== interface ===================
+// ================== interface ===================
 type TeacherInterface interface {
 
 	// TeacherInterface can be used for interface verification.
@@ -243,8 +243,8 @@ type TeacherInterface interface {
 	Teach(ctx context.Context, req *TeachReq, reply *TeachReply) (err error)
 }
 
-//================== server implement demo ===================
-//ripple.Default().RegisterRpc("User", &UserRpcDemo{}, "")
+// ================== server implement demo ===================
+// ripple.Default().RegisterRpc("User", &UserRpcDemo{}, "")
 type TeacherRpcDemo struct{}
 
 func (this *TeacherRpcDemo) Teach(ctx context.Context, req *TeachReq, reply *TeachReply) (err error) {
@@ -253,7 +253,7 @@ func (this *TeacherRpcDemo) Teach(ctx context.Context, req *TeachReq, reply *Tea
 	return nil
 }
 
-//================== client stub ===================
+// ================== client stub ===================
 // newXClientForTeacher creates a XClient.
 // You can configure this client pool with more options such as etcd registry, serialize type, select algorithm and fail mode.
 func newXClientPoolForTeacher() (*client.XClientPool, error) {
@@ -327,25 +327,48 @@ func newXClientPoolForTeacher() (*client.XClientPool, error) {
 // Teacher is a client wrapped XClient.
 type TeacherClient struct {
 	XClientPool *client.XClientPool
+	Plugins     client.PluginContainer
+}
+
+type TeacherClientOption struct {
+	Plugins client.PluginContainer
+}
+
+// WithPluginsForTeacherClient 设置插件
+func WithPluginsForTeacherClient(plugins client.PluginContainer) func(*TeacherClientOption) {
+	return func(opt *TeacherClientOption) {
+		opt.Plugins = plugins
+	}
 }
 
 // NewTeacherClient wraps a XClient as TeacherClient.
 // You can pass a shared XClient object created by NewXClientForTeacher.
-func NewTeacherClient() *TeacherClient {
+func NewTeacherClient(options ...func(*TeacherClientOption)) *TeacherClient {
 	pool, err := newXClientPoolForTeacher()
 	if err != nil {
 		fmt.Println(fmt.Sprintf("Create rpcx client err: ripple", err.Error()))
 		return &TeacherClient{}
 	}
-	return &TeacherClient{XClientPool: pool}
+	opt := &TeacherClientOption{}
+	for _, option := range options {
+		option(opt)
+	}
+	return &TeacherClient{XClientPool: pool, Plugins: opt.Plugins}
 }
 
 // Teach is client rpc method as defined
 func (c *TeacherClient) Teach(ctx context.Context, req *TeachReq) (reply *TeachReply, err error) {
 	reply = &TeachReply{}
-	if c.XClientPool != nil {
-		err = c.XClientPool.Get().Call(ctx, "Teach", req, reply)
+
+	if c.XClientPool == nil {
+		return nil, errors.New("rpcx client pool is nil")
 	}
+
+	xcli := c.XClientPool.Get()
+
+	c.Plugins.DoPreCall(ctx, "TeacherRpc", "Teach", req)
+	err = xcli.Call(ctx, "Teach", req, reply)
+	c.Plugins.DoPostCall(ctx, "TeacherRpc", "Teach", req, reply, err)
 	return reply, err
 }
 
