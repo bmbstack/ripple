@@ -142,6 +142,19 @@ func GetBaseConfig() *BaseConfig {
 	return bc
 }
 
+func UpdateBaseConfig() {
+	if v == nil {
+		panic("Please init Config")
+	}
+	baseConfig := BaseConfig{}
+	err := v.Unmarshal(&baseConfig)
+	if err != nil {
+		fmt.Println("yaml parse err: ", err)
+		panic(err)
+	}
+	bc = &baseConfig
+}
+
 func GetConfig() *viper.Viper {
 	if v == nil {
 		panic("Please init Config")

@@ -12,6 +12,7 @@ import (
 
 	"github.com/bmbstack/g"
 	"github.com/bmbstack/ripple/cache"
+	. "github.com/bmbstack/ripple/helper"
 	log "github.com/bmbstack/ripple/logger"
 	"github.com/bmbstack/ripple/logger/cls"
 	"github.com/bmbstack/ripple/logger/sls"
@@ -41,7 +42,7 @@ const (
 )
 
 // VersionName 0.8.2以后使用yaml配置文件, 1.0.1升级了脚手架(protoc, ast gen)
-const VersionName = "1.3.6"
+const VersionName = "1.3.7"
 
 func Version() string {
 	return VersionName
