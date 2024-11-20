@@ -222,34 +222,18 @@ func (r *ripple) generateService(file *generator.FileDescriptor, service *pb.Ser
 
 		// %[1]s is a client wrapped XClient.
 		type %[1]sClient struct{
-			XClientPool *client.XClientPool
-			Plugins     client.PluginContainer
-		}
-
-		type %[1]sClientOption struct {
-			Plugins client.PluginContainer
-		}
-
-		// WithPluginsFor%[1]sClient 设置插件
-		func WithPluginsFor%[1]sClient(plugins client.PluginContainer) func(*%[1]sClientOption) {
-			return func(opt *%[1]sClientOption) {
-				opt.Plugins = plugins
-			}
+			XClientPool   *client.XClientPool
 		}
 
 		// New%[1]sClient wraps a XClient as %[1]sClient.
 		// You can pass a shared XClient object created by NewXClientFor%[1]s.
-		func New%[1]sClient(options ...func(*%[1]sClientOption)) *%[1]sClient {
+		func New%[1]sClient() *%[1]sClient {
 			pool, err := newXClientPoolFor%[1]s()
 			if err != nil {
 				fmt.Println(fmt.Sprintf("Create rpcx client err: %s", err.Error()))
 				return &%[1]sClient{}
 			}
-			opt := &%[1]sClientOption{}
-			for _, option := range options {
-				option(opt)
-			}
-			return &%[1]sClient{XClientPool: pool, Plugins: opt.Plugins}
+			return &%[1]sClient{XClientPool: pool}
 		}
 	`, serviceName, cluster, group))
 	for _, method := range service.Method {
@@ -289,16 +273,9 @@ func (r *ripple) generateClientCode(service *pb.ServiceDescriptorProto, method *
 	r.P(fmt.Sprintf(`// %s is client rpc method as defined
 		func (c *%sClient) %s(ctx context.Context, req *%s)(reply *%s, err error){
 			reply = &%s{}
-
-			if c.XClientPool == nil {
-				return nil, errors.New("rpcx client pool is nil")
+			if c.XClientPool != nil {
+				err = c.XClientPool.Get().Call(ctx,"%s",req, reply)
 			}
-
-			xcli := c.XClientPool.Get()	
-
-			c.Plugins.DoPreCall(ctx, "%[2]sRpc", "%[7]s", req)
-			err = xcli.Call(ctx,"%[7]s",req, reply)
-			c.Plugins.DoPostCall(ctx, "%[2]sRpc", "%[7]s", req, reply, err)
 			return reply, err
 		}
 	`, methodName, serviceName, methodName, inType, outType, outType, method.GetName()))
