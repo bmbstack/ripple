@@ -2,9 +2,10 @@ package cache
 
 import (
 	"fmt"
-	"github.com/go-redis/redis/v8"
 	"strings"
 	"time"
+
+	"github.com/go-redis/redis/v8"
 )
 
 const VersionName = "0.1.0"
@@ -98,12 +99,20 @@ type AdapterConfig struct {
 	Password string
 	DB       int
 
+	// Type of connection pool.
+	// true for FIFO pool, false for LIFO pool.
+	// Note that fifo has higher overhead compared to lifo.
+	PoolFIFO bool
 	// Maximum number of socket connections.
 	// Default is 10 connections per every available CPU as reported by runtime.GOMAXPROCS.
 	PoolSize int
 	// Minimum number of idle connections which is useful when establishing
 	// new connection is slow.
 	MinIdleConns int
+
+	// redis://user:password@localhost:6789/3?dial_timeout=3&db=1&read_timeout=6s&max_retries=2
+	// url, 如果使用url，其他配置无效, url的优先级高于其他配置
+	Url string
 }
 
 type Options struct {

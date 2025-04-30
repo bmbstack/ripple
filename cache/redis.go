@@ -22,21 +22,32 @@ func NewRedisCache() *RedisCache {
 	return &RedisCache{}
 }
 
-func (r *RedisCache) connect(opt Options) error {
+func (r *RedisCache) connect(opt Options) (err error) {
 	r.hasPrefix = len(opt.Section) > 0
 	r.prefix = opt.Section
 	r.alias = opt.Alias
 
-	nc := redis.NewClient(&redis.Options{
-		Addr:         opt.AdapterConfig.Addr,
-		Password:     opt.AdapterConfig.Password,
-		DB:           opt.AdapterConfig.DB,
-		PoolSize:     opt.AdapterConfig.PoolSize,
-		MinIdleConns: opt.AdapterConfig.MinIdleConns,
-	})
+	var redisOpt *redis.Options
+	if opt.AdapterConfig.Url != "" {
+		redisOpt, err = redis.ParseURL(opt.AdapterConfig.Url)
+		if err != nil {
+			return err
+		}
+	} else {
+		redisOpt = &redis.Options{
+			Addr:         opt.AdapterConfig.Addr,
+			Password:     opt.AdapterConfig.Password,
+			DB:           opt.AdapterConfig.DB,
+			PoolFIFO:     opt.AdapterConfig.PoolFIFO,
+			PoolSize:     opt.AdapterConfig.PoolSize,
+			MinIdleConns: opt.AdapterConfig.MinIdleConns,
+		}
+	}
+		
+	nc := redis.NewClient(redisOpt)
 	clients[opt.Alias] = nc
 
-	fmt.Println(fmt.Sprintf("%s: %s, %s, db: %d", color.Green("Connect.redis"), opt.Section, opt.AdapterConfig.Addr, opt.AdapterConfig.DB))
+	fmt.Println(fmt.Sprintf("%s: %s, %s, db: %d", color.Green("Connect.redis"), opt.Section, redisOpt.Addr, redisOpt.DB))
 	return nil
 }
 

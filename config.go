@@ -2,6 +2,7 @@ package ripple
 
 import (
 	"fmt"
+
 	"github.com/bmbstack/ripple/cache"
 	"github.com/spf13/viper"
 )
@@ -41,8 +42,12 @@ type CacheConfig struct {
 	Port         int    `mapstructure:"port"`         // port=6379
 	Password     string `mapstructure:"password"`     // password=123456
 	DB           int    `mapstructure:"db"`           // db, select db
+	PoolFIFO     bool   `mapstructure:"poolFifo"`     // poolFifo, true for FIFO pool, false for LIFO pool
 	PoolSize     int    `mapstructure:"poolSize"`     // poolSize
 	MinIdleConns int    `mapstructure:"minIdleConns"` // minIdleConns
+
+	// redis://user:password@localhost:6789/3?dial_timeout=3&db=1&read_timeout=6s&max_retries=2
+	Url string `mapstructure:"url"` // url, 如果使用url，其他配置无效,
 }
 
 type NacosConfig struct {
@@ -174,6 +179,7 @@ func (cacheConfig CacheConfig) GetCacheAdapterConfig() cache.AdapterConfig {
 		Addr:         fmt.Sprintf("%s:%d", cacheConfig.Host, cacheConfig.Port),
 		Password:     cacheConfig.Password,
 		DB:           cacheConfig.DB,
+		PoolFIFO:     cacheConfig.PoolFIFO,
 		PoolSize:     cacheConfig.PoolSize,
 		MinIdleConns: cacheConfig.MinIdleConns,
 	}
