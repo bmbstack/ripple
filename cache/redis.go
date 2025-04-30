@@ -47,7 +47,7 @@ func (r *RedisCache) connect(opt Options) (err error) {
 	nc := redis.NewClient(redisOpt)
 	clients[opt.Alias] = nc
 
-	fmt.Println(fmt.Sprintf("%s: %s, %s, db: %d", color.Green("Connect.redis"), opt.Section, redisOpt.Addr, redisOpt.DB))
+	fmt.Println(fmt.Sprintf("%s: %s, %s, db: %d, poolSize=%d, MinIdleConns=%d, poolFIFO=%v", color.Green("Connect.redis"), opt.Section, redisOpt.Addr, redisOpt.DB, redisOpt.PoolSize, redisOpt.MinIdleConns, redisOpt.PoolFIFO))
 	return nil
 }
 
