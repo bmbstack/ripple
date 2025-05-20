@@ -42,7 +42,7 @@ const (
 )
 
 // VersionName 0.8.2以后使用yaml配置文件, 1.0.1升级了脚手架(protoc, ast gen)
-const VersionName = "1.3.9"
+const VersionName = "1.4.0"
 
 func Version() string {
 	return VersionName
@@ -167,7 +167,7 @@ func NewLog(item LogConfig) *logrus.Logger {
 			sls.SetTopic(item.Topic),
 			sls.SetSource(item.Source),
 		)
-		if item.CloseStdout {
+		if !item.CloseStdout {
 			f, err := os.OpenFile(os.DevNull, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
 			if err != nil {
 				fmt.Println("SLS.CloseStdout Open file err: ", err)
@@ -184,7 +184,7 @@ func NewLog(item LogConfig) *logrus.Logger {
 			item.AllowLogLevel,
 			cls.SetTopic(item.Topic),
 		)
-		if item.CloseStdout {
+		if !item.CloseStdout {
 			f, err := os.OpenFile(os.DevNull, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
 			if err != nil {
 				fmt.Println("CLS.CloseStdout Open file err: ", err)
