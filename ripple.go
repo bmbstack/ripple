@@ -167,12 +167,10 @@ func NewLog(item LogConfig) *logrus.Logger {
 			sls.SetTopic(item.Topic),
 			sls.SetSource(item.Source),
 		)
-		if !item.CloseStdout {
-			f, err := os.OpenFile(os.DevNull, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
-			if err != nil {
-				fmt.Println("SLS.CloseStdout Open file err: ", err)
-			}
-			std.SetOutput(bufio.NewWriter(f))
+		if item.CloseStdout {
+			std.SetOutput(io.Discard)
+		} else {
+			std.SetOutput(os.Stdout)
 		}
 		std.SetFormatter(formatter)
 		std.AddHook(h)
@@ -184,12 +182,10 @@ func NewLog(item LogConfig) *logrus.Logger {
 			item.AllowLogLevel,
 			cls.SetTopic(item.Topic),
 		)
-		if !item.CloseStdout {
-			f, err := os.OpenFile(os.DevNull, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
-			if err != nil {
-				fmt.Println("CLS.CloseStdout Open file err: ", err)
-			}
-			std.SetOutput(bufio.NewWriter(f))
+		if item.CloseStdout {
+			std.SetOutput(io.Discard)
+		} else {
+			std.SetOutput(os.Stdout)
 		}
 		std.SetFormatter(formatter)
 		std.AddHook(h)
