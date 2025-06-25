@@ -373,7 +373,57 @@ nacos:
   cacheDir: "./cache"
   logDir: "./log"
   server: "127.0.0.1:18090"
+logs: [
+  {
+    "alias": "box",
+    "type": "sls",
+    "lumberjackConfig":
+        {
+          "filename": "./log/box.log",
+          "maxSize": 10,
+          "maxBackups": 3,
+          "maxAge": 28,
+          "compress": true,
+        },
+    "accessKeyId": "xxxxxxx",
+    "accessKeySecret": "xxxxxxx",
+    "endpoint": "xxxxxxx",
+    "allowLogLevel": "info",
+    "closeStdout": false,
+    "project": "boxlite",
+    "logstore": "xxxxxxx",
+    "topic": "*package",
+    "source": "source"
+  },
+  {
+    "alias": "user",
+    "type": "cls",
+    "lumberjackConfig":
+        {
+          "filename": "./log/user.log",
+          "maxSize": 10,
+          "maxBackups": 3,
+          "maxAge": 28,
+          "compress": true,
+        },
+    "accessKeyId": "xxxxxxx",
+    "accessKeySecret": "xxxxxxx",
+    "endpoint": "xxxxxxx",
+    "allowLogLevel": "info",
+    "closeStdout": false,
+    "project": "xxxxxxx",
+    "logstore": "xxxxxxx",
+    "topic": "topic",
+    "source": "source"
+  }
+]
 sls:
+  lumberjackConfig:
+    filename: "./log/sls.log"
+    maxSize: 10
+    maxBackups: 3
+    maxAge: 28
+    compress: true
   accessKeyId: "xxxxxxx"
   accessKeySecret: "xxxxxxx"
   endpoint: "cn-beijing-intranet.log.aliyuncs.com"
@@ -384,6 +434,12 @@ sls:
   topic: "topic"
   source: "source"
 cls:
+  lumberjackConfig:
+    filename: "./log/cls.log"
+    maxSize: 10
+    maxBackups: 3
+    maxAge: 28
+    compress: true
   accessKeyId: "xxxxxxx"
   accessKeySecret: "xxxxxxx"
   endpoint: "ap-beijing.cls.tencentcs.com"
