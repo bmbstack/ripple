@@ -69,6 +69,14 @@ type NacosConfig struct {
 	ClientPoolSize int    `mapstructure:"clientPoolSize"`
 }
 
+type LumberjackConfig struct {
+	Filename   string `mapstructure:"filename"`
+	MaxSize    int    `mapstructure:"maxSize"` // MB
+	MaxBackups int    `mapstructure:"maxBackups"`
+	MaxAge     int    `mapstructure:"maxAge"` // days
+	Compress   bool   `mapstructure:"compress"`
+}
+
 type LogConfig struct {
 	Alias string `mapstructure:"alias"`
 	Type  string `mapstructure:"type"` // sls, cls
@@ -78,6 +86,8 @@ type LogConfig struct {
 	Endpoint        string `mapstructure:"endpoint"`
 	AllowLogLevel   string `mapstructure:"allowLogLevel"`
 	CloseStdout     bool   `mapstructure:"closeStdout"`
+
+	LumberjackConfig LumberjackConfig `mapstructure:"lumberjackConfig,omitempty"`
 
 	Project  string `mapstructure:"project"`
 	Logstore string `mapstructure:"logstore"`
@@ -92,6 +102,8 @@ type SlsConfig struct {
 	AllowLogLevel   string `mapstructure:"allowLogLevel"`
 	CloseStdout     bool   `mapstructure:"closeStdout"`
 
+	LumberjackConfig LumberjackConfig `mapstructure:"lumberjackConfig,omitempty"`
+
 	Project  string `mapstructure:"project"`
 	Logstore string `mapstructure:"logstore"`
 	Topic    string `mapstructure:"topic"`
@@ -104,6 +116,8 @@ type ClsConfig struct {
 	Endpoint        string `mapstructure:"endpoint"`
 	AllowLogLevel   string `mapstructure:"allowLogLevel"`
 	CloseStdout     bool   `mapstructure:"closeStdout"`
+
+	LumberjackConfig LumberjackConfig `mapstructure:"lumberjackConfig,omitempty"`
 
 	Topic string `mapstructure:"topic"`
 }

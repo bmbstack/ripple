@@ -1,7 +1,6 @@
 package ripple
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"os"
@@ -27,6 +26,7 @@ import (
 	"github.com/labstack/gommon/color"
 	"github.com/sirupsen/logrus"
 	"github.com/smallnest/rpcx/server"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 var firstRegController = true
@@ -157,38 +157,59 @@ func NewLog(item LogConfig) *logrus.Logger {
 		DisableHTMLEscape: true,
 	}
 	if LogTypeSLS == item.Type {
-		h := sls.NewSLSHook(
-			item.AccessKeyId,
-			item.AccessKeySecret,
-			item.Endpoint,
-			item.AllowLogLevel,
-			sls.SetProject(item.Project),
-			sls.SetLogstore(item.Logstore),
-			sls.SetTopic(item.Topic),
-			sls.SetSource(item.Source),
-		)
+		std.SetFormatter(formatter)
 		if item.CloseStdout {
 			std.SetOutput(io.Discard)
 		} else {
 			std.SetOutput(os.Stdout)
 		}
-		std.SetFormatter(formatter)
-		std.AddHook(h)
+
+		if IsNotEmpty(item.LumberjackConfig) {
+			std.SetOutput(&lumberjack.Logger{
+				Filename:   item.LumberjackConfig.Filename,
+				MaxSize:    item.LumberjackConfig.MaxSize,
+				MaxBackups: item.LumberjackConfig.MaxBackups,
+				MaxAge:     item.LumberjackConfig.MaxAge,
+				Compress:   item.LumberjackConfig.Compress,
+			})
+		} else {
+			std.AddHook(sls.NewSLSHook(
+				item.AccessKeyId,
+				item.AccessKeySecret,
+				item.Endpoint,
+				item.AllowLogLevel,
+				sls.SetProject(item.Project),
+				sls.SetLogstore(item.Logstore),
+				sls.SetTopic(item.Topic),
+				sls.SetSource(item.Source),
+			))
+		}
+
 	} else if LogTypeCLS == item.Type {
-		h := cls.NewCLSHook(
-			item.AccessKeyId,
-			item.AccessKeySecret,
-			item.Endpoint,
-			item.AllowLogLevel,
-			cls.SetTopic(item.Topic),
-		)
+		std.SetFormatter(formatter)
 		if item.CloseStdout {
 			std.SetOutput(io.Discard)
 		} else {
 			std.SetOutput(os.Stdout)
 		}
-		std.SetFormatter(formatter)
-		std.AddHook(h)
+
+		if IsNotEmpty(item.LumberjackConfig) {
+			std.SetOutput(&lumberjack.Logger{
+				Filename:   item.LumberjackConfig.Filename,
+				MaxSize:    item.LumberjackConfig.MaxSize,
+				MaxBackups: item.LumberjackConfig.MaxBackups,
+				MaxAge:     item.LumberjackConfig.MaxAge,
+				Compress:   item.LumberjackConfig.Compress,
+			})
+		} else {
+			std.AddHook(cls.NewCLSHook(
+				item.AccessKeyId,
+				item.AccessKeySecret,
+				item.Endpoint,
+				item.AllowLogLevel,
+				cls.SetTopic(item.Topic),
+			))
+		}
 	}
 	return std
 }
@@ -202,42 +223,58 @@ func (this *Ripple) AddLogType(value LogType) {
 		DisableHTMLEscape: true,
 	}
 	if LogTypeSLS == value && IsNotEmpty(conf.SLS) {
-		h := sls.NewSLSHook(
-			conf.SLS.AccessKeyId,
-			conf.SLS.AccessKeySecret,
-			conf.SLS.Endpoint,
-			conf.SLS.AllowLogLevel,
-			sls.SetProject(conf.SLS.Project),
-			sls.SetLogstore(conf.SLS.Logstore),
-			sls.SetTopic(conf.SLS.Topic),
-			sls.SetSource(conf.SLS.Source),
-		)
+		this.Logrus.SetFormatter(formatter)
 		if conf.SLS.CloseStdout {
-			f, err := os.OpenFile(os.DevNull, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
-			if err != nil {
-				fmt.Println("SLS.CloseStdout Open file err: ", err)
-			}
-			this.Logrus.SetOutput(bufio.NewWriter(f))
+			this.Logrus.SetOutput(io.Discard)
+		} else {
+			this.Logrus.SetOutput(os.Stdout)
 		}
-		this.Logrus.SetFormatter(formatter)
-		this.Logrus.AddHook(h)
+
+		if IsNotEmpty(conf.SLS.LumberjackConfig) {
+			this.Logrus.SetOutput(&lumberjack.Logger{
+				Filename:   conf.SLS.LumberjackConfig.Filename,
+				MaxSize:    conf.SLS.LumberjackConfig.MaxSize,
+				MaxBackups: conf.SLS.LumberjackConfig.MaxBackups,
+				MaxAge:     conf.SLS.LumberjackConfig.MaxAge,
+				Compress:   conf.SLS.LumberjackConfig.Compress,
+			})
+		} else {
+			this.Logrus.AddHook(sls.NewSLSHook(
+				conf.SLS.AccessKeyId,
+				conf.SLS.AccessKeySecret,
+				conf.SLS.Endpoint,
+				conf.SLS.AllowLogLevel,
+				sls.SetProject(conf.SLS.Project),
+				sls.SetLogstore(conf.SLS.Logstore),
+				sls.SetTopic(conf.SLS.Topic),
+				sls.SetSource(conf.SLS.Source),
+			))
+		}
 	} else if LogTypeCLS == value && IsNotEmpty(conf.CLS) {
-		h := cls.NewCLSHook(
-			conf.CLS.AccessKeyId,
-			conf.CLS.AccessKeySecret,
-			conf.CLS.Endpoint,
-			conf.CLS.AllowLogLevel,
-			cls.SetTopic(conf.CLS.Topic),
-		)
-		if conf.CLS.CloseStdout {
-			f, err := os.OpenFile(os.DevNull, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
-			if err != nil {
-				fmt.Println("CLS.CloseStdout Open file err: ", err)
-			}
-			this.Logrus.SetOutput(bufio.NewWriter(f))
-		}
 		this.Logrus.SetFormatter(formatter)
-		this.Logrus.AddHook(h)
+		if conf.CLS.CloseStdout {
+			this.Logrus.SetOutput(io.Discard)
+		} else {
+			this.Logrus.SetOutput(os.Stdout)
+		}
+
+		if IsNotEmpty(conf.CLS.LumberjackConfig) {
+			this.Logrus.SetOutput(&lumberjack.Logger{
+				Filename:   conf.CLS.LumberjackConfig.Filename,
+				MaxSize:    conf.CLS.LumberjackConfig.MaxSize,
+				MaxBackups: conf.CLS.LumberjackConfig.MaxBackups,
+				MaxAge:     conf.CLS.LumberjackConfig.MaxAge,
+				Compress:   conf.CLS.LumberjackConfig.Compress,
+			})
+		} else {
+			this.Logrus.AddHook(cls.NewCLSHook(
+				conf.CLS.AccessKeyId,
+				conf.CLS.AccessKeySecret,
+				conf.CLS.Endpoint,
+				conf.CLS.AllowLogLevel,
+				cls.SetTopic(conf.CLS.Topic),
+			))
+		}
 	} else {
 		// do nothing
 	}

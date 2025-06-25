@@ -3,78 +3,97 @@ static: "frontend/static"
 templates: "frontend/templates"
 autoMigrate: false
 bindAllTag: false
-databases: [
-  {
-    "alias": "one",
-    "dialect": "mysql",
-    "host": "127.0.0.1",
-    "port": 3306,
-    "name": "one",
-    "username": "root",
-    "password": "123456",
-    "maxIdleConns": 200,
-    "maxOpenConns": 1000
-  },
-  {
-    "alias": "two",
-    "dialect": "mysql",
-    "host": "127.0.0.1",
-    "port": 3306,
-    "name": "two",
-    "username": "root",
-    "password": "123456",
-    "maxIdleConns": 200,
-    "maxOpenConns": 1000
-  }
-]
-caches: [
-  {
-    "alias": "one",
-    "section": "one",
-    "adapter": "redis",
-    "host": "127.0.0.1",
-    "port": 6379,
-    "password": "123456",
-    "db": 12
-  },
-  {
-    "alias": "two",
-    "section": "two",
-    "adapter": "redis",
-    "host": "127.0.0.1",
-    "port": 6379,
-    "password": "123456",
-    "db": 11
-  }
-]
-logs: [
-  {
-    "alias": "box",
-    "type": "sls",
-    "accessKeyId": "xxxxxxx",
-    "accessKeySecret": "xxxxxxx",
-    "endpoint": "xxxxxxx",
-    "allowLogLevel": "info",
-    "closeStdout": false,
-    "project": "boxlite",
-    "logstore": "xxxxxxx",
-    "topic": "*package",
-    "source": "source"
-  },
-  {
-    "alias": "user",
-    "type": "cls",
-    "accessKeyId": "xxxxxxx",
-    "accessKeySecret": "xxxxxxx",
-    "endpoint": "xxxxxxx",
-    "allowLogLevel": "info",
-    "closeStdout": false,
-    "project": "xxxxxxx",
-    "logstore": "xxxxxxx",
-    "topic": "topic",
-    "source": "source"
-  }
-]
+databases:
+  [
+    {
+      "alias": "one",
+      "dialect": "mysql",
+      "host": "127.0.0.1",
+      "port": 3306,
+      "name": "one",
+      "username": "root",
+      "password": "123456",
+      "maxIdleConns": 200,
+      "maxOpenConns": 1000,
+    },
+    {
+      "alias": "two",
+      "dialect": "mysql",
+      "host": "127.0.0.1",
+      "port": 3306,
+      "name": "two",
+      "username": "root",
+      "password": "123456",
+      "maxIdleConns": 200,
+      "maxOpenConns": 1000,
+    },
+  ]
+caches:
+  [
+    {
+      "alias": "one",
+      "section": "one",
+      "adapter": "redis",
+      "host": "127.0.0.1",
+      "port": 6379,
+      "password": "123456",
+      "db": 12,
+    },
+    {
+      "alias": "two",
+      "section": "two",
+      "adapter": "redis",
+      "host": "127.0.0.1",
+      "port": 6379,
+      "password": "123456",
+      "db": 11,
+    },
+  ]
+logs:
+  [
+    {
+      "alias": "box",
+      "type": "sls",
+      "lumberjackConfig":
+        {
+          "filename": "./log/box.log",
+          "maxSize": 10,
+          "maxBackups": 3,
+          "maxAge": 28,
+          "compress": true,
+        },
+      "accessKeyId": "xxxxxxx",
+      "accessKeySecret": "xxxxxxx",
+      "endpoint": "xxxxxxx",
+      "allowLogLevel": "info",
+      "closeStdout": false,
+      "project": "boxlite",
+      "logstore": "xxxxxxx",
+      "topic": "*package",
+      "source": "source",
+    },
+    {
+      "alias": "user",
+      "type": "cls",
+      "lumberjackConfig":
+        {
+          "filename": "./log/user.log",
+          "maxSize": 10,
+          "maxBackups": 3,
+          "maxAge": 28,
+          "compress": true,
+        },
+      "accessKeyId": "xxxxxxx",
+      "accessKeySecret": "xxxxxxx",
+      "endpoint": "xxxxxxx",
+      "allowLogLevel": "info",
+      "closeStdout": false,
+      "project": "xxxxxxx",
+      "logstore": "xxxxxxx",
+      "topic": "topic",
+      "source": "source",
+    },
+  ]
 nacos:
   host: "xxxxxxx"
   port: 8848
@@ -87,19 +106,31 @@ nacos:
   logDir: "./log"
   server: "127.0.0.1:18090"
 sls:
+  lumberjackConfig:
+    filename: "./log/sls.log"
+    maxSize: 10
+    maxBackups: 3
+    maxAge: 28
+    compress: true
   accessKeyId: "xxxxxxx"
   accessKeySecret: "xxxxxxx"
   endpoint: "xxxxxxx"
-  allowLogLevel: "info"  # debug,info,warn,error
+  allowLogLevel: "info" # debug,info,warn,error
   closeStdout: false
   project: "xxxxxxx"
   logstore: "xxxxxxx"
   topic: "topic"
   source: "source"
 cls:
+  lumberjackConfig:
+    filename: "./log/cls.log"
+    maxSize: 10
+    maxBackups: 3
+    maxAge: 28
+    compress: true
   accessKeyId: "xxxxxxx"
   accessKeySecret: "xxxxxxx"
   endpoint: "ap-beijing.cls.tencentcs.com"
-  allowLogLevel: "info"  # debug,info,warn,error
+  allowLogLevel: "info" # debug,info,warn,error
   closeStdout: false
   topic: "b246af67-dab3-408b-b802-ba150488ffbf"
