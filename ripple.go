@@ -42,7 +42,7 @@ const (
 )
 
 // VersionName 0.8.2以后使用yaml配置文件, 1.0.1升级了脚手架(protoc, ast gen)
-const VersionName = "1.4.1"
+const VersionName = "1.4.3"
 
 func Version() string {
 	return VersionName
@@ -304,7 +304,7 @@ func (this *Ripple) GetCache(alias string) *cache.Cache {
 // GetLog  return ripple log
 func (this *Ripple) GetLog(alias string) *logrus.Logger {
 	if _, ok := this.Logs[alias]; !ok {
-		panic(fmt.Errorf("GetLog: cannot get log alias '%s'", alias))
+		return nil
 	}
 	return this.Logs[alias]
 }

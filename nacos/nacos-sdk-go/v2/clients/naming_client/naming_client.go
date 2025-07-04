@@ -21,7 +21,10 @@ import (
 	"math"
 	"math/rand"
 	"strings"
+	"sync"
 	"time"
+
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/security"
 
 	"github.com/pkg/errors"
 
@@ -42,10 +45,17 @@ type NamingClient struct {
 	cancel            context.CancelFunc
 	serviceProxy      naming_proxy.INamingProxy
 	serviceInfoHolder *naming_cache.ServiceInfoHolder
+	isClosed          bool
+	mutex             sync.Mutex
 }
 
 // NewNamingClient ...
 func NewNamingClient(nc nacos_client.INacosClient) (*NamingClient, error) {
+	return NewNamingClientWithRamCredentialProvider(nc, nil)
+}
+
+// NewNamingClientWithRamCredentialProvider ...
+func NewNamingClientWithRamCredentialProvider(nc nacos_client.INacosClient, provider security.RamCredentialProvider) (*NamingClient, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	rand.Seed(time.Now().UnixNano())
 	naming := &NamingClient{INacosClient: nc, ctx: ctx, cancel: cancel}
@@ -75,7 +85,7 @@ func NewNamingClient(nc nacos_client.INacosClient) (*NamingClient, error) {
 	naming.serviceInfoHolder = naming_cache.NewServiceInfoHolder(clientConfig.NamespaceId, clientConfig.CacheDir,
 		clientConfig.UpdateCacheWhenEmpty, clientConfig.NotLoadCacheAtStart)
 
-	naming.serviceProxy, err = NewNamingProxyDelegate(ctx, clientConfig, serverConfig, httpAgent, naming.serviceInfoHolder)
+	naming.serviceProxy, err = NewNamingProxyDelegateWithRamCredentialProvider(ctx, clientConfig, serverConfig, httpAgent, naming.serviceInfoHolder, provider)
 
 	if clientConfig.AsyncUpdateService {
 		go NewServiceInfoUpdater(ctx, naming.serviceInfoHolder, clientConfig.UpdateThreadNum, naming.serviceProxy).asyncUpdateService()
@@ -265,7 +275,7 @@ func (sc *NamingClient) selectInstances(service model.Service, healthy bool) ([]
 	}
 	hosts := service.Hosts
 	var result []model.Instance
-	logger.Infof("select instances with options: [healthy:<%s>], with service:<%s>", healthy, util.GetGroupName(service.Name, service.GroupName))
+	logger.Infof("select instances with options: [healthy:<%t>], with service:<%s>", healthy, util.GetGroupName(service.Name, service.GroupName))
 	for _, host := range hosts {
 		if host.Healthy == healthy && host.Enable && host.Weight > 0 {
 			result = append(result, host)
@@ -350,6 +360,13 @@ func (sc *NamingClient) ServerHealthy() bool {
 
 // CloseClient ...
 func (sc *NamingClient) CloseClient() {
+	sc.mutex.Lock()
+	defer sc.mutex.Unlock()
+
+	if sc.isClosed {
+		return
+	}
 	sc.serviceProxy.CloseClient()
 	sc.cancel()
+	sc.isClosed = true
 }

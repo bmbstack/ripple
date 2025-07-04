@@ -2,11 +2,12 @@ package cache
 
 import (
 	"fmt"
-	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
 	"math/rand"
 	"os"
 	"strconv"
 	"testing"
+
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
 
 	"github.com/stretchr/testify/assert"
 

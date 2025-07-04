@@ -18,13 +18,14 @@ package encryption
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
 	inner_encoding "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/encoding"
-	"strings"
 )
 
 type kmsPlugin struct {
-	kmsClient *KmsClient
+	kmsClient KmsClient
 }
 
 func (k *kmsPlugin) Encrypt(param *HandlerParam) error {

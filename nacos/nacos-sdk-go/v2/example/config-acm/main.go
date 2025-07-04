@@ -18,12 +18,13 @@ package main
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/config_client"
 	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/nacos_client"
 	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
 	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/http_agent"
 	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/vo"
-	"time"
 )
 
 var localServerConfigWithOptions = constant.NewServerConfig(

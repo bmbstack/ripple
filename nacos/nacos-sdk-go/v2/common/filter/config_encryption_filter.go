@@ -17,10 +17,11 @@
 package filter
 
 import (
+	"strings"
+
 	nacos_inner_encryption "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/encryption"
 	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/vo"
 	"github.com/pkg/errors"
-	"strings"
 )
 
 const (

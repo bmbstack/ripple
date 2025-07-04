@@ -24,6 +24,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/security"
+
 	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/cache"
 	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/nacos_client"
 	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
@@ -59,6 +61,7 @@ type ConfigClient struct {
 	cacheMap                 cache.ConcurrentMap
 	uid                      string
 	listenExecute            chan struct{}
+	isClosed                 bool
 }
 
 type cacheData struct {
@@ -101,7 +104,7 @@ func (cacheData *cacheData) executeListener() {
 	go cacheData.cacheDataListener.listener(cacheData.tenant, cacheData.group, cacheData.dataId, decryptedContent)
 }
 
-func NewConfigClient(nc nacos_client.INacosClient) (*ConfigClient, error) {
+func NewConfigClientWithRamCredentialProvider(nc nacos_client.INacosClient, provider security.RamCredentialProvider) (*ConfigClient, error) {
 	config := &ConfigClient{}
 	config.ctx, config.cancel = context.WithCancel(context.Background())
 	config.INacosClient = nc
@@ -124,7 +127,7 @@ func NewConfigClient(nc nacos_client.INacosClient) (*ConfigClient, error) {
 	clientConfig.CacheDir = clientConfig.CacheDir + string(os.PathSeparator) + "config"
 	config.configCacheDir = clientConfig.CacheDir
 
-	if config.configProxy, err = NewConfigProxy(config.ctx, serverConfig, clientConfig, httpAgent); err != nil {
+	if config.configProxy, err = NewConfigProxyWithRamCredentialProvider(config.ctx, serverConfig, clientConfig, httpAgent, provider); err != nil {
 		return nil, err
 	}
 
@@ -150,6 +153,10 @@ func NewConfigClient(nc nacos_client.INacosClient) (*ConfigClient, error) {
 	config.listenExecute = make(chan struct{})
 	config.startInternal()
 	return config, err
+}
+
+func NewConfigClient(nc nacos_client.INacosClient) (*ConfigClient, error) {
+	return NewConfigClientWithRamCredentialProvider(nc, nil)
 }
 
 func initLogger(clientConfig constant.ClientConfig) error {
@@ -247,6 +254,7 @@ func (client *ConfigClient) PublishConfig(param vo.ConfigParam) (published bool,
 	clientConfig, _ := client.GetClientConfig()
 	request := rpc_request.NewConfigPublishRequest(param.Group, param.DataId, clientConfig.NamespaceId, param.Content, param.CasMd5)
 	request.AdditionMap["tag"] = param.Tag
+	request.AdditionMap["config_tags"] = param.ConfigTags
 	request.AdditionMap["appName"] = param.AppName
 	request.AdditionMap["betaIps"] = param.BetaIps
 	request.AdditionMap["type"] = param.Type
@@ -358,8 +366,15 @@ func (client *ConfigClient) SearchConfig(param vo.SearchConfigParam) (*model.Con
 }
 
 func (client *ConfigClient) CloseClient() {
+	client.mutex.Lock()
+	defer client.mutex.Unlock()
+
+	if client.isClosed {
+		return
+	}
 	client.configProxy.getRpcClient(client).Shutdown()
 	client.cancel()
+	client.isClosed = true
 }
 
 func (client *ConfigClient) searchConfigInner(param vo.SearchConfigParam) (*model.ConfigPage, error) {

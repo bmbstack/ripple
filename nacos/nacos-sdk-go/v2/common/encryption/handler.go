@@ -18,12 +18,13 @@ package encryption
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/alibabacloud-go/tea/tea"
 	dkms_api "github.com/aliyun/alibabacloud-dkms-gcs-go-sdk/openapi"
 	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
 	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
 	"github.com/pkg/errors"
-	"strings"
 )
 
 type HandlerParam struct {
@@ -64,7 +65,10 @@ func newKmsHandler() *KmsHandler {
 
 func RegisterConfigEncryptionKmsPlugins(encryptionHandler Handler, clientConfig constant.ClientConfig) {
 	innerKmsClient, err := innerNewKmsClient(clientConfig)
-	if err == nil && innerKmsClient == nil {
+	if innerKmsClient == nil {
+		err = errors.New("create kms client failed.")
+	}
+	if err != nil && innerKmsClient == nil {
 		err = errors.New("create kms client failed.")
 	}
 	if err != nil {
@@ -191,10 +195,10 @@ func (d *KmsHandler) contentParamCheck(content string) error {
 	return nil
 }
 
-func innerNewKmsClient(clientConfig constant.ClientConfig) (kmsClient *KmsClient, err error) {
+func innerNewKmsClient(clientConfig constant.ClientConfig) (kmsClient KmsClient, err error) {
 	switch clientConfig.KMSVersion {
 	case constant.KMSv1, constant.DEFAULT_KMS_VERSION:
-		kmsClient, err = newKmsV1Client(clientConfig)
+		kmsClient, err = newKmsRamClient(clientConfig)
 	case constant.KMSv3:
 		kmsClient, err = newKmsV3Client(clientConfig)
 	default:
@@ -203,15 +207,19 @@ func innerNewKmsClient(clientConfig constant.ClientConfig) (kmsClient *KmsClient
 	return kmsClient, err
 }
 
-func newKmsV1Client(clientConfig constant.ClientConfig) (*KmsClient, error) {
+func newKmsV1Client(clientConfig constant.ClientConfig) (KmsClient, error) {
 	return NewKmsV1ClientWithAccessKey(clientConfig.RegionId, clientConfig.AccessKey, clientConfig.SecretKey)
 }
 
-func newKmsV3Client(clientConfig constant.ClientConfig) (*KmsClient, error) {
+func newKmsV3Client(clientConfig constant.ClientConfig) (KmsClient, error) {
 	return NewKmsV3ClientWithConfig(&dkms_api.Config{
 		Protocol:         tea.String("https"),
 		Endpoint:         tea.String(clientConfig.KMSv3Config.Endpoint),
 		ClientKeyContent: tea.String(clientConfig.KMSv3Config.ClientKeyContent),
 		Password:         tea.String(clientConfig.KMSv3Config.Password),
 	}, clientConfig.KMSv3Config.CaContent)
+}
+
+func newKmsRamClient(clientConfig constant.ClientConfig) (KmsClient, error) {
+	return NewKmsRamClient(clientConfig.KMSConfig, clientConfig.RegionId, clientConfig.AccessKey, clientConfig.SecretKey)
 }

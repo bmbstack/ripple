@@ -23,22 +23,20 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/pkg/errors"
-
-	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/monitor"
-
-	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/remote/rpc"
-	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/remote/rpc/rpc_request"
-	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/remote/rpc/rpc_response"
-
 	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/cache"
 	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
 	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/http_agent"
 	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/logger"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/monitor"
 	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/nacos_server"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/remote/rpc"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/remote/rpc/rpc_request"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/remote/rpc/rpc_response"
+	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/security"
 	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
 	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/util"
 	"github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/vo"
+	"github.com/pkg/errors"
 )
 
 type ConfigProxy struct {
@@ -47,20 +45,21 @@ type ConfigProxy struct {
 }
 
 func NewConfigProxy(ctx context.Context, serverConfig []constant.ServerConfig, clientConfig constant.ClientConfig, httpAgent http_agent.IHttpAgent) (IConfigProxy, error) {
+	return NewConfigProxyWithRamCredentialProvider(ctx, serverConfig, clientConfig, httpAgent, nil)
+}
+
+func NewConfigProxyWithRamCredentialProvider(ctx context.Context, serverConfig []constant.ServerConfig, clientConfig constant.ClientConfig, httpAgent http_agent.IHttpAgent, provider security.RamCredentialProvider) (IConfigProxy, error) {
 	proxy := ConfigProxy{}
 	var err error
-	proxy.nacosServer, err = nacos_server.NewNacosServer(ctx, serverConfig, clientConfig, httpAgent, clientConfig.TimeoutMs, clientConfig.Endpoint, nil)
+	proxy.nacosServer, err = nacos_server.NewNacosServerWithRamCredentialProvider(ctx, serverConfig, clientConfig, httpAgent, clientConfig.TimeoutMs, clientConfig.Endpoint, nil, provider)
 	proxy.clientConfig = clientConfig
 	return &proxy, err
 }
 
 func (cp *ConfigProxy) requestProxy(rpcClient *rpc.RpcClient, request rpc_request.IRequest, timeoutMills uint64) (rpc_response.IResponse, error) {
 	start := time.Now()
-	cp.nacosServer.InjectSecurityInfo(request.GetHeaders())
+	cp.nacosServer.InjectSecurityInfo(request.GetHeaders(), security.BuildConfigResourceByRequest(request))
 	cp.injectCommHeader(request.GetHeaders())
-	cp.nacosServer.InjectSkAk(request.GetHeaders(), cp.clientConfig)
-	signHeaders := nacos_server.GetSignHeadersFromRequest(request.(rpc_request.IConfigRequest), cp.clientConfig.SecretKey)
-	request.PutAllHeaders(signHeaders)
 	response, err := rpcClient.Request(request, int64(timeoutMills))
 	monitor.GetConfigRequestMonitor(constant.GRPC, request.GetRequestType(), rpc_response.GetGrpcResponseStatusCode(response)).Observe(float64(time.Now().Nanosecond() - start.Nanosecond()))
 	return response, err
@@ -87,14 +86,27 @@ func (cp *ConfigProxy) searchConfigProxy(param vo.SearchConfigParam, tenant, acc
 		params["dataId"] = ""
 	}
 	var headers = map[string]string{}
-	headers["accessKey"] = accessKey
-	headers["secretKey"] = secretKey
+	var version = "v2"
 	result, err := cp.nacosServer.ReqConfigApi(constant.CONFIG_PATH, params, headers, http.MethodGet, cp.clientConfig.TimeoutMs)
 	if err != nil {
-		return nil, err
+		if len(tenant) > 0 {
+			params["namespaceId"] = params["tenant"]
+		}
+		params["groupName"] = params["group"]
+		result, err = cp.nacosServer.ReqConfigApi("/v3/admin/cs/config/list", params, headers, http.MethodGet, cp.clientConfig.TimeoutMs)
+		if err != nil {
+			return nil, err
+		}
+		version = "v3"
 	}
 	var configPage model.ConfigPage
-	err = json.Unmarshal([]byte(result), &configPage)
+	if version == "v2" {
+		err = json.Unmarshal([]byte(result), &configPage)
+	} else {
+		var configPageResult model.ConfigPageResult
+		err = json.Unmarshal([]byte(result), &configPageResult)
+		configPage = configPageResult.Data
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -133,6 +145,7 @@ func (cp *ConfigProxy) queryConfig(dataId, group, tenant string, timeout uint64,
 	if response.GetErrorCode() == 300 {
 		cache.WriteConfigToFile(cacheKey, cp.clientConfig.CacheDir, "")
 		cache.WriteEncryptedDataKeyToFile(cacheKey, cp.clientConfig.CacheDir, "")
+		response.SetSuccess(true)
 		return response, nil
 	}
 
@@ -173,6 +186,10 @@ func (cp *ConfigProxy) createRpcClient(ctx context.Context, taskId string, clien
 			// TODO fix the group/dataId empty problem
 			return rpc_request.NewConfigChangeNotifyRequest("", "", "")
 		}, &ConfigChangeNotifyRequestHandler{client: client})
+
+		configListener := NewConfigConnectionEventListener(client, taskId)
+		rpcClient.RegisterConnectionListener(configListener)
+
 		rpcClient.Tenant = cp.clientConfig.NamespaceId
 		rpcClient.Start()
 	}

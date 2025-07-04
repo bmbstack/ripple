@@ -26,6 +26,7 @@ func NewRpcServerNacos(nacos NacosConfig) (*server.Server, *serverplugin.NacosRe
 		NamespaceId:          nacos.NamespaceId,
 		CacheDir:             nacos.CacheDir,
 		LogDir:               nacos.LogDir,
+		LogLevel:             "info", // debug,info,warn,error, default value is info
 		UpdateThreadNum:      20,
 		NotLoadCacheAtStart:  true,
 		UpdateCacheWhenEmpty: true,

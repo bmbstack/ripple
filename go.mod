@@ -3,11 +3,16 @@ module github.com/bmbstack/ripple
 go 1.16
 
 require (
-	github.com/alibabacloud-go/tea v1.2.2
+	github.com/alibabacloud-go/darabonba-openapi/v2 v2.1.7
+	github.com/alibabacloud-go/kms-20160120/v3 v3.2.3
+	github.com/alibabacloud-go/tea v1.3.8
+	github.com/alibabacloud-go/tea-utils/v2 v2.0.7
 	github.com/aliyun/alibaba-cloud-sdk-go v1.61.1800
 	github.com/aliyun/alibabacloud-dkms-gcs-go-sdk v0.5.1
 	github.com/aliyun/alibabacloud-dkms-transfer-go-sdk v0.1.9
 	github.com/aliyun/aliyun-log-go-sdk v0.1.36
+	github.com/aliyun/aliyun-secretsmanager-client-go v1.1.5
+	github.com/aliyun/credentials-go v1.4.6
 	github.com/bmbstack/g v1.0.0
 	github.com/buger/jsonparser v1.1.1
 	github.com/dave/dst v0.26.2
@@ -17,23 +22,23 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/mock v1.6.0
-	github.com/golang/protobuf v1.5.2
+	github.com/golang/protobuf v1.5.3
 	github.com/labstack/echo/v4 v4.6.1
 	github.com/labstack/gommon v0.3.0
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.11.0
+	github.com/prometheus/client_golang v1.12.2
 	github.com/sirupsen/logrus v1.6.0
 	github.com/smallnest/rpcx v1.7.3
 	github.com/spf13/viper v1.11.0
-	github.com/stretchr/testify v1.8.0
+	github.com/stretchr/testify v1.8.3
 	github.com/tencentcloud/tencentcloud-cls-sdk-go v1.0.2
 	github.com/urfave/cli/v2 v2.3.0
-	go.uber.org/zap v1.17.0
-	golang.org/x/mod v0.8.0
-	golang.org/x/sync v0.1.0
-	golang.org/x/time v0.0.0-20201208040808-7e3f01d25324
-	google.golang.org/grpc v1.45.0
-	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b
+	go.uber.org/zap v1.21.0
+	golang.org/x/mod v0.17.0
+	golang.org/x/sync v0.10.0
+	golang.org/x/time v0.3.0
+	google.golang.org/grpc v1.56.3
+	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gorm.io/driver/mysql v1.2.0
 	gorm.io/driver/postgres v1.2.2

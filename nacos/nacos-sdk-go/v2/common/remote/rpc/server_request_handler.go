@@ -90,10 +90,6 @@ func (*NamingPushRequestHandler) Name() string {
 func (c *NamingPushRequestHandler) RequestReply(request rpc_request.IRequest, client *RpcClient) rpc_response.IResponse {
 	notifySubscriberRequest, ok := request.(*rpc_request.NotifySubscriberRequest)
 	if ok {
-		// TODO modify
-		if notifySubscriberRequest.ServiceInfo.Clusters == "" && len(notifySubscriberRequest.ServiceInfo.Hosts) > 0 {
-			notifySubscriberRequest.ServiceInfo.Clusters = notifySubscriberRequest.ServiceInfo.Hosts[0].ClusterName
-		}
 		c.ServiceInfoHolder.ProcessService(&notifySubscriberRequest.ServiceInfo)
 		logger.Debugf("%s naming push response success ackId->%s", client.currentConnection.getConnectionId(),
 			request.GetRequestId())
