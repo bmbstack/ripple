@@ -3,17 +3,18 @@ package ripple
 import (
 	"errors"
 	"fmt"
+	"log"
+	"os"
+	"reflect"
+	"strconv"
+	"time"
+
 	. "github.com/bmbstack/ripple/helper"
 	"github.com/labstack/gommon/color"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	mlogger "gorm.io/gorm/logger"
-	"log"
-	"os"
-	"reflect"
-	"strconv"
-	"time"
 )
 
 // Orm facilitate database interactions, support mysql
@@ -37,6 +38,19 @@ func NewOrm(database DatabaseConfig, debug bool) *Orm {
 	maxIdleConns := database.MaxIdleConns
 	maxOpenConns := database.MaxOpenConns
 
+	charset := "utf8mb4"
+	if IsNotEmpty(database.Charset) {
+		charset = database.Charset
+	}
+	parseTime := "True"
+	if IsNotEmpty(database.ParseTime) {
+		parseTime = database.ParseTime
+	}
+	loc := "Local"
+	if IsNotEmpty(database.Loc) {
+		loc = database.Loc
+	}
+
 	// logger
 	logLevel := mlogger.Silent
 	logColorful := false
@@ -56,7 +70,7 @@ func NewOrm(database DatabaseConfig, debug bool) *Orm {
 	dsn := ""
 	switch dialect {
 	case "mysql":
-		dsn = username + ":" + password + "@tcp(" + host + ":" + strconv.Itoa(port) + ")/" + name + "?charset=utf8mb4&parseTime=True&loc=Local"
+		dsn = fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=%s&parseTime=%s&loc=%s", username, password, host, port, name, charset, parseTime, loc)
 		db, err := gorm.Open(mysql.New(mysql.Config{
 			DSN: dsn,
 		}), &gorm.Config{Logger: newLogger})

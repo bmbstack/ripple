@@ -32,6 +32,9 @@ type DatabaseConfig struct {
 	Password     string `mapstructure:"password"`     // password=123456
 	MaxIdleConns int    `mapstructure:"maxIdleConns"` // maxIdleConns
 	MaxOpenConns int    `mapstructure:"maxOpenConns"` // maxOpenConns
+	Charset      string `mapstructure:"charset"`      // charset, default: utf8mb4
+	ParseTime    string `mapstructure:"parseTime"`    // parseTime, default: True
+	Loc          string `mapstructure:"loc"`          // loc, default: Local
 }
 
 type CacheConfig struct {
