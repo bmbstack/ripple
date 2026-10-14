@@ -16,7 +16,6 @@ import (
 	"github.com/bmbstack/ripple/logger/cls"
 	"github.com/bmbstack/ripple/logger/sls"
 	"github.com/bmbstack/ripple/middleware/bind"
-	"github.com/bmbstack/ripple/middleware/binding"
 	"github.com/bmbstack/ripple/middleware/logger"
 	"github.com/bmbstack/ripple/middleware/recover"
 	"github.com/bmbstack/ripple/nacos/rpcxnacos/serverplugin"
@@ -42,7 +41,7 @@ const (
 )
 
 // VersionName 0.8.2以后使用yaml配置文件, 1.0.1升级了脚手架(protoc, ast gen)
-const VersionName = "1.4.6"
+const VersionName = "1.4.7"
 
 func Version() string {
 	return VersionName
@@ -101,10 +100,8 @@ func NewRipple() *Ripple {
 	r.Echo.Use(recover.Recover())
 	r.Echo.Use(mw.Logger())
 
-	r.Echo.Binder = binding.Binder{}
-	if config.BindAllTag {
-		r.Echo.Binder = &bind.DefaultBinder{}
-	}
+	r.Echo.Binder = &bind.DefaultBinder{}
+	r.Echo.Validator = NewValidator(config.ValidateTag)
 	r.Echo.Renderer = NewRenderer(config)
 	r.Echo.Static("/static", config.Static)
 
@@ -123,7 +120,6 @@ func NewRipple() *Ripple {
 		for _, item := range config.Caches {
 			newCache, err := cache.NewCache(cache.Options{
 				Alias:         item.Alias,
-				Adapter:       item.Adapter,
 				AdapterConfig: item.GetCacheAdapterConfig(),
 				Section:       item.Section,
 			})

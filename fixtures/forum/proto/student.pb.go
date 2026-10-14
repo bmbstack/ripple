@@ -13,7 +13,7 @@ import (
 	fmt "fmt"
 	ripple "github.com/bmbstack/ripple"
 	helper "github.com/bmbstack/ripple/helper"
-	constant "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
+	constant "github.com/nacos-group/nacos-sdk-go/v2/common/constant"
 	client1 "github.com/bmbstack/ripple/nacos/rpcxnacos/client"
 	proto "github.com/golang/protobuf/proto"
 	client "github.com/smallnest/rpcx/client"

@@ -3,6 +3,7 @@ cmd/ripple/ripple
 fixtures/forum/forum
 .xmark.README.md.html
 go.sum
+.codebuddy/
 
 ### Go template
 # Compiled Object files, Static and Dynamic libs (Shared Objects)

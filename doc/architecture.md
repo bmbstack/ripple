@@ -1,6 +1,6 @@
 # Ripple 框架知识库
 
-> 版本: v1.4.6 | 基于 [Echo](https://github.com/labstack/echo) 的轻量级 Go Web 框架
+> 版本: v1.4.7 | 基于 [Echo](https://github.com/labstack/echo) 的轻量级 Go Web 框架
 
 ---
 
@@ -331,42 +331,42 @@ func init() {
 
 ### 4.5 Cache 缓存层
 
-**文件：** `cache/cache.go`, `cache/redis.go`, `cache/memory.go`
+**文件：** `cache/cache.go`, `cache/redis.go`
 
-提供统一的缓存抽象，通过 **Store 接口** 解耦后端实现。
+提供基于 **Redis** 的缓存实现。遵循 Spring Boot 的「薄 KV 抽象 + 具体实现」设计：
+`Store` 接口只暴露通用 KV 操作，Redis 专属命令（hash/list/set/zset/bitmap/script）
+通过 `Client()` 返回的 `*redis.Client` 直接调用。
 
-**Store 接口（精简）：**
+**Store 接口（薄 KV 抽象）：**
 
 ```go
 type Store interface {
-    connect(opt Options) error
-    Client() interface{}
+    Client() *redis.Client
     Close() error
     Key(key string) string
     // String
     Set(key, val string, expiration time.Duration) error
     Get(key string) (string, error)
-    // Hash
-    HGet/HGetAll/HSet/HExists/HMGet/HMSet/HSetNX
-    // Set
-    SCard/SAdd/SRem/SScan
-    // List
-    LRange/LPush/LLen/RPop/RPopCount/RPopLPush/RPush/RPushX
-    // Sorted Set
-    ZAdd/ZRange/ZRank/ZScore/ZRem
-    // Advanced
-    SetEX/SetNX/RunScript/Incr/Decr/Expire/Del/Flush
-    // Bitmap
-    GetBit/SetBit/BitCount/BitOpAnd/BitOpOr/BitOpXor/BitOpNot/BitPos/BitField
+    // Key
+    Del(keys ...string) (int64, error)
+    Delete(key string) error
+    DeleteByPrefix(prefix string) error
+    // TTL
+    Expire(key string, expiration time.Duration) (bool, error)
+    TTL(key string) (time.Duration, error)
+    Exists(keys ...string) (int64, error)
+    Exist(key string) bool
+    // Counter
+    Incr(key string) (int64, error)
+    Decr(key string) (int64, error)
 }
 ```
 
-**适配器矩阵：**
+**后端：**
 
-| 适配器 | 后端 | 实现状态 | Key 前缀 |
-|--------|------|----------|----------|
-| `redis` | go-redis/v8 | ✅ 完整 | `{section}:{key}` |
-| `memory` | sync.Map | ⚠️ 骨架 | 无 |
+| 后端 | 实现 | Key 前缀 |
+|------|------|----------|
+| go-redis/v8 | ✅ 完整 | `{section}:{key}` |
 
 **缓存配置：**
 
@@ -374,7 +374,6 @@ type Store interface {
 caches:
   - alias: "forum"
     section: "forum"        # Key 前缀
-    adapter: "redis"        # redis / memory
     host: "127.0.0.1"
     port: 6379
     password: "123456"
@@ -388,11 +387,11 @@ caches:
 
 ```go
 cache := ripple.Default().GetCache("forum")
-// 方式1: 使用 Store 接口
+// 方式1: 使用 Store 薄 KV 接口
 cache.Set("key", "value", 0)
-cache.HGetAll("hash_key")
-// 方式2: 获取底层 Redis Client
-client := cache.Client().(*redis.Client)
+cache.Get("key")
+// 方式2: 获取底层 Redis Client 调用高级命令
+client := cache.Client()
 client.HGetAll(ctx, "hash_key").Result()
 ```
 
@@ -920,7 +919,6 @@ databases:
 caches:
   - alias: "default"
     section: "app"                 # Key 前缀隔离
-    adapter: "redis"               # redis | memory
     host: "127.0.0.1"
     port: 6379
     password: ""
@@ -1027,4 +1025,4 @@ ripple
 
 ---
 
-> **文档版本：** v1.0 | **最后更新：** 2026-06-02 | **框架版本：** Ripple v1.4.6
+> **文档版本：** v1.0 | **最后更新：** 2026-06-02 | **框架版本：** Ripple v1.4.7

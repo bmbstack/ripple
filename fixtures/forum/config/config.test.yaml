@@ -31,7 +31,6 @@ caches: [
   {
     "alias": "one",
     "section": "one",
-    "adapter": "redis",
     "host": "127.0.0.1",
     "port": 6379,
     "password": "123456",
@@ -40,7 +39,6 @@ caches: [
   {
     "alias": "two",
     "section": "two",
-    "adapter": "redis",
     "host": "127.0.0.1",
     "port": 6379,
     "password": "123456",

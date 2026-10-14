@@ -33,7 +33,7 @@ go run cmd/main.go --env dev s
 If you use nacos, we recommend you:
 
 ```shell
-go get github.com/smallnest/rpcx@v1.7.3
+go get github.com/smallnest/rpcx@v1.9.3
 ```
 
 Then, Open the url: [http://127.0.0.1:8090](http://127.0.0.1:8090)
@@ -241,16 +241,21 @@ result, err := client.HGetAll(context.Background(), "key").Result()
 ## Logger
 
 ### SLS(aliyun log)
+
 ```go
 ripple.Default().AddLogType(ripple.LogTypeSLS)
 ```
+
 or
+
 ### CLS(tecent cloud log)
+
 ```go
 ripple.Default().AddLogType(ripple.LogTypeCLS)
 ```
 
 Use logger like this
+
 ```go
 import "github.com/bmbstack/ripple/logger"
 
@@ -261,6 +266,7 @@ logger.With(map[string]interface{}{
 
 logger.Info("hello, jack")
 ```
+
 ## Please close Resource, when the program exits
 
 ```go
@@ -291,11 +297,11 @@ Middlewares handle:
 
 ## Features
 
-* [x] MySQL and Foundation database support
-* [x] Modular (you can choose which components to use)
-* [x] Middleware support, compatible Middleware works out of the box
-* [x] Lightweight
-* [x] Multiple configuration files support (currently ```.env```)
+* [X] MySQL and Foundation database support
+* [X] Modular (you can choose which components to use)
+* [X] Middleware support, compatible Middleware works out of the box
+* [X] Lightweight
+* [X] Multiple configuration files support (currently ``.env``)
 
 ## Overview
 
@@ -311,14 +317,14 @@ ripple support .env configurations files. In our rippleApp app, we put the confi
 
 ripple searches for a file named .env in the config directory. The first to be found is the one to be used.
 
-This is the content of ```config.dev.yaml/config.test.yaml/config.prod.yaml``` file:
+This is the content of ``config.dev.yaml/config.test.yaml/config.prod.yaml`` file:
 
 ```shell
 domain: "127.0.0.1:8090"
 static: "frontend/static"
 templates: "frontend/templates"
 autoMigrate: false
-bindAllTag: false
+validateTag: "validate"
 databases: [
   {
     "alias": "one",

@@ -9,7 +9,7 @@ import (
 
 type BaseConfig struct {
 	AutoMigrate bool             `mapstructure:"autoMigrate,omitempty"` // autoMigrate
-	BindAllTag  bool             `mapstructure:"bindAllTag,omitempty"`  // false=binding
+	ValidateTag string           `mapstructure:"validateTag,omitempty"` // validate tag name, default: validate
 	Debug       bool             `mapstructure:"debug,omitempty"`       // debug, default false
 	Domain      string           `mapstructure:"domain,omitempty"`      // domain=127.0.0.1:8090
 	Static      string           `mapstructure:"static,omitempty"`      // static=frontend/static
@@ -40,7 +40,6 @@ type DatabaseConfig struct {
 type CacheConfig struct {
 	Alias        string `mapstructure:"alias"`        // alias=forum
 	Section      string `mapstructure:"section"`      // section=forum
-	Adapter      string `mapstructure:"adapter"`      // adapter=redis
 	Host         string `mapstructure:"host"`         // host=127.0.0.1
 	Port         int    `mapstructure:"port"`         // port=6379
 	Password     string `mapstructure:"password"`     // password=123456

@@ -2,10 +2,10 @@ package serverplugin
 
 import (
 	"errors"
-	clients2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients"
-	naming_client2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/naming_client"
-	constant2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
-	vo2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/vo"
+	clients2 "github.com/nacos-group/nacos-sdk-go/v2/clients"
+	naming_client2 "github.com/nacos-group/nacos-sdk-go/v2/clients/naming_client"
+	constant2 "github.com/nacos-group/nacos-sdk-go/v2/common/constant"
+	vo2 "github.com/nacos-group/nacos-sdk-go/v2/vo"
 	"strings"
 
 	"github.com/smallnest/rpcx/log"

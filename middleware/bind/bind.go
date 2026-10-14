@@ -13,24 +13,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type StructValidator interface {
-	// ValidateStruct can receive any kind of type and it should never panic, even if the configuration is not right.
-	// If the received type is not a struct, any validation should be skipped and nil must be returned.
-	// If the received type is a struct or pointer to a struct, the validation should be performed.
-	// If the struct is not valid or the validation itself fails, a descriptive error should be returned.
-	// Otherwise nil must be returned.
-	ValidateStruct(interface{}) error
-}
-
-var Validator StructValidator = &defaultValidator{}
-
-func validate(obj interface{}) error {
-	if Validator == nil {
-		return nil
-	}
-	return Validator.ValidateStruct(obj)
-}
-
 type (
 	// Binder is the interface that wraps the Bind method.
 	Binder interface {
@@ -143,7 +125,11 @@ func (b *DefaultBinder) Bind(i interface{}, c echo.Context) (err error) {
 	if err = b.BindBody(c, i); err != nil {
 		return err
 	}
-	return validate(i)
+	// 绑定完成后自动校验，使用 Echo.Validator（默认 validate tag，见 ripple.NewValidator）
+	if v := c.Echo().Validator; v != nil {
+		return v.Validate(i)
+	}
+	return nil
 }
 
 // bindData will bind data ONLY fields in destination struct that have EXPLICIT tag

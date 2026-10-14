@@ -3,7 +3,7 @@ package ripple
 import (
 	"fmt"
 	. "github.com/bmbstack/ripple/helper"
-	constant2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
+	constant2 "github.com/nacos-group/nacos-sdk-go/v2/common/constant"
 	"github.com/bmbstack/ripple/nacos/rpcxnacos/serverplugin"
 	"github.com/bmbstack/ripple/util"
 	"github.com/labstack/gommon/color"

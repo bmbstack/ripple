@@ -1,0 +1,28 @@
+schema: spec-driven
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+context: |
+  Tech stack: Go 1.24+, Echo v4 (web), rpcx v1.9 + Nacos (RPC 服务发现), GORM (ORM, MySQL/PostgreSQL), go-redis/v8 (缓存), viper (配置), logrus (日志), gogo/protobuf (protobuf 代码生成)
+  Module path: github.com/bmbstack/ripple
+  Project type: 轻量级 Go web + RPC 框架（脚手架）
+  目录约定:
+    - cache/          缓存层（Redis，薄 KV 抽象 + Client() 逃生通道）
+    - middleware/     Echo 中间件（bind/logger/recover/pprof）
+    - nacos/          Nacos 服务发现集成（rpcxnacos client + serverplugin）
+    - protoc/         protobuf 代码生成（command + ripple 插件 + protoc-gen-gofast）
+    - rst/            Go AST 工具库
+    - fixtures/       示例项目（forum）
+  构建/测试:
+    - 构建: go build ./...（本机需 Go 1.24+，可用 /Users/pop/.g/versions/1.26.0）
+    - 测试: go test -vet=off ./...（fixtures/forum/proto 有存量 vet 告警，与业务无关）
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+rules:
+  proposal:
+    - 说明变更的 Why 和影响范围
+  tasks:
+    - 任务需可独立验证，粒度控制在合理范围
+  specs:
+    - 使用 Given/When/Then 场景描述需求

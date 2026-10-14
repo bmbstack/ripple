@@ -2,11 +2,11 @@ package client
 
 import (
 	"fmt"
-	clients2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients"
-	naming_client2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/clients/naming_client"
-	constant2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
-	model2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/model"
-	vo2 "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/vo"
+	clients2 "github.com/nacos-group/nacos-sdk-go/v2/clients"
+	naming_client2 "github.com/nacos-group/nacos-sdk-go/v2/clients/naming_client"
+	constant2 "github.com/nacos-group/nacos-sdk-go/v2/common/constant"
+	model2 "github.com/nacos-group/nacos-sdk-go/v2/model"
+	vo2 "github.com/nacos-group/nacos-sdk-go/v2/vo"
 	"sync"
 	"time"
 
@@ -76,22 +76,24 @@ func (d *NacosDiscovery) fetch() {
 		log.Errorf("failed to get service %s: %v", d.servicePath, err)
 		return
 	}
-	pairs := make([]*client.KVPair, 0, len(service.Hosts))
-	for _, inst := range service.Hosts {
+	d.pairsMu.Lock()
+	d.pairs = convertInstances(service.Hosts, d.filter)
+	d.pairsMu.Unlock()
+}
+
+// convertInstances converts nacos service instances to rpcx KVPairs.
+func convertInstances(instances []model2.Instance, filter client.ServiceDiscoveryFilter) []*client.KVPair {
+	pairs := make([]*client.KVPair, 0, len(instances))
+	for _, inst := range instances {
 		network := inst.Metadata["network"]
-		ip := inst.Ip
-		port := inst.Port
-		key := fmt.Sprintf("%s@%s:%d", network, ip, port)
+		key := fmt.Sprintf("%s@%s:%d", network, inst.Ip, inst.Port)
 		pair := &client.KVPair{Key: key, Value: util.ConvertMap2String(inst.Metadata)}
-		if d.filter != nil && !d.filter(pair) {
+		if filter != nil && !filter(pair) {
 			continue
 		}
 		pairs = append(pairs, pair)
 	}
-
-	d.pairsMu.Lock()
-	d.pairs = pairs
-	d.pairsMu.Unlock()
+	return pairs
 }
 
 // Clone clones this ServiceDiscovery with new servicePath.
@@ -144,20 +146,8 @@ func (d *NacosDiscovery) watch() {
 		Clusters:    []string{d.Cluster},
 		GroupName:   d.Group,
 		SubscribeCallback: func(services []model2.Instance, err error) {
-			pairs := make([]*client.KVPair, 0, len(services))
-			for _, inst := range services {
-				network := inst.Metadata["network"]
-				ip := inst.Ip
-				port := inst.Port
-				key := fmt.Sprintf("%s@%s:%d", network, ip, port)
-				pair := &client.KVPair{Key: key, Value: util.ConvertMap2String(inst.Metadata)}
-				if d.filter != nil && !d.filter(pair) {
-					continue
-				}
-				pairs = append(pairs, pair)
-			}
 			d.pairsMu.Lock()
-			d.pairs = pairs
+			d.pairs = convertInstances(services, d.filter)
 			d.pairsMu.Unlock()
 
 			d.mu.Lock()

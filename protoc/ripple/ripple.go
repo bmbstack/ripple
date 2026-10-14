@@ -27,7 +27,7 @@ const (
 	rippleHelperPkgPath     = "github.com/bmbstack/ripple/helper"
 	rpcxClientPkgPath       = "github.com/smallnest/rpcx/client"
 	rpcxNacosClientPkgPath  = "github.com/bmbstack/ripple/nacos/rpcxnacos/client"
-	rpcxNacosSdkConsPkgPath = "github.com/bmbstack/ripple/nacos/nacos-sdk-go/v2/common/constant"
+	rpcxNacosSdkConsPkgPath = "github.com/nacos-group/nacos-sdk-go/v2/common/constant"
 	rpcxProtocolPkgPath     = "github.com/smallnest/rpcx/protocol"
 
 	Permissions = 0755
